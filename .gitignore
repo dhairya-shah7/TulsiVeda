@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.local
+
+# Android & Gradle Build Artifacts
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
+apps/mobile/android/**/*.apk
+apps/mobile/android/**/*.aab
+
+# Keep ready-to-install root APKs for quick testing
+!TulsiVeda_AI.apk
+!TulsiVeda_AI_Release.apk
+
+# Logs & Environment
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env*.local
+*.log
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Antigravity & System
+.system_generated/
+scratch/
