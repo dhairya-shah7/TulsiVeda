@@ -140,4 +140,4 @@ The API service runs on `http://localhost:3001`.
 
 ## 👥 Contributors & Team
 * Built for **UnleashLLM Hackathon**
-* **Repository Owner:** @bobby-dash
+* **Repository Owner:** @dhairya-shah7
