@@ -16,7 +16,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Curcuma longa',
     commonName: 'Turmeric / Haldi (હળદર)',
     family: 'Zingiberaceae',
-    vernacularAliases: ['હળદર', 'હલ્દી', 'हल्दी', 'haldi', 'turmeric', 'haridra', 'curcuma', 'હળદળ'],
+    vernacularAliases: [
+      'હળદર', 'હલ્દી', 'हल्दी', 'हळद', 'மஞ்சள்', 'పసుపు', 'ಅರಿಶಿನ', 'മഞ്ഞൾ', 'হলুদ', 'ਹਲਦੀ', 
+      'haldi', 'turmeric', 'haridra', 'curcuma', 'manjal', 'pasupu', 'arishina', 'holud'
+    ],
     primaryParts: ['Rhizome', 'Root'],
     activeConstituents: ['Curcumin', 'Demethoxycurcumin', 'Bisdemethoxycurcumin', 'Turmerone'],
     pharmacologicalClass: 'Polyphenol & Diarylheptanoid',
@@ -28,7 +31,7 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Curcuma aromatica',
     commonName: 'Wild Turmeric / Aamba Haldi (આંબા હળદર)',
     family: 'Zingiberaceae',
-    vernacularAliases: ['આંબા હળદર', 'आम्बा हल्दी', 'aamba haldi', 'wild turmeric', 'kasthuri manjal'],
+    vernacularAliases: ['આંબા હળદર', 'आम्बा हल्दी', 'aamba haldi', 'wild turmeric', 'kasthuri manjal', 'ran halad'],
     primaryParts: ['Rhizome'],
     activeConstituents: ['Germacrone', 'Curzerenone', 'Camphor'],
     pharmacologicalClass: 'Sesquiterpenoid',
@@ -40,7 +43,7 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Curcuma zedoaria',
     commonName: 'White Turmeric / Kachur (કચૂર)',
     family: 'Zingiberaceae',
-    vernacularAliases: ['કચૂર', 'કચૂરો', 'कचूर', 'kachur', 'white turmeric', 'zedoary'],
+    vernacularAliases: ['કચૂર', 'કચૂરો', 'कचूर', 'kachur', 'white turmeric', 'zedoary', 'narkachur'],
     primaryParts: ['Rhizome'],
     activeConstituents: ['Curcumenol', 'Furanodiene', 'Isobornyl alcohol'],
     pharmacologicalClass: 'Terpenoid',
@@ -52,7 +55,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Ocimum sanctum',
     commonName: 'Tulsi / Holy Basil (તુલસી)',
     family: 'Lamiaceae',
-    vernacularAliases: ['તુલસી', 'શ્યામ તુલસી', 'રામ તુલસી', 'तुलसी', 'tulsi', 'holy basil', 'ocimum', 'vishnupriya'],
+    vernacularAliases: [
+      'તુલસી', 'શ્યામ તુલસી', 'રામ તુલસી', 'तुलसी', 'तुळस', 'துளசி', 'తులసి', 'ತುಳಸಿ', 'തുളസി', 'তুলসী', 'ਤੁਲਸੀ',
+      'tulsi', 'holy basil', 'ocimum', 'vishnupriya', 'thulasi', 'tulasi'
+    ],
     primaryParts: ['Leaves', 'Whole aerial plant', 'Seeds'],
     activeConstituents: ['Eugenol', 'Ursolic acid', 'Rosmarinic acid', 'Caryophyllene'],
     pharmacologicalClass: 'Phenylpropanoid & Triterpenoid',
@@ -88,7 +94,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Withania somnifera',
     commonName: 'Ashwagandha / Indian Ginseng (અશ્વગંધા)',
     family: 'Solanaceae',
-    vernacularAliases: ['અશ્વગંધા', 'આસોંધ', 'अश्वगंधा', 'ashwagandha', 'asgandh', 'indian ginseng', 'withania'],
+    vernacularAliases: [
+      'અશ્વગંધા', 'આસોંધ', 'अश्वगंधा', 'अश्वगंध', 'அஸ்வகந்தா', 'అశ్వగంధ', 'ಅಶ್ವಗಂಧ', 'അശ്വഗന്ധ', 'অশ্বগন্ধা', 'ਅਸ਼ਵਗੰਧਾ',
+      'ashwagandha', 'asgandh', 'indian ginseng', 'withania', 'amukkara', 'asvagandha'
+    ],
     primaryParts: ['Roots', 'Leaves'],
     activeConstituents: ['Withaferin A', 'Withanolide D', 'Withanosides', 'Somniferine'],
     pharmacologicalClass: 'Steroidal lactone (Withanolides)',
@@ -112,7 +121,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Azadirachta indica',
     commonName: 'Neem / Nimba (લીમડો / મીઠો નહીં, કડવો લીમડો)',
     family: 'Meliaceae',
-    vernacularAliases: ['લીમડો', 'કડવો લીમડો', 'नीम', 'neem', 'nimba', 'azadirachta'],
+    vernacularAliases: [
+      'લીમડો', 'કડવો લીમડો', 'नीम', 'कडुनिंब', 'வேம்பு', 'వేప', 'ಬೇವು', 'ആര്യവേപ്പ്', 'নিম', 'ਨਿੰਮ',
+      'neem', 'nimba', 'azadirachta', 'veppam', 'vepa', 'bevu'
+    ],
     primaryParts: ['Bark', 'Leaves', 'Seeds', 'Oil'],
     activeConstituents: ['Nimbin', 'Nimbidin', 'Azadirachtin', 'Salannin'],
     pharmacologicalClass: 'Tetranortriterpenoid / Limonoid',
@@ -124,7 +136,7 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Murraya koenigii',
     commonName: 'Curry Leaves / Meetho Limdo (મીઠો લીમડો)',
     family: 'Rutaceae',
-    vernacularAliases: ['મીઠો લીમડો', 'કઢી પત્તા', 'मीठा नीम', 'curry leaves', 'meetho limdo', 'kadi patta'],
+    vernacularAliases: ['મીઠો લીમડો', 'કઢી પત્તા', 'मीठा नीम', 'curry leaves', 'meetho limdo', 'kadi patta', 'karivepaku', 'kariveppila'],
     primaryParts: ['Leaves'],
     activeConstituents: ['Mahanimbine', 'Koenigine', 'Girimbine'],
     pharmacologicalClass: 'Carbazole alkaloid',
@@ -136,7 +148,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Tinospora cordifolia',
     commonName: 'Giloy / Guduchi / Galo (ગળો / ગિલોય)',
     family: 'Menispermaceae',
-    vernacularAliases: ['ગળો', 'ગિલોય', 'गिलोय', 'गिलोय', 'giloy', 'guduchi', 'galo', 'tinospora', 'amrita'],
+    vernacularAliases: [
+      'ગળો', 'ગિલોય', 'गिलोय', 'गुळवेल', 'சீந்தில்', 'తిప్పతీగ', 'ಅಮೃತಬಳ್ಳಿ', 'ചിറ്റമൃത്', 'গুলঞ্চ', 'ਗਿਲੋਏ',
+      'giloy', 'guduchi', 'galo', 'tinospora', 'amrita', 'gulvel', 'seenthil', 'tippateega', 'amrutaballi'
+    ],
     primaryParts: ['Stems'],
     activeConstituents: ['Tinosporide', 'Tinosporaside', 'Cordifolide', 'Berberine', 'Palmatine'],
     pharmacologicalClass: 'Diterpenoid lactone & Isoquinoline alkaloid',
@@ -148,7 +163,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Zingiber officinale',
     commonName: 'Ginger / Aadhu / Sunthi (આદુ / સૂંઠ)',
     family: 'Zingiberaceae',
-    vernacularAliases: ['આદુ', 'સૂંઠ', 'अदरक', 'सोंठ', 'ginger', 'aadu', 'adrak', 'sunthi', 'zingiber'],
+    vernacularAliases: [
+      'આદુ', 'સૂંઠ', 'अदरक', 'सोंठ', 'आले', 'சுக்கு', 'இஞ்சி', 'అల్లం', 'ಶುಂಠಿ', 'ഇഞ്ചി', 'আদা', 'ਅਦਰਕ',
+      'ginger', 'aadu', 'adrak', 'sunthi', 'zingiber', 'injji', 'allam', 'shunti'
+    ],
     primaryParts: ['Fresh Rhizome (Aadhu)', 'Dried Rhizome (Sunthi)'],
     activeConstituents: ['6-Gingerol', '6-Shogaol', 'Zingiberene', 'Bisabolene'],
     pharmacologicalClass: 'Phenylalkylketone',
@@ -160,7 +178,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Allium sativum',
     commonName: 'Garlic / Lasan (લસણ)',
     family: 'Amaryllidaceae',
-    vernacularAliases: ['લસણ', 'लहसुन', 'lasan', 'garlic', 'lahsun', 'allium'],
+    vernacularAliases: [
+      'લસણ', 'लहसुन', 'लसूण', 'பூண்டு', 'వెల్లుల్లి', 'ಬೆಳ್ಳುಳ್ಳಿ', 'വെളുത്തുള്ളി', 'রসুন', 'ਲਸਣ',
+      'lasan', 'garlic', 'lahsun', 'allium', 'poondu', 'vellulli', 'bellulli'
+    ],
     primaryParts: ['Cloves / Bulbs'],
     activeConstituents: ['Allicin', 'Ajoene', 'S-Allylcysteine', 'Diallyl trisulfide'],
     pharmacologicalClass: 'Organosulfur compound',
@@ -172,7 +193,7 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Commiphora mukul',
     commonName: 'Guggulu / Guggul (ગુગળ)',
     family: 'Burseraceae',
-    vernacularAliases: ['ગુગળ', 'ગૂગળ', 'गुग्गुल', 'guggul', 'guggulu', 'commiphora'],
+    vernacularAliases: ['ગુગળ', 'ગૂગળ', 'गुग्गुल', 'guggul', 'guggulu', 'commiphora', 'guggulu'],
     primaryParts: ['Gum resin / Oleo-gum'],
     activeConstituents: ['E-Guggulsterone', 'Z-Guggulsterone', 'Mukulol'],
     pharmacologicalClass: 'Pregnane derivative / Phytosteroid',
@@ -184,7 +205,10 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     scientificName: 'Glycyrrhiza glabra',
     commonName: 'Licorice / Jethimadh (જેઠીમધ)',
     family: 'Fabaceae',
-    vernacularAliases: ['જેઠીમધ', 'મુલેઠી', 'मुलेठी', 'jethimadh', 'mulethi', 'licorice', 'glycyrrhiza', 'yashtimadhu'],
+    vernacularAliases: [
+      'જેઠીમધ', 'મુલેઠી', 'मुलेठी', 'ज्येष्ठमध', 'அதிமதுரம்', 'యస్టిమధు', 'ಜ್ಯೇಷ್ಠಮಧು', 'ഇരട്ടിമധുരം', 'যষ্টিমধু', 'ਮੁਲੱਠੀ',
+      'jethimadh', 'mulethi', 'licorice', 'glycyrrhiza', 'yashtimadhu', 'athimathuram'
+    ],
     primaryParts: ['Roots', 'Stolons'],
     activeConstituents: ['Glycyrrhizin', 'Glycyrrhetinic acid', 'Liquiritin', 'Glabridin'],
     pharmacologicalClass: 'Triterpenoid saponin & Flavonoid',

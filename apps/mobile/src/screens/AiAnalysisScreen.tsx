@@ -66,18 +66,18 @@ export const AiAnalysisScreen: React.FC<AiAnalysisScreenProps> = ({
 
     // 2. Parts Used
     let partsUsed = 'Not Extracted';
-    if (/ગાંઠ|મૂળ|જડ|गांठ|जड़|मूल|rhizome|root|roots/i.test(text)) partsUsed = 'Rhizome (ગાંઠ / મૂળ / Rhizome)';
-    else if (/પાન|પાંદડા|पत्ता|पत्ते|पत्तियां|पत्तियाँ|leaf|leaves/i.test(text)) partsUsed = 'Leaves (પાંદડા / Leaves)';
-    else if (/છાલ|छाल|bark/i.test(text)) partsUsed = 'Bark (છાલ / Bark)';
-    else if (/બીજ|બી|बीज|दाने|seed|seeds/i.test(text)) partsUsed = 'Seeds (બીજ / Seeds)';
-    else if (/કાંડ|દાંડી|तना|stem|stalk/i.test(text)) partsUsed = 'Stem (કાંડ / Stem)';
+    if (/ગાંઠ|મૂળ|જડ|गांठ|जड़|मूल|मूळ|வேர்|వేరు|ಬೇರು|വേര്|শিকড়|ਜੜ੍ਹ|rhizome|root|roots/i.test(text)) partsUsed = 'Rhizome & Root (મૂળ / जड़ / Root)';
+    else if (/પાન|પાંદડા|पत्ता|पत्ते|पत्तियां|पत्तियाँ|पान|இலை|ఆకులు|ಎಲೆ|ഇല|পাতা|ਪੱਤੇ|leaf|leaves/i.test(text)) partsUsed = 'Leaves (પાંદડા / Leaves)';
+    else if (/છાલ|छाल|साल|பட்டை|bark/i.test(text)) partsUsed = 'Bark (છાલ / Bark)';
+    else if (/બીજ|બી|बीज|दाने|बिया|seed|seeds/i.test(text)) partsUsed = 'Seeds (બીજ / Seeds)';
+    else if (/કાંડ|દાંડી|તના|तना|stem|stalk/i.test(text)) partsUsed = 'Stem (કાંડ / Stem)';
 
     // 3. Preparation
     let preparation = 'Not Extracted';
-    if (/દૂધ|दूध|milk|warm milk/i.test(text)) preparation = 'Boiled with warm milk (દૂધ સાથે ઉકાળો)';
-    else if (/ઉકાળો|કાઢો|काढ़ा|decoction|boiled/i.test(text)) preparation = 'Boiled Herbal Decoction (ઉકાળો / काढ़ा)';
-    else if (/રસ|સ્વરસ|रस|स्वरस|fresh juice|juice/i.test(text)) preparation = 'Fresh juice (સ્વરસ / रस)';
-    else if (/ચૂર્ણ|चूर्ण|powder|churna/i.test(text)) preparation = 'Powder (ચૂર્ણ) with warm water';
+    if (/દૂધ|दूध|दुधात|பால்|పాలు|ಹಾಲು|പാൽ|দুধ|ਦੁੱਧ|milk|warm milk/i.test(text)) preparation = 'Boiled with warm milk (દૂધ સાથે ઉકાળો / दूध के साथ)';
+    else if (/ઉકાળો|કાઢો|काढ़ा|काढा|கஷாயம்|కషాయం|decoction|boiled/i.test(text)) preparation = 'Boiled Herbal Decoction (ઉકાળો / काढ़ा)';
+    else if (/રસ|સ્વરસ|रस|स्वरस|சாறு|రసం|fresh juice|juice/i.test(text)) preparation = 'Fresh juice (સ્વરસ / रस)';
+    else if (/ચૂર્ણ|चूर्ण|पूड|தூள்|పొడి|ಪುಡಿ|গুঁড়ো|powder|churna/i.test(text)) preparation = 'Powder / Churna (ચૂર્ણ / चूर्ण) with warm milk/water';
     else if (/લેપ|પેસ્ટ|लेप|paste|topical|ointment/i.test(text)) preparation = 'Topical Paste for external application (લેપ)';
 
     // 4. Dose
@@ -93,7 +93,9 @@ export const AiAnalysisScreen: React.FC<AiAnalysisScreenProps> = ({
 
     // 5. Frequency
     let frequency = 'Not Extracted';
-    if (/સવારે અને સાંજે|સવાર સાંજ|દિવસમાં બે વાર|બે વાર|सुबह और शाम|सुबह शाम|दिन में दो बार|दो बार|twice|morning and evening/i.test(text)) {
+    if (/રાત્રે|रात|रात्री|இரவு|రాత్రి|bedtime|night/i.test(text)) {
+      frequency = 'Once Daily at Bedtime (રાત્રે સૂતી વખતે / रात को सोते समय)';
+    } else if (/સવારે અને સાંજે|સવાર સાંજ|દિવસમાં બે વાર|બે વાર|सुबह और शाम|सुबह शाम|दिन में दो बार|दो बार|दोन वेळा|இருவேளை|రెండుసార్లు|twice|morning and evening/i.test(text)) {
       frequency = 'Twice Daily (સવારે અને સાંજે / सुबह-शाम)';
     } else if (/રોજ|એક વાર|દિવસે એક વાર|दिन में एक बार|रोज|once|daily/i.test(text)) {
       frequency = 'Once Daily (રોજ એક વાર / दिन में एक बार)';
@@ -103,14 +105,14 @@ export const AiAnalysisScreen: React.FC<AiAnalysisScreenProps> = ({
 
     // 6. Duration
     let duration = 'Not Extracted';
-    const durMatch = text.match(/(\d+|one|two|three|five|seven|ten|સાત|પાંચ|બે|એક|દસ|सात|पांच|दो|एक|दस)\s*(દિવસ|દહાડા|મહિના|અઠવાડિયા|दिन|हफ्ते|days?|weeks?|months?)/i);
+    const durMatch = text.match(/(\d+|one|two|three|five|seven|ten|સાત|પાંચ|બે|એક|દસ|सात|पांच|दो|एक|दस|दहा|ஏழு|ஐந்து|ഏഴ്)\s*(દિવસ|દહાડા|મહિના|અઠવાડિયા|दिन|दिवस|நாட்கள்|రోజులు|दिन|days?|weeks?|months?)/i);
     if (durMatch) {
       duration = durMatch[0];
-    } else if (/7 days|seven days|સાત દિવસ|सात दिन/i.test(text)) {
+    } else if (/7 days|seven days|સાત દિવસ|सात दिन|सात दिवस/i.test(text)) {
       duration = '7 days (સાત દિવસ)';
     } else if (/5 days|five days|પાંચ દિવસ|पांच दिन/i.test(text)) {
       duration = '5 days (પાંચ દિવસ)';
-    } else if (/10 days|ten days|દસ દિવસ|दस दिन/i.test(text)) {
+    } else if (/10 days|ten days|દસ દિવસ|दस दिन|दहा दिवस/i.test(text)) {
       duration = '10 days (દસ દિવસ)';
     }
 
@@ -129,8 +131,12 @@ export const AiAnalysisScreen: React.FC<AiAnalysisScreenProps> = ({
         usedFor = 'Joint Pain & Swelling (સાંધાનો દુખાવો)';
       } else if (/ખાંસી|શરદી|ઉધરસ|કફ|खांसी|खाँसी|जुकाम|सर्दी|cough|cold/i.test(text)) {
         usedFor = 'Cough & Cold (શરદી-ઉધરસ)';
-      } else if (/તાવ|તાવનો|बुखार|fever/i.test(text)) {
+      } else if (/તાવ|તાવનો|बुखार|ताप|fever/i.test(text)) {
         usedFor = 'Fever (તાવ / बुखार)';
+      } else if (/ઊંઘ|અનિદ્રા|ટેન્શન|ચિંતા|अनिद्रा|तनाव|झोप|insomnia|stress|anxiety/i.test(text)) {
+        usedFor = 'Anxiety & Sleep Support (અનિદ્રા / માનસિક તાણ)';
+      } else if (/ડાયાબિટીસ|સુગર|मधुमेह|शुगर|diabetes|sugar/i.test(text)) {
+        usedFor = 'Diabetes Mellitus Support (ડાયાબિટીસ)';
       } else if (/પાચન|પેટ|पाचन|पेट|digestion|stomach|acidity|gas/i.test(text)) {
         usedFor = 'Digestive Issues (પાચન સમસ્યા)';
       } else if (/ચામડી|ત્વચા|ખંજવાળ|त्वचा|खुजली|skin|rash|घाव/i.test(text)) {

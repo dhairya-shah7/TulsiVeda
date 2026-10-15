@@ -67,23 +67,23 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
 
     // 2. Used For / Clinical Condition
     let detectedCondition = '';
-    if (/સાંધા|દુખાવો|જોડો|जोड़ों|दर्द|joint|pain|arthritis|swelling|सूजन|સોજો|ગોઠણ/i.test(text)) {
+    if (/સાંધા|દુખાવો|જોડો|जोड़ों|दर्द|सांधे|सूज|மூட்டு|வலி|కీళ్ల|నొప్పులు|ಕೀಲು|ನೋವು|സന്ധി|വേദന|বাতের|ব্যথা|ਜੋੜਾਂ|ਦਰਦ|joint|pain|arthritis|swelling|सूजन|સોજો|ગોઠણ/i.test(text)) {
       detectedCondition = 'Joint Pain & Swelling (સાંધાનો દુખાવો)';
-    } else if (/ખાંસી|શરદી|ઉધરસ|કફ|ખાંસી|खांसी|खाँसी|જુકામ|जुकाम|सर्दी|cough|cold|bronchitis|દમ|અસ્થમા/i.test(text)) {
+    } else if (/ખાંસી|શરદી|ઉધરસ|કફ|खांसी|खाँसी|जुकाम|सर्दी|खोकला|சளி|இருமல்|దగ్గు|జలుబు|ಕೆಮ್ಮು|ನೆಗಡಿ|ചുമ|തണുപ്പ്|কাশি|সর্দি|ਖੰਘ|ਜ਼ੁਕਾਮ|cough|cold|bronchitis|દમ|અસ્થમા/i.test(text)) {
       detectedCondition = 'Respiratory Cough & Cold (શરદી-ઉધરસ)';
-    } else if (/તાવ|તાવનો|મુદતીયો|बुखार|fever|pyrexia/i.test(text)) {
+    } else if (/તાવ|તાવનો|મુદતીયો|बुखार|ताप|காய்ச்சல்|జ్వరం|ಜ್ವರ|പനി|জ্বর|ਬੁਖ਼ਾਰ|fever|pyrexia/i.test(text)) {
       detectedCondition = 'Acute Fever (તાવ / बुखार)';
-    } else if (/ડાયાબિટીસ|ડાયાબિટિસ|સુગર|શુગર|સુગર|मधुमेह|शुगर|diabetes|glycemia|sugar/i.test(text)) {
+    } else if (/ડાયાબિટીસ|ડાયાબિટિસ|સુગર|શુગર|मधुमेह|शुगर|साखर|நீரிழிவு|சர்க்கரை|మధుమేహం|ಸಕ್ಕರೆ|പ്രമേഹം|ডায়াবেটিস|ਸ਼ੂਗਰ|diabetes|glycemia|sugar/i.test(text)) {
       detectedCondition = 'Diabetes Mellitus Support (મધુપ્રમેહ / ડાયાબિટીસ)';
-    } else if (/બ્લડ પ્રેશર|પ્રેશર|બીપી|રક્તચાપ|hypertension|blood pressure|bp/i.test(text)) {
+    } else if (/બ્લડ પ્રેશર|પ્રેશર|બીપી|રક્તચાપ|రక్తపోటు|இரத்த அழுத்தம்|hypertension|blood pressure|bp/i.test(text)) {
       detectedCondition = 'Hypertension / High BP (હાઈ બ્લડ પ્રેશર)';
-    } else if (/પાચન|પેટ|પાચન|ગેસ|એસિડિટી|અપચો|पाचन|पेट|गैस|digestion|stomach|acidity|gas|dyspepsia/i.test(text)) {
+    } else if (/પાચન|પેટ|પાચન|ગેસ|એસિડિટી|અપચો|पाचन|पेट|गैस|अपचन|செரிமானம்|జీర్ణక్రియ|ಜೀರ್ಣಕ್ರಿಯೆ|হজম|digestion|stomach|acidity|gas|dyspepsia/i.test(text)) {
       detectedCondition = 'Digestive Distress & Acidity (પાચન સમસ્યા / એસિડિટી)';
-    } else if (/ચામડી|ત્વચા|ખંજવાળ|ફોડલી|ગુમડાં|त्वचा|खुजली|skin|rash|eczema/i.test(text)) {
+    } else if (/ચામડી|ત્વચા|ખંજવાળ|ફોડલી|ગુમડાં|त्वचा|खुजली|खाज|தோல்|துர்நாற்றம்|చర్మ|ತುರಿಕೆ|ചർമ്മം|চর্মরোগ|ਚਮੜੀ|skin|rash|eczema/i.test(text)) {
       detectedCondition = 'Dermatological Irritation (ત્વચા રોગ / ખંજવાળ)';
-    } else if (/પથરી|કિડની|પેશાબ|stone|calculi|dysuria/i.test(text)) {
+    } else if (/પથરી|કિડની|પેશાબ|मूत्र|மூத்திரக்காய்|stone|calculi|dysuria/i.test(text)) {
       detectedCondition = 'Renal Stones & Dysuria (પથરી / મૂત્ર સમસ્યા)';
-    } else if (/ઊંઘ|અનિદ્રા|ટેન્શન|ચિંતા|अनिद्रा|insomnia|stress|anxiety/i.test(text)) {
+    } else if (/ઊંઘ|અનિદ્રા|ટેન્શન|ચિંતા|अनिद्रा|तनाव|झोप|தூக்கமின்மை|மன அழுத்தம்|నిద్రలేమి|ನಿದ್ರಾಹೀನತೆ|ഉറക്കമില്ലായ്മ|ঘুম|অনিদ্রা|ਨੀਂਦ|insomnia|stress|anxiety|sleeplessness/i.test(text)) {
       detectedCondition = 'Anxiety & Sleep Support (અનિદ્રા / માનસિક તાણ)';
     }
 
@@ -167,17 +167,32 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
       </div>
 
       {/* Language Selector Dropdown */}
+      {/* Language Selector Dropdown (Pan-Indic Multilingual) */}
       <div>
-        <label className="form-label text-xs">Language</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="form-label text-xs mb-0">Voice & Regional Language</label>
+          <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            AI4Bharat IndicWhisper ASR
+          </span>
+        </div>
         <div className="relative">
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             className="form-input appearance-none pr-9 text-sm font-medium bg-white cursor-pointer"
           >
-            <option value="Gujarati">Gujarati (ગુજરાતી)</option>
-            <option value="English">English</option>
             <option value="Hindi">Hindi (हिन्दी)</option>
+            <option value="Gujarati">Gujarati (ગુજરાતી)</option>
+            <option value="Marathi">Marathi (मराठी)</option>
+            <option value="Tamil">Tamil (தமிழ்)</option>
+            <option value="Telugu">Telugu (తెలుగు)</option>
+            <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+            <option value="Malayalam">Malayalam (മലയാളം)</option>
+            <option value="Bengali">Bengali (বাংলা)</option>
+            <option value="Punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
+            <option value="Odia">Odia (ଓଡ଼ିଆ)</option>
+            <option value="Sanskrit">Sanskrit (संस्कृतम्)</option>
+            <option value="English">Indian English</option>
           </select>
           <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3.5 pointer-events-none" />
         </div>
@@ -187,9 +202,49 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
       <div className="space-y-1.5">
         <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
           <Sparkles className="w-3 h-3 text-emerald-600" />
-          Quick Voice Intake Samples (Tap to simulate / auto-fill)
+          Test Remedy Voice Presets (Tap to test ASR & Safety Graph)
         </span>
         <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              if (language === 'Hindi') {
+                applyPreset('हम अनिद्रा और अत्यधिक मानसिक चिंता के लिए अश्वगंधा चूर्ण का उपयोग करते हैं। एक चम्मच जड़ का चूर्ण गर्म गाय के दूध के साथ रात को सोने से पहले सात दिनों तक दिया जाता है।');
+              } else if (language === 'Gujarati') {
+                applyPreset('અમે ઊંઘ ન આવવાની સમસ્યા અને માનસિક ચિંતા માટે અશ્વગંધા મૂળનું ચૂર્ણ વાપરીએ છીએ. એક ચમચી ચૂર્ણ રાત્રે ગરમ દૂધ સાથે સાત દિવસ આપીએ છીએ.');
+              } else if (language === 'Marathi') {
+                applyPreset('आम्ही निद्रानाश आणि मानसिक तणावासाठी अश्वगंधा चूर्ण वापरतो. एक चमचा मुळांची पूड रात्री झोपताना कोमट दुधासोबत सात दिवस देतो.');
+              } else if (language === 'Tamil') {
+                applyPreset('நாங்கள் தூக்கமின்மை மற்றும் மன அழுத்தத்திற்கு அஸ்வகந்தா வேர் தூளை பயன்படுத்துகிறோம். இரவு படுக்கும் முன் வெதுவெதுப்பான பாலில் ஒரு தேக்கரண்டி கொடுக்கிறோம்.');
+              } else if (language === 'Bengali') {
+                applyPreset('আমরা অনিদ্রা ও অতিরিক্ত মানসিক উদ্বেগের জন্য অশ্বগন্ধা চূর্ণ ব্যবহার করি। এক চামচ মূলের গুঁড়ো রাতে শোয়ার আগে গরম দুধের সাথে সাত দিন খেতে দিই।');
+              } else {
+                applyPreset('We use Ashwagandha root churna for severe chronic insomnia and anxiety. One teaspoon root powder taken with warm cow milk at bedtime for 7 days.');
+              }
+            }}
+            className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 transition-colors flex items-center gap-1"
+          >
+            <span>🌾</span> Ashwagandha (Insomnia / Stress)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (language === 'Hindi') {
+                applyPreset('पुराने बुखार और शुगर नियंत्रण के लिए हम गिलोय का काढ़ा बनाते हैं। गिलोय के तने को पानी में उबालकर आधा कर लेते हैं। दो चम्मच काढ़ा सुबह खाली पेट दस दिनों तक दिया जाता है।');
+              } else if (language === 'Gujarati') {
+                applyPreset('જુના તાવ અને ડાયાબિટીસ માટે અમે ગળોની વેલનો દેશી ઉકાળો બનાવીએ છીએ. સવારે ભૂખ્યા પેટે બે ચમચી ઉકાળો દર્દીને દસ દિવસ આપીએ છીએ.');
+              } else if (language === 'Marathi') {
+                applyPreset('वारंवार येणारा ताप आणि मधुमेहासाठी आम्ही गुळवेल काढा वापरतो. गुळवेलीचे खोड उकळून सकाळी उपाशीपोटी दोन चमचे दहा दिवस देतो.');
+              } else if (language === 'Tamil') {
+                applyPreset('நாள்பட்ட காய்ச்சல் மற்றும் சர்க்கரை நோய்க்கு நாங்கள் சீந்தில் கொடி கஷாயம் பயன்படுத்துகிறோம். காலை வெறும் வயிற்றில் இரண்டு கரண்டி கொடுக்கிறோம்.');
+              } else {
+                applyPreset('For chronic fever and blood sugar management, we prepare Giloy stem decoction. Two tablespoons taken orally on an empty stomach for 10 days.');
+              }
+            }}
+            className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+          >
+            <span>🌿</span> Giloy Kwath (Fever & Diabetes)
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -197,13 +252,17 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
                 applyPreset('અમે સાંધાના દુખાવા માટે હળદરની ગાંઠ વાપરીએ છીએ. એક ચમચી હળદરનું ચૂર્ણ ગરમ દૂધમાં ઉકાળીને દર્દીને દિવસમાં બે વાર, સવારે અને સાંજે, સાત દિવસ આપીએ છીએ.');
               } else if (language === 'Hindi') {
                 applyPreset('हम जोड़ों के दर्द के लिए हल्दी की गांठ का उपयोग करते हैं। एक चम्मच हल्दी का चूर्ण गर्म दूध में उबालकर मरीज को दिन में दो बार, सुबह और शाम, सात दिनों तक दिया जाता है।');
+              } else if (language === 'Marathi') {
+                applyPreset('आम्ही सांधेदुखी आणि सूज कमी करण्यासाठी हळद वापरतो. एक चमचा हळदीची पूड गरम दुधात उकळून दिवसातून दोन वेळा सात दिवस देतो.');
+              } else if (language === 'Tamil') {
+                applyPreset('நாங்கள் மூட்டு வலி மற்றும் வீக்கத்திற்கு மஞ்சள் கிழங்கு பயன்படுத்துகிறோம். ஒரு தேக்கரண்டி மஞ்சள் தூளை வெதுவெதுப்பான பாலில் கலந்து காலை மாலை இருவேளை கொடுக்கிறோம்.');
               } else {
                 applyPreset('We use Haldi rhizome root for severe joint pain and swelling. One teaspoon turmeric powder boiled in warm milk, taken orally twice daily for 7 days.');
               }
             }}
-            className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+            className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1"
           >
-            <span>🌿</span> Haldi + Milk (Joint Pain)
+            <span>🟡</span> Haldi + Milk (Joint Pain)
           </button>
           <button
             type="button"
@@ -219,21 +278,6 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
             className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100 transition-colors flex items-center gap-1"
           >
             <span>🍃</span> Tulsi (Cough & Cold)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (language === 'Gujarati') {
-                applyPreset('ત્વચા રોગ અને ખંજવાળ માટે અમે લીમડાના પાંદડા વાપરીએ છીએ. તેને વાટીને લીસી પેસ્ટ બનાવીએ છીએ. આ લેપ ચામડી પર રોજ એક વાર દસ દિવસ લગાવવાનો છે.');
-              } else if (language === 'Hindi') {
-                applyPreset('त्वचा रोग और खुजली के लिए हम नीम के पत्तों का लेप बनाते हैं। यह लेप त्वचा पर रोज एक बार दस दिन तक लगाना है।');
-              } else {
-                applyPreset('For skin rashes and eczema, we grind fresh Neem leaves into a smooth paste. Apply topically once daily for 10 days.');
-              }
-            }}
-            className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1"
-          >
-            <span>🍃</span> Neem (Skin Rashes)
           </button>
         </div>
       </div>

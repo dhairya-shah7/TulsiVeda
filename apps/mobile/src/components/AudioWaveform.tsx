@@ -33,14 +33,44 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   const liveTranscriptRef = useRef<string>('');
 
+  const LANG_BCP47: Record<string, string> = {
+    'Gujarati': 'gu-IN',
+    'Hindi': 'hi-IN',
+    'Marathi': 'mr-IN',
+    'Tamil': 'ta-IN',
+    'Telugu': 'te-IN',
+    'Kannada': 'kn-IN',
+    'Malayalam': 'ml-IN',
+    'Bengali': 'bn-IN',
+    'Punjabi': 'pa-IN',
+    'Odia': 'or-IN',
+    'Sanskrit': 'sa-IN',
+    'English': 'en-IN',
+  };
+
   const getDefaultSpeechText = (lang: string) => {
-    if (lang === 'Gujarati') {
-      return 'અમે સાંધાના દુખાવા માટે હળદરની ગાંઠ વાપરીએ છીએ. એક ચમચી હળદરનું ચૂર્ણ ગરમ દૂધમાં ઉકાળીને દર્દીને દિવસમાં બે વાર, સવારે અને સાંજે, સાત દિવસ આપીએ છીએ.';
+    switch (lang) {
+      case 'Gujarati':
+        return 'અમે સાંધાના દુખાવા માટે હળદરની ગાંઠ વાપરીએ છીએ. એક ચમચી હળદરનું ચૂર્ણ ગરમ દૂધમાં ઉકાળીને દર્દીને દિવસમાં બે વાર, સવારે અને સાંજે, સાત દિવસ આપીએ છીએ.';
+      case 'Hindi':
+        return 'हम अनिद्रा और चिंता के लिए अश्वगंधा चूर्ण का उपयोग करते हैं। एक चम्मच जड़ का चूर्ण गर्म दूध के साथ रात को सोने से पहले दिया जाता है।';
+      case 'Marathi':
+        return 'आम्ही सांधेदुखी आणि सूज कमी करण्यासाठी हळद वापरतो. एक चमचा हळदीची पूड गरम दुधात उकळून दिवसातून दोन वेळा सात दिवस देतो.';
+      case 'Tamil':
+        return 'நாங்கள் மூட்டு வலி மற்றும் வீக்கத்திற்கு மஞ்சள் கிழங்கு பயன்படுத்துகிறோம். ஒரு தேக்கரண்டி மஞ்சள் தூளை வெதுவெதுப்பான பாலில் கலந்து காலை மாலை இருவேளை கொடுக்கிறோம்.';
+      case 'Telugu':
+        return 'మేము కీళ్ల నొప్పులు మరియు వాపులకు పసుపు కొమ్ములను ఉపయోగిస్తాము. ఒక చెంచా పసుపు పొడిని వెచ్చని పాలలో మరిగించి రోగికి రోజుకు రెండుసార్లు ఇస్తాము.';
+      case 'Kannada':
+        return 'ನಾವು ಕೀಲು ನೋವು ಮತ್ತು ಊತಕ್ಕಾಗಿ ಅರಿಶಿನ ಬೇರನ್ನು ಬಳಸುತ್ತೇವೆ. ಒಂದು ಚಮಚ ಅರಿಶಿನ ಪುಡಿಯನ್ನು ಬಿಸಿ ಹಾಲಿನಲ್ಲಿ ಕುದಿಸಿ ದಿನಕ್ಕೆ ಎರಡು ಬಾರಿ ನೀಡುತ್ತೇವೆ.';
+      case 'Malayalam':
+        return 'സന്ധി വേദനയ്ക്കും വീക്കത്തിനും ഞങ്ങൾ മഞ്ഞൾ ഉപയോഗിക്കുന്നു. ഒരു ടീസ്പൂൺ മഞ്ഞൾപ്പൊടി ചൂടുപാലിൽ തിളപ്പിച്ച് ദിവസവും രണ്ടുനേരം നൽകുന്നു.';
+      case 'Bengali':
+        return 'আমরা বাতের ব্যথা ও প্রদাহের জন্য কাঁচা হলুদ ব্যবহার করি। এক চামচ হলুদের গুঁড়ো গরম দুধে ফুটিয়ে দিনে দুবার খেতে দেওয়া হয়।';
+      case 'Punjabi':
+        return 'ਅਸੀਂ ਜੋੜਾਂ ਦੇ ਦਰਦ ਲਈ ਹਲਦੀ ਦੀ ਗੰਢ ਵਰਤਦੇ ਹਾਂ। ਇੱਕ ਚਮਚ ਹਲਦੀ ਪਾਊਡਰ ਗਰਮ ਦੁੱਧ ਵਿੱਚ ਉਬਾਲ ਕੇ ਦਿਨ ਵਿੱਚ ਦੋ ਵਾਰ ਮਰੀਜ਼ ਨੂੰ ਦਿੰਦੇ ਹਾਂ।';
+      default:
+        return 'We use Ashwagandha root churna for insomnia and chronic anxiety. One teaspoon root powder taken with warm milk at bedtime.';
     }
-    if (lang === 'Hindi') {
-      return 'हम जोड़ों के दर्द के लिए हल्दी की गांठ का उपयोग करते हैं। एक चम्मच हल्दी का चूर्ण गर्म दूध में उबालकर मरीज को दिन में दो बार, सुबह और शाम, सात दिनों तक दिया जाता है।';
-    }
-    return 'We use Haldi rhizome root for severe joint pain and swelling. One teaspoon turmeric powder boiled in warm milk, taken orally twice daily for 7 days.';
   };
 
   const startRecording = async () => {
@@ -57,9 +87,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         recognition.continuous = true;
         recognition.interimResults = true;
         
-        if (language === 'Gujarati') recognition.lang = 'gu-IN';
-        else if (language === 'Hindi') recognition.lang = 'hi-IN';
-        else recognition.lang = 'en-IN';
+        recognition.lang = LANG_BCP47[language] || 'en-IN';
 
         recognition.onresult = (event: any) => {
           let text = '';
