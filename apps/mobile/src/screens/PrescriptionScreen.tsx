@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, CheckCircle, AlertTriangle, Pill, FileText, Check, Camera, Plus } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertTriangle, Pill, FileText, Check, Camera, Plus, Sparkles } from 'lucide-react';
+import { resolveMedicineFromText, INDIAN_BRANDS, DRUG_CATALOG } from '../services/pharmacopoeiaDatabase.ts';
 
 interface PrescriptionScreenProps {
   onNext: (confirmedMedicine: {
@@ -26,6 +27,30 @@ export const PrescriptionScreen: React.FC<PrescriptionScreenProps> = ({ onNext }
   const [manualGeneric, setManualGeneric] = useState('');
   const [manualDose, setManualDose] = useState('');
   const [manualFreq, setManualFreq] = useState('Once Daily (OD)');
+
+  const handleBrandChange = (val: string) => {
+    setManualBrand(val);
+    const resolved = resolveMedicineFromText(val);
+    if (resolved) {
+      setManualGeneric(resolved.genericName);
+      setManualDose(resolved.dose);
+    }
+  };
+
+  const handleQuickAdd = (brand: string) => {
+    const resolved = resolveMedicineFromText(brand);
+    if (resolved) {
+      const newMed = {
+        brandName: resolved.brandName,
+        genericName: resolved.genericName,
+        type: resolved.type,
+        dose: resolved.dose,
+        frequency: 'Once Daily (OD)',
+      };
+      setMedicines((prev) => [...prev, newMed]);
+      setConfirmedMedicines((prev) => ({ ...prev, [medicines.length]: true }));
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -171,16 +196,31 @@ export const PrescriptionScreen: React.FC<PrescriptionScreenProps> = ({ onNext }
           </button>
         </div>
 
+        {/* Quick Prescription Presets */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <span className="text-[10px] text-gray-500 font-medium self-center mr-1">Quick Select:</span>
+          {['Ecosprin 75', 'Glycomet 500', 'Warf 5', 'Alprax 0.25', 'Dolo 650', 'Lanoxin'].map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => handleQuickAdd(preset)}
+              className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 transition-colors"
+            >
+              + {preset}
+            </button>
+          ))}
+        </div>
+
         {/* Manual Add Medicine Drawer */}
         {showManualAdd && (
           <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5 animate-fadeIn">
-            <div className="text-xs font-bold text-gray-800">Add Allopathic Medicine</div>
+            <div className="text-xs font-bold text-gray-800">Add Allopathic Medicine (Auto-Normalizes)</div>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="Brand Name (e.g. Ecosprin, Pan-40)"
                 value={manualBrand}
-                onChange={(e) => setManualBrand(e.target.value)}
+                onChange={(e) => handleBrandChange(e.target.value)}
                 className="form-input text-xs"
               />
               <input

@@ -8,6 +8,7 @@ import { PlantIdScreen } from './screens/PlantIdScreen.tsx';
 import { PrescriptionScreen } from './screens/PrescriptionScreen.tsx';
 import { EvidenceDecisionScreen } from './screens/EvidenceDecisionScreen.tsx';
 import { StorageService, StoredRecord } from './services/storageService.ts';
+import { SafetyEngine } from './services/safetyEngine.ts';
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<number>(1);
@@ -173,24 +174,22 @@ export const App: React.FC = () => {
   // Screen 6: Final Clinician Decision Submitted -> Returns to Dashboard
   const handleSubmitDecision = async (decisionData: any) => {
     const remedyId = activeDraft.remedyId || 'rec_' + Date.now();
-    const plant = (activeDraft.scientificName || 'Curcuma longa').toLowerCase();
-    const drug = (activeDraft.confirmedMedicine?.genericName || 'Aspirin').toLowerCase();
+    const plant = activeDraft.scientificName || 'Curcuma longa';
+    const drug = activeDraft.confirmedMedicine?.genericName || 'Aspirin';
 
     let interactionType = 'No Direct High-Risk Interaction Detected';
     let evidenceLevel = 'Preliminary Verification';
 
-    if (/curcuma|turmeric|haldi/i.test(plant) && /aspirin|ecosprin|warfarin/i.test(drug)) {
-      interactionType = 'Additive Antiplatelet / Bleeding Risk';
-      evidenceLevel = 'Suspected Mechanistic (PMID: 21453289)';
-    } else if (/ocimum|tulsi/i.test(plant) && /metformin|insulin|glimepiride/i.test(drug)) {
-      interactionType = 'Additive Hypoglycemic Effect';
-      evidenceLevel = 'Strong In-Vitro & Animal Evidence (PMID: 16187193)';
-    } else if (/azadirachta|neem/i.test(plant) && /metformin|glimepiride/i.test(drug)) {
-      interactionType = 'Hypoglycemic Potentiation';
-      evidenceLevel = 'Curated Botanical Monograph';
-    } else if (/withania|ashwagandha/i.test(plant)) {
-      interactionType = 'CNS Potentiation / Thyroid Modulation';
-      evidenceLevel = 'Clinical Observational (PMID: 10956379)';
+    try {
+      const analysis = await SafetyEngine.analyze({
+        plantSpecies: plant,
+        drugGenericName: drug,
+        isClinicianConfirmed: true,
+      });
+      interactionType = analysis.interactionType;
+      evidenceLevel = `${analysis.evidenceLevel.toUpperCase()} (${analysis.evidenceSummary?.pmidOrId || 'Evidence-Backed'})`;
+    } catch (err) {
+      console.warn('[App] SafetyEngine traversal fallback:', err);
     }
 
     // Persist finalized record to local storage immediately

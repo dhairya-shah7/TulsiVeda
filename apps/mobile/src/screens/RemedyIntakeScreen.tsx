@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Edit3, Sparkles } from 'lucide-react';
 import { AudioWaveform } from '../components/AudioWaveform.tsx';
+import { BOTANICAL_DATABASE } from '../services/botanicalDatabase.ts';
 
 interface RemedyIntakeScreenProps {
   onNext: (data: {
@@ -39,55 +40,59 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [capturedTranscript, setCapturedTranscript] = useState<string>(initialData?.transcript || '');
 
-  // Extract botanical entities and clinical condition from spoken text
+  // Extract botanical entities and clinical condition dynamically from spoken or typed text
   const parseEntities = (text: string) => {
-    if (!text) return;
+    if (!text || !text.trim()) return;
     const lower = text.toLowerCase();
 
-    // 1. Plant / Local Name
+    // 1. Search full 50+ botanical database
     let detectedName = '';
-    if (/હળદર|हल्दी|haldi|turmeric|curcuma/i.test(text)) {
-      detectedName = 'Haldi (હળદર / Turmeric)';
-    } else if (/તુલસી|तुलसी|tulsi|basil|ocimum/i.test(text)) {
-      detectedName = 'Tulsi (તુલસી / Holy Basil)';
-    } else if (/લીમડો|नीम|neem|azadirachta/i.test(text)) {
-      detectedName = 'Neem (લીમડો)';
-    } else if (/અશ્વગંધા|अश्वगंधा|ashwagandha|withania/i.test(text)) {
-      detectedName = 'Ashwagandha (અશ્વગંધા)';
-    } else if (/ગિલોય|ગળો|गिलोय|giloy|guduchi|tinospora/i.test(text)) {
-      detectedName = 'Giloy (ગિલોય / ગળો)';
-    } else if (/આદુ|अदरक|आदू|ginger|aadu|sunthi|zingiber/i.test(text)) {
-      detectedName = 'Ginger / Aadu (આદુ)';
-    } else if (/આમળા|आंवला|amla|emblica/i.test(text)) {
-      detectedName = 'Amla (આમળા)';
-    } else if (/ફૂદીનો|પૂદીના|पुदीना|pudina|mint/i.test(text)) {
-      detectedName = 'Pudina (ફૂદીનો)';
+    for (const plant of BOTANICAL_DATABASE) {
+      if (lower.includes(plant.scientificName.toLowerCase())) {
+        detectedName = `${plant.scientificName} (${plant.commonName.split('/')[0].trim()})`;
+        break;
+      }
+      for (const alias of plant.vernacularAliases) {
+        if (lower.includes(alias.toLowerCase())) {
+          detectedName = `${alias} (${plant.scientificName})`;
+          break;
+        }
+      }
+      if (detectedName) break;
     }
 
     if (detectedName) {
       setRemedyNameLocal(detectedName);
     }
 
-    // 2. Used For / Condition
+    // 2. Used For / Clinical Condition
     let detectedCondition = '';
-    if (/સાંધા|દુખાવો|જોડો|जोड़ों|दर्द|joint|pain|arthritis|swelling|सूजन|સોજો/i.test(text)) {
+    if (/સાંધા|દુખાવો|જોડો|जोड़ों|दर्द|joint|pain|arthritis|swelling|सूजन|સોજો|ગોઠણ/i.test(text)) {
       detectedCondition = 'Joint Pain & Swelling (સાંધાનો દુખાવો)';
-    } else if (/ખાંસી|શરદી|ઉધરસ|કફ|खांसी|खाँसी|जुकाम|सर्दी|cough|cold/i.test(text)) {
-      detectedCondition = 'Cough & Cold (શરદી-ઉધરસ)';
-    } else if (/તાવ|તાવનો|बुखार|fever/i.test(text)) {
-      detectedCondition = 'Fever (તાવ / बुखार)';
-    } else if (/પાચન|પેટ|पाचन|पेट|digestion|stomach|acidity|gas/i.test(text)) {
-      detectedCondition = 'Digestive Issues (પાચન સમસ્યા)';
-    } else if (/ચામડી|ત્વચા|ખંજવાળ|त्वचा|खुजली|skin|rash|घाव/i.test(text)) {
-      detectedCondition = 'Skin Irritation (ત્વચા રોગ)';
+    } else if (/ખાંસી|શરદી|ઉધરસ|કફ|ખાંસી|खांसी|खाँसी|જુકામ|जुकाम|सर्दी|cough|cold|bronchitis|દમ|અસ્થમા/i.test(text)) {
+      detectedCondition = 'Respiratory Cough & Cold (શરદી-ઉધરસ)';
+    } else if (/તાવ|તાવનો|મુદતીયો|बुखार|fever|pyrexia/i.test(text)) {
+      detectedCondition = 'Acute Fever (તાવ / बुखार)';
+    } else if (/ડાયાબિટીસ|ડાયાબિટિસ|સુગર|શુગર|સુગર|मधुमेह|शुगर|diabetes|glycemia|sugar/i.test(text)) {
+      detectedCondition = 'Diabetes Mellitus Support (મધુપ્રમેહ / ડાયાબિટીસ)';
+    } else if (/બ્લડ પ્રેશર|પ્રેશર|બીપી|રક્તચાપ|hypertension|blood pressure|bp/i.test(text)) {
+      detectedCondition = 'Hypertension / High BP (હાઈ બ્લડ પ્રેશર)';
+    } else if (/પાચન|પેટ|પાચન|ગેસ|એસિડિટી|અપચો|पाचन|पेट|गैस|digestion|stomach|acidity|gas|dyspepsia/i.test(text)) {
+      detectedCondition = 'Digestive Distress & Acidity (પાચન સમસ્યા / એસિડિટી)';
+    } else if (/ચામડી|ત્વચા|ખંજવાળ|ફોડલી|ગુમડાં|त्वचा|खुजली|skin|rash|eczema/i.test(text)) {
+      detectedCondition = 'Dermatological Irritation (ત્વચા રોગ / ખંજવાળ)';
+    } else if (/પથરી|કિડની|પેશાબ|stone|calculi|dysuria/i.test(text)) {
+      detectedCondition = 'Renal Stones & Dysuria (પથરી / મૂત્ર સમસ્યા)';
+    } else if (/ઊંઘ|અનિદ્રા|ટેન્શન|ચિંતા|अनिद्रा|insomnia|stress|anxiety/i.test(text)) {
+      detectedCondition = 'Anxiety & Sleep Support (અનિદ્રા / માનસિક તાણ)';
     }
 
     if (detectedCondition) {
       setUsedForCondition(detectedCondition);
     }
 
-    // Defaults for regional field reporting
-    if (!preparedBy) setPreparedBy('ASHA Field Worker');
+    // Default regional field worker credentials
+    if (!preparedBy) setPreparedBy('Pooja Patel (ASHA Worker)');
     if (!placeRegion) setPlaceRegion('Anand, Gujarat');
   };
 

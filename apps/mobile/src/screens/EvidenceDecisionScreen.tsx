@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ExternalLink, BookOpen, FileCheck, ShieldAlert, ArrowRight, Sprout, Pill } from 'lucide-react';
 import { GraphVisualizer } from '../components/GraphVisualizer.tsx';
+import { SafetyEngine, SafetyAnalysisResult } from '../services/safetyEngine.ts';
 
 interface EvidenceDecisionScreenProps {
   caseData: {
@@ -30,128 +31,47 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
   const hasMedicine = !!(caseData.medicineGeneric && caseData.medicineGeneric.trim());
   const hasInput = hasPlant || hasMedicine;
 
-  const getDynamicPharmacology = (plant: string = '', drug: string = '') => {
-    const p = (plant || '').toLowerCase();
-    const d = (drug || '').toLowerCase();
-
-    if (/curcuma|turmeric|haldi/i.test(p)) {
-      return {
-        activeCompound: 'Curcumin (Diferuloylmethane)',
-        hasInteraction: /aspirin|ecosprin|warfarin|clopidogrel|heparin/i.test(d),
-        interactionType: /aspirin|ecosprin|warfarin|clopidogrel|heparin/i.test(d)
-          ? 'Additive Antiplatelet / Bleeding Risk'
-          : 'No High-Risk Interaction Detected',
-        evidenceStrength: 'Suspected Mechanistic',
-        source: 'PubMed / Hematology Research',
-        publication: 'J Clin Psychopharmacol & Hematology',
-        pmidOrId: 'PMID: 21453289',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/21453289/',
-      };
-    }
-
-    if (/ocimum|tulsi|basil/i.test(p)) {
-      return {
-        activeCompound: 'Eugenol & Ursolic Acid',
-        hasInteraction: /aspirin|metformin|glimepiride|insulin/i.test(d),
-        interactionType: /aspirin/i.test(d)
-          ? 'Antiplatelet Synergism'
-          : /metformin|glimepiride|insulin/i.test(d)
-          ? 'Additive Hypoglycemic Effect'
-          : 'No High-Risk Interaction Detected',
-        evidenceStrength: 'Strong In-Vitro & Animal Evidence',
-        source: 'PubMed / Phytotherapy Research',
-        publication: 'Phytother Res & Ethnopharmacology',
-        pmidOrId: 'PMID: 16187193',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/16187193/',
-      };
-    }
-
-    if (/azadirachta|neem/i.test(p)) {
-      return {
-        activeCompound: 'Azadirachtin & Nimbin',
-        hasInteraction: /metformin|glimepiride|insulin/i.test(d),
-        interactionType: /metformin|glimepiride|insulin/i.test(d)
-          ? 'Hypoglycemic Potentiation'
-          : 'No High-Risk Interaction Detected',
-        evidenceStrength: 'Curated Botanical Monograph',
-        source: 'PubMed / Diabetes Care Studies',
-        publication: 'Indian J Med Res',
-        pmidOrId: 'PMID: 12895678',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/12895678/',
-      };
-    }
-
-    if (/withania|ashwagandha/i.test(p)) {
-      return {
-        activeCompound: 'Withaferin A & Withanolides',
-        hasInteraction: /diazepam|alprazolam|levothyroxine/i.test(d),
-        interactionType: /diazepam|alprazolam|levothyroxine/i.test(d)
-          ? 'CNS Potentiation / Thyroid Hormone Modulation'
-          : 'No High-Risk Interaction Detected',
-        evidenceStrength: 'Clinical Observational',
-        source: 'PubMed / Neuropharmacology',
-        publication: 'Phytomedicine International',
-        pmidOrId: 'PMID: 10956379',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/10956379/',
-      };
-    }
-
-    if (/zingiber|ginger|aadu/i.test(p)) {
-      return {
-        activeCompound: 'Gingerols & Shogaols',
-        hasInteraction: /aspirin|warfarin|heparin/i.test(d),
-        interactionType: /aspirin|warfarin|heparin/i.test(d)
-          ? 'Thromboxane Synthetase Inhibition'
-          : 'No High-Risk Interaction Detected',
-        evidenceStrength: 'Mechanistic Pharmacology',
-        source: 'PubMed / Thrombosis Research',
-        publication: 'Thromb Res Clinical Studies',
-        pmidOrId: 'PMID: 7558374',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/7558374/',
-      };
-    }
-
-    return {
-      activeCompound: 'Phytochemical Constituents',
-      hasInteraction: false,
-      interactionType: 'No Direct High-Risk Interaction Detected',
-      evidenceStrength: 'Preliminary Verification',
-      source: 'Curated Ethnobotanical Reference',
-      publication: 'PubMed / PMC Biomedical Index',
-      pmidOrId: 'PMID: 30129481',
-      url: 'https://pubmed.ncbi.nlm.nih.gov/',
-    };
-  };
-
-  const pharma = getDynamicPharmacology(caseData.plantSpecies, caseData.medicineGeneric);
-
-  const [safetyAnalysis, setSafetyAnalysis] = useState<any>({
-    hasInteraction: pharma.hasInteraction,
-    interactionType: pharma.interactionType,
-    evidenceLevel: pharma.evidenceStrength,
+  const [safetyAnalysis, setSafetyAnalysis] = useState<SafetyAnalysisResult>({
+    hasInteraction: false,
+    interactionType: 'Evaluating pharmacological pathways...',
+    evidenceLevel: 'not_detected',
+    confidence: 'Moderate',
+    graphPath: [],
     evidenceSummary: {
-      source: pharma.source,
-      publication: pharma.publication,
-      pmidOrId: pharma.pmidOrId,
-      evidenceStrength: pharma.evidenceStrength,
-      url: pharma.url,
+      source: 'PubMed / Biomedical Index',
+      publication: 'Clinical Pharmacology',
+      pmidOrId: 'Loading...',
+      evidenceStrength: 'Mechanistic',
+      url: 'https://pubmed.ncbi.nlm.nih.gov/',
     },
+    missingInformation: [],
+    humanActionRequired: true,
+    alertHeadline: 'Evaluating Graph-RAG pathways...',
+    ruleVersion: 'GraphRAG-SafetyEngine-v2.5',
+    graphSnapshotHash: '',
+    provenance: { plantTaxon: '', targetPathway: '', drugATC: '' },
   });
 
   useEffect(() => {
-    const updated = getDynamicPharmacology(caseData.plantSpecies, caseData.medicineGeneric);
-    setSafetyAnalysis({
-      hasInteraction: updated.hasInteraction,
-      interactionType: updated.interactionType,
-      evidenceLevel: updated.evidenceStrength,
-      evidenceSummary: {
-        source: updated.source,
-        publication: updated.publication,
-        pmidOrId: updated.pmidOrId,
-        evidenceStrength: updated.evidenceStrength,
-        url: updated.url,
-      },
-    });
+    let isMounted = true;
+    async function runAnalysis() {
+      try {
+        const res = await SafetyEngine.analyze({
+          plantSpecies: caseData.plantSpecies || '',
+          drugGenericName: caseData.medicineGeneric || '',
+          isClinicianConfirmed: true,
+        });
+        if (isMounted) {
+          setSafetyAnalysis(res);
+        }
+      } catch (err) {
+        console.warn('[SafetyScreen] Evaluation warning:', err);
+      }
+    }
+    runAnalysis();
+    return () => {
+      isMounted = false;
+    };
   }, [caseData.plantSpecies, caseData.medicineGeneric]);
 
   const handleSubmit = () => {
@@ -274,7 +194,7 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
       <div className="space-y-3">
         <GraphVisualizer
           plantName={caseData.plantSpecies || 'Botanical Specimen'}
-          activeCompound={pharma.activeCompound}
+          activeCompound={safetyAnalysis.graphPath?.[1]?.label || 'Active Phytochemical'}
           medicineName={caseData.medicineGeneric || 'Allopathic Medicine'}
           interactionName={safetyAnalysis.interactionType || 'Mechanistic Pathway'}
           hasInteraction={safetyAnalysis.hasInteraction}

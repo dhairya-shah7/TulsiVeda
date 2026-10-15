@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { BOTANICAL_DATABASE } from '../services/botanicalDatabase.ts';
 
 interface AiAnalysisScreenProps {
   remedyData: {
@@ -45,15 +46,22 @@ export const AiAnalysisScreen: React.FC<AiAnalysisScreenProps> = ({
     // 1. Local Name
     let localName = hintName || 'Not Extracted';
     if (localName === 'Not Extracted' || !localName) {
-      if (/હળદર|हल्दी|haldi|turmeric|curcuma/i.test(text)) localName = 'Haldi (હળદર / Curcuma longa)';
-      else if (/તુલસી|तुलसी|tulsi|holy basil|basil|ocimum/i.test(text)) localName = 'Tulsi (તુલસી / Ocimum sanctum)';
-      else if (/લીમડો|नीम|neem|azadirachta/i.test(text)) localName = 'Neem (લીમડો / Azadirachta indica)';
-      else if (/અશ્વગંધા|अश्वगंधा|ashwagandha|withania/i.test(text)) localName = 'Ashwagandha (અશ્વગંધા)';
-      else if (/ગિલોય|ગળો|गिलोय|giloy|guduchi|tinospora/i.test(text)) localName = 'Giloy (ગિલોય / Tinospora cordifolia)';
-      else if (/આદુ|अदरक|आदू|ginger|aadu|sunthi|zingiber/i.test(text)) localName = 'Ginger / Aadu (આદુ / Zingiber officinale)';
-      else if (/આમળા|आंवला|amla|emblica/i.test(text)) localName = 'Amla (આમળા / Phyllanthus emblica)';
-      else if (/ફૂદીનો|પૂદીના|पुदीना|pudina|mint/i.test(text)) localName = 'Pudina (ફૂદીનો)';
-      else if (text.trim()) localName = text.split(' ')[0];
+      for (const plant of BOTANICAL_DATABASE) {
+        if (lower.includes(plant.scientificName.toLowerCase())) {
+          localName = `${plant.scientificName} (${plant.commonName.split('/')[0].trim()})`;
+          break;
+        }
+        for (const alias of plant.vernacularAliases) {
+          if (lower.includes(alias.toLowerCase())) {
+            localName = `${alias} (${plant.scientificName})`;
+            break;
+          }
+        }
+        if (localName !== 'Not Extracted' && localName) break;
+      }
+      if ((localName === 'Not Extracted' || !localName) && text.trim()) {
+        localName = text.split(' ')[0];
+      }
     }
 
     // 2. Parts Used
