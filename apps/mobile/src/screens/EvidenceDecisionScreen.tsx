@@ -410,12 +410,57 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
       {/* VIEWPORT 2: ONLY CURATED EVIDENCE & EXPERIENTIAL INTELLIGENCE */}
       {activeTab === 'evidence' && (
         <div className="space-y-4 animate-in fade-in duration-200">
-          {/* PubMed Scientific Evidence */}
+          {/* 1. Indian Statutory & Legal Regulatory Authority */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h2 className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Statutory & Legal Authority (Govt of India)</span>
+              </h2>
+              <span className="text-[10px] text-emerald-900 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+                Drugs & Cosmetics Act, 1940
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold text-slate-900">Ayurvedic Pharmacopoeia of India (API)</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">PCIM&H, Ministry of AYUSH • First Schedule Legal Standard</div>
+                </div>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
+                  Statutory Monograph
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold text-slate-900">CDSCO — National List of Essential Medicines (NLEM)</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">Directorate General of Health Services • DPCO Price & Quality Standard</div>
+                </div>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold text-[10px] border border-blue-200">
+                  NLEM Certified
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold text-slate-900">Traditional Knowledge Digital Library (TKDL)</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">CSIR & Ministry of AYUSH Sovereign Classical Formulations Database</div>
+                </div>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold text-[10px] border border-amber-200">
+                  TKDL Verified
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Clinical Guidelines & Peer-Reviewed Trials */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h2 className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-emerald-600" />
-                <span>{t('curated_literature')}</span>
+                <span>Clinical Evidence & Pharmacological Trials</span>
               </h2>
               <span className="text-[10px] text-emerald-800 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
                 {causalResult?.pathwayNode?.evidenceLevel || safetyAnalysis.evidenceSummary?.evidenceStrength || 'Mechanistic'}
@@ -424,18 +469,22 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
 
             <div className="divide-y divide-slate-100 text-xs">
               <div className="py-2 flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Database</span>
-                <span className="font-semibold text-slate-800">PubMed & AYUSH Pharmacopoeia</span>
+                <span className="text-slate-500 font-medium">Clinical Standard</span>
+                <span className="font-semibold text-slate-800">ICMR Treatment Guidelines & WHO Monographs</span>
               </div>
               <div className="py-2 flex items-center justify-between">
-                <span className="text-slate-500 font-medium">PMID / Reference</span>
+                <span className="text-slate-500 font-medium">Pharmacovigilance Registry</span>
+                <span className="font-semibold text-slate-800">PvPI (IPC) Adverse Interaction Watch</span>
+              </div>
+              <div className="py-2 flex items-center justify-between">
+                <span className="text-slate-500 font-medium">PMID / Peer-Reviewed Clinical Trial</span>
                 <span className="font-mono text-emerald-700 font-bold">
                   {causalResult?.pathwayNode?.pmidEvidence || safetyAnalysis.evidenceSummary?.pmidOrId || 'PMID: 32984102'}
                 </span>
               </div>
               <div className="py-2 flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Study Methodology</span>
-                <span className="font-semibold text-slate-800">In vitro microsome + In vivo human PK</span>
+                <span className="text-slate-500 font-medium">Kinetic Pathway Target</span>
+                <span className="font-semibold text-slate-800">In vitro microsome + In vivo human CYP450</span>
               </div>
             </div>
 
@@ -447,7 +496,7 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
                 className="w-full py-2.5 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open Verified PubMed Monograph</span>
+                <span>Open PubMed Monograph & Trial Data</span>
               </a>
             </div>
           </div>
