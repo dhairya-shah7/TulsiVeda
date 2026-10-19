@@ -2,44 +2,64 @@ import React, { useEffect, useState } from 'react';
 import { 
   Leaf, 
   ClipboardList, 
-  Inbox, 
-  Clock, 
   ChevronRight, 
   CheckCircle2, 
   AlertTriangle,
   RotateCw,
   Search,
   X,
-  ShieldAlert,
-  FileText,
-  MapPin,
-  User,
-  ExternalLink,
-  Trash2
+  PhoneCall,
+  BookOpen,
+  Pill,
+  Send,
+  Stethoscope,
+  Clock,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { StorageService, StoredRecord } from '../services/storageService.ts';
+import { AudioNarrator } from '../components/AudioNarrator.tsx';
+import { t, useCurrentLanguage } from '../services/localizationService.ts';
 
 interface DashboardScreenProps {
   onStartRemedy: () => void;
   onStartPrescription: () => void;
+  onOpenKnowledge: () => void;
+  onOpenAlternatives: () => void;
+  onOpenIvr: () => void;
   onSelectRecord?: (record: StoredRecord) => void;
+  currentMode: 'village' | 'city';
+  currentRole: 'citizen' | 'asha' | 'doctor';
+  activeDraft?: {
+    remedyId?: string;
+    remedyNameLocal?: string;
+    scientificName?: string;
+    confirmedMedicine?: any;
+    usedForCondition?: string;
+  };
+  onSubmitReviewRequest?: () => void;
 }
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onStartRemedy,
   onStartPrescription,
+  onOpenKnowledge,
+  onOpenAlternatives,
+  onOpenIvr,
   onSelectRecord,
+  currentMode,
+  currentRole = 'citizen',
+  activeDraft,
+  onSubmitReviewRequest
 }) => {
+  useCurrentLanguage();
   const [stats, setStats] = useState({ remedies: 0, prescriptions: 0, alerts: 0, decisions: 0 });
   const [recentRecords, setRecentRecords] = useState<StoredRecord[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<StoredRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Filter & Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'draft'>('all');
-  
-  // Selected record modal
   const [inspectRecord, setInspectRecord] = useState<StoredRecord | null>(null);
 
   const loadData = async (isManualRefresh = false) => {
@@ -50,11 +70,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       const data = await StorageService.fetchDashboardData();
       setRecentRecords(data.records);
       setStats(data.stats);
+      setPendingRequests(StorageService.getPendingReviewRequests());
     } catch (err) {
-      console.warn('[Dashboard] Could not fetch live backend stats, using local storage:', err);
+      console.warn('[Dashboard] Error reading local data:', err);
       const localRecs = StorageService.getLocalRecords();
       setRecentRecords(localRecs);
       setStats(StorageService.getLocalStats());
+      setPendingRequests(StorageService.getPendingReviewRequests());
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -63,34 +85,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentRole]);
 
   const handleRecordClick = (rec: StoredRecord) => {
-    setInspectRecord(rec);
     if (onSelectRecord) {
       onSelectRecord(rec);
+    } else {
+      setInspectRecord(rec);
     }
   };
 
-  // Filter records
-  const filteredRecords = recentRecords.filter((rec) => {
-    const matchesStatus = 
-      statusFilter === 'all' ? true : 
-      statusFilter === 'completed' ? rec.status === 'completed' : 
-      rec.status !== 'completed';
-
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return matchesStatus;
-
-    const matchesSearch = 
-      (rec.remedy_name_local || '').toLowerCase().includes(q) ||
-      (rec.used_for_condition || '').toLowerCase().includes(q) ||
-      (rec.confirmed_species || '').toLowerCase().includes(q) ||
-      (rec.confirmed_medicine || '').toLowerCase().includes(q) ||
-      (rec.place_region || '').toLowerCase().includes(q);
-
-    return matchesStatus && matchesSearch;
-  });
+  const handleClearAll = () => {
+    StorageService.clearAllRecords();
+    setRecentRecords([]);
+    setPendingRequests(StorageService.getPendingReviewRequests());
+    setInspectRecord(null);
+  };
 
   const formatDate = (isoString?: string) => {
     if (!isoString) return 'Recent';
@@ -107,358 +117,501 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }
   };
 
-  const handleClearAll = () => {
-    StorageService.clearAllRecords();
-    setRecentRecords([]);
-    setStats({ remedies: 0, prescriptions: 0, alerts: 0, decisions: 0 });
-    setInspectRecord(null);
-  };
+  const isCitizen = currentRole === 'citizen';
+  const hasHerb = !!(activeDraft?.remedyNameLocal || activeDraft?.scientificName);
+  const hasMedicine = !!(activeDraft?.confirmedMedicine);
+  const readyToSubmit = hasHerb && hasMedicine;
 
   return (
-    <div className="space-y-5">
-      {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-gray-900 tracking-tight">Welcome</h1>
-          <p className="text-xs text-gray-500 mt-0.5">TulsiVeda AI • Hyperlocal Remedy & Safety Ledger</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {recentRecords.length > 0 && (
-            <button
-              onClick={handleClearAll}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-500 hover:text-rose-600 text-xs font-semibold transition-colors"
-              title="Clear all records (Reset for clean demo)"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          )}
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing || loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 text-xs font-semibold transition-colors disabled:opacity-50"
-            title="Refresh recent records"
-          >
-            <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
-            <span>{refreshing ? 'Refreshing' : 'Refresh'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5 text-center">
-          <div className="text-lg font-bold text-emerald-800">{stats.remedies}</div>
-          <div className="text-[10px] font-medium text-emerald-600">Remedies</div>
-        </div>
-        <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 text-center">
-          <div className="text-lg font-bold text-blue-800">{stats.prescriptions}</div>
-          <div className="text-[10px] font-medium text-blue-600">Reviewed</div>
-        </div>
-        <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-2.5 text-center">
-          <div className="text-lg font-bold text-amber-800">{stats.alerts}</div>
-          <div className="text-[10px] font-medium text-amber-600">Alerts</div>
-        </div>
-        <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-2.5 text-center">
-          <div className="text-lg font-bold text-purple-800">{stats.decisions}</div>
-          <div className="text-[10px] font-medium text-purple-600">Decisions</div>
-        </div>
-      </div>
-
-      {/* Two Primary Action Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        {/* Card 1: New Remedy Record */}
-        <div className="surface-card flex flex-col justify-between hover:border-emerald-300 transition-all group">
-          <div>
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Leaf className="w-5 h-5 fill-emerald-600 text-emerald-600" />
-            </div>
-            <h2 className="font-heading font-bold text-base text-gray-900">New Remedy Record</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-              Capture vernacular remedy voice & botany
-            </p>
-          </div>
-          <button
-            onClick={onStartRemedy}
-            className="btn-primary mt-4 w-full text-xs py-2.5 rounded-lg flex items-center justify-center gap-1.5"
-          >
-            <span>+ Start New</span>
-          </button>
-        </div>
-
-        {/* Card 2: New Prescription Review */}
-        <div className="surface-card flex flex-col justify-between hover:border-emerald-300 transition-all group">
-          <div>
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <ClipboardList className="w-5 h-5 text-emerald-600" />
-            </div>
-            <h2 className="font-heading font-bold text-base text-gray-900">New Prescription Review</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-              Upload prescription for safety review
-            </p>
-          </div>
-          <button
-            onClick={onStartPrescription}
-            className="btn-primary mt-4 w-full text-xs py-2.5 rounded-lg flex items-center justify-center gap-1.5"
-          >
-            <span>+ Start New</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Records Section Header & Filters */}
-      <div className="pt-2 space-y-3">
+    <div className="space-y-4 max-w-md mx-auto pb-24">
+      {/* Welcome & Ecosystem Hero Banner */}
+      <div className="bg-gradient-to-br from-emerald-800 via-teal-800 to-emerald-950 rounded-3xl p-5 text-white shadow-md relative overflow-hidden">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="font-heading font-bold text-base text-gray-900">Recent Records</h2>
-            <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              {recentRecords.length} recorded
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-semibold text-emerald-200 border border-white/15">
+            <span>
+              {currentRole === 'doctor' 
+                ? '👨‍⚕️ Medical Officer Review Desk' 
+                : currentRole === 'asha' 
+                  ? '🩺 ASHA Community Health Portal' 
+                  : (currentMode === 'village' ? '🌾 Village First • Audio Active' : '🏙️ Citizen Safety Portal')}
+            </span>
+          </div>
+          <AudioNarrator 
+            textToNarrate={isCitizen 
+              ? "Welcome to Tulsi Veda. Step 1: Speak or enter your herbal remedy. Step 2: Add your prescription medicine. Step 3: Send it for review to your local ASHA worker or doctor."
+              : "Clinical review desk. Inspect incoming review requests submitted by patients and confirm safety using the Bio-Kinetic Causal Engine."
+            }
+            label={t('listen_native')}
+            className="bg-white/15 border-white/20 text-white"
+          />
+        </div>
+
+        <h1 className="text-2xl font-extrabold tracking-tight mt-2 text-white">
+          {currentRole === 'doctor' 
+            ? 'Clinical Review Desk' 
+            : currentRole === 'asha' 
+              ? 'ASHA Health Post' 
+              : t('welcome_title')}
+        </h1>
+        <p className="text-xs text-emerald-100/90 mt-1 font-medium leading-relaxed">
+          {isCitizen 
+            ? 'Follow the 3 simple steps below to verify if your home remedy is safe with your medicine.' 
+            : 'Review citizen drug-herb interactions, verify causal graphs, and confirm safety decisions.'}
+        </p>
+
+        {/* Feature Phone IVR Callout banner for Rural/Keypad Users */}
+        <div className="mt-4 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
+              <PhoneCall className="w-4 h-4 animate-bounce" />
+            </div>
+            <div>
+              <span className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider block">Keypad Phone Hotline</span>
+              <span className="text-xs font-black text-white">1800-TULSIVEDA (Toll Free)</span>
+            </div>
+          </div>
+          <button
+            onClick={onOpenIvr}
+            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[11px] shadow-sm transition-all"
+          >
+            Launch Call
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================
+          ROLE 1: CITIZEN VIEW - 3-STEP GUIDED AUDIO / VISUAL FLOW
+         ======================================================== */}
+      {isCitizen && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <span>{t('step_guide_heading')}</span>
+            </h2>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {t('guided_flow')}
             </span>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex bg-gray-100 p-0.5 rounded-lg text-[11px]">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-                statusFilter === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setStatusFilter('completed')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-                statusFilter === 'completed'
-                  ? 'bg-white text-emerald-700 shadow-sm font-semibold'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              Completed
-            </button>
-            <button
-              onClick={() => setStatusFilter('draft')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-                statusFilter === 'draft'
-                  ? 'bg-white text-amber-700 shadow-sm font-semibold'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              Drafts
-            </button>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search recent records, plants, drugs, or conditions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-8 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Blank State (0 records) */}
-        {filteredRecords.length === 0 ? (
-          <div className="surface-card border-dashed border-gray-300 py-10 px-6 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 mb-2.5 shadow-inner">
-              <Inbox className="w-6 h-6 stroke-[1.5]" />
-            </div>
-            <p className="text-sm font-semibold text-gray-700">No matching records found</p>
-            <p className="text-xs text-gray-400 mt-1 max-w-xs">
-              {searchQuery ? 'Try clearing your search query.' : 'All entered records will appear here.'}
-            </p>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="mt-3 text-xs text-emerald-700 font-semibold underline"
-              >
-                Clear Search
-              </button>
-            )}
-          </div>
-        ) : (
-          /* Populated State */
-          <div className="space-y-2.5">
-            {filteredRecords.map((rec) => {
-              const isCompleted = rec.status === 'completed' || !!rec.decision;
-              return (
-                <div
-                  key={rec.id}
-                  onClick={() => handleRecordClick(rec)}
-                  className="surface-card p-3.5 hover:shadow-md hover:border-emerald-200 transition-all flex items-center justify-between gap-3 cursor-pointer active:scale-[0.99]"
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-xs mt-0.5 ${
-                      isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="font-semibold text-sm text-gray-900 truncate">
-                          {rec.remedy_name_local || 'Remedy Observation'}
-                        </h4>
-                        {rec.confirmed_species && (
-                          <span className="text-[10px] italic text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
-                            {rec.confirmed_species}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-gray-500 truncate mt-0.5">
-                        {rec.used_for_condition || 'Condition unspecified'} • {rec.place_region || 'Gujarat'}
-                      </p>
-
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        {rec.interaction_type && (
-                          <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                            <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span className="truncate max-w-[180px]">{rec.interaction_type.split(':')[0]}</span>
-                          </span>
-                        )}
-                        {rec.confirmed_medicine && (
-                          <span className="text-[10px] text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
-                            Rx: {rec.confirmed_medicine.split('(')[0]}
-                          </span>
-                        )}
-                        <span className="text-[10px] text-gray-400">
-                          {formatDate(rec.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
-                      isCompleted
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                        : 'bg-amber-50 text-amber-800 border border-amber-200'
-                    }`}>
-                      {rec.status || 'draft'}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400 ml-auto mt-1.5" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Record Inspection Modal */}
-      {inspectRecord && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-start justify-between border-b border-gray-100 pb-3">
-              <div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  inspectRecord.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+          {/* STEP 1: RECORD BOTANICAL REMEDY */}
+          <div className={`p-4 rounded-3xl border transition-all ${
+            hasHerb 
+              ? 'bg-emerald-50/60 border-emerald-300' 
+              : 'bg-white border-slate-200 shadow-xs hover:border-emerald-500'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
+                  hasHerb ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
                 }`}>
-                  {inspectRecord.status} Record
-                </span>
-                <h3 className="font-heading font-bold text-base text-gray-900 mt-1">
-                  {inspectRecord.remedy_name_local}
-                </h3>
-                {inspectRecord.confirmed_species && (
-                  <p className="text-xs text-emerald-700 italic">
-                    Taxonomy: {inspectRecord.confirmed_species}
+                  {hasHerb ? '✓' : '1'}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    {t('step1_title')}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                    {hasHerb 
+                      ? `${t('added_label')}: ${activeDraft?.remedyNameLocal || activeDraft?.scientificName}` 
+                      : t('step1_desc')}
                   </p>
-                )}
-              </div>
-              <button
-                onClick={() => setInspectRecord(null)}
-                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="bg-gray-50 p-3 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-gray-700">
-                  <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="font-semibold">Condition:</span>
-                  <span>{inspectRecord.used_for_condition}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="font-semibold">Region:</span>
-                  <span>{inspectRecord.place_region || 'Gujarat'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <User className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="font-semibold">Recorder:</span>
-                  <span>{inspectRecord.prepared_by || 'ASHA Field Worker'}</span>
                 </div>
               </div>
-
-              {inspectRecord.interaction_type && (
-                <div className="bg-amber-50/80 border border-amber-200 p-3 rounded-xl space-y-1">
-                  <div className="flex items-center gap-1.5 text-amber-900 font-bold">
-                    <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Herb-Drug Interaction Alert</span>
-                  </div>
-                  <p className="text-amber-800 font-medium">{inspectRecord.interaction_type}</p>
-                  {inspectRecord.confirmed_medicine && (
-                    <p className="text-[11px] text-amber-700">
-                      Evaluated Drug: <strong>{inspectRecord.confirmed_medicine}</strong>
-                    </p>
-                  )}
-                  {inspectRecord.evidence_level && (
-                    <span className="inline-block bg-white text-amber-800 border border-amber-300 px-2 py-0.5 rounded text-[10px] mt-1 font-semibold">
-                      Evidence Level: {inspectRecord.evidence_level}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {inspectRecord.decision && (
-                <div className="bg-emerald-50/80 border border-emerald-200 p-3 rounded-xl space-y-1">
-                  <div className="flex items-center gap-1.5 text-emerald-900 font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Clinician Action & Decision</span>
-                  </div>
-                  <p className="text-emerald-800 font-semibold capitalize">
-                    {inspectRecord.decision.replace(/_/g, ' ')}
-                  </p>
-                  {inspectRecord.decision_notes && (
-                    <p className="text-gray-600 text-[11px] mt-1 italic">
-                      "{inspectRecord.decision_notes}"
-                    </p>
-                  )}
-                </div>
-              )}
+              <AudioNarrator 
+                textToNarrate={t('step1_desc')}
+                className="shrink-0"
+              />
             </div>
 
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setInspectRecord(null)}
-                className="btn-primary w-full py-2 text-xs rounded-xl"
-              >
-                Close Record Details
-              </button>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+              {hasHerb ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-emerald-800">
+                    🌿 {activeDraft?.remedyNameLocal || activeDraft?.scientificName}
+                  </span>
+                  <button 
+                    onClick={onStartRemedy}
+                    className="text-[11px] font-bold text-slate-500 hover:text-emerald-700 underline"
+                  >
+                    {t('change_btn')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onStartRemedy}
+                  className="w-full py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <Leaf className="w-4 h-4" />
+                  <span>{t('speak_or_type_herb')}</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* STEP 2: ADD MODERN PRESCRIPTION MEDICINE */}
+          <div className={`p-4 rounded-3xl border transition-all ${
+            hasMedicine 
+              ? 'bg-blue-50/60 border-blue-300' 
+              : 'bg-white border-slate-200 shadow-xs hover:border-blue-500'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
+                  hasMedicine ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {hasMedicine ? '✓' : '2'}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    {t('step2_title')}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                    {hasMedicine 
+                      ? `${t('added_label')}: ${activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}` 
+                      : t('step2_desc')}
+                  </p>
+                </div>
+              </div>
+              <AudioNarrator 
+                textToNarrate={t('step2_desc')}
+                className="shrink-0"
+              />
+            </div>
+
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+              {hasMedicine ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-blue-800">
+                    💊 {activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}
+                  </span>
+                  <button 
+                    onClick={onStartPrescription}
+                    className="text-[11px] font-bold text-slate-500 hover:text-blue-700 underline"
+                  >
+                    {t('change_btn')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onStartPrescription}
+                  className="w-full py-2.5 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span>{t('add_rx_medicine_btn')}</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* STEP 3: SUBMIT FOR ASHA / DOCTOR REVIEW */}
+          <div className={`p-4 rounded-3xl border transition-all ${
+            readyToSubmit 
+              ? 'bg-amber-50/70 border-amber-300 shadow-sm' 
+              : 'bg-white border-slate-200'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
+                  readyToSubmit ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  3
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    {t('step3_title')}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                    {readyToSubmit 
+                      ? t('step3_desc') 
+                      : t('awaiting_details')}
+                  </p>
+                </div>
+              </div>
+              <AudioNarrator 
+                textToNarrate={t('step3_desc')}
+                className="shrink-0"
+              />
+            </div>
+
+            <div className="mt-3 pt-2 border-t border-slate-100">
+              {readyToSubmit ? (
+                <button
+                  onClick={onSubmitReviewRequest}
+                  className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-98 animate-pulse"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{t('send_for_review_btn')}</span>
+                </button>
+              ) : (
+                <div className="text-[11px] text-slate-400 font-medium text-center py-1">
+                  ⏳ {t('awaiting_details')}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 text-center pt-2">
-        All field records, plant identifications, and clinician decisions are preserved offline in device storage.
-      </p>
+      {/* ========================================================
+          ROLE 2: DOCTOR / ASHA WORKER VIEW - REVIEW REQUESTS QUEUE
+         ======================================================== */}
+      {!isCitizen && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                <Stethoscope className="w-4 h-4 text-emerald-700" />
+                <span>{t('citizen_review_requests')}</span>
+              </h2>
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                {pendingRequests.length} {t('pending_badge')}
+              </span>
+            </div>
+            <button
+              onClick={() => loadData(true)}
+              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-500 px-1 leading-relaxed">
+            {t('welcome_subtitle')}
+          </p>
+
+          <div className="space-y-2.5">
+            {pendingRequests.map((req) => (
+              <div
+                key={req.id}
+                onClick={() => handleRecordClick(req)}
+                className="bg-white p-4 rounded-3xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md cursor-pointer transition-all space-y-3 group"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                      {req.patient_name ? req.patient_name.charAt(0) : 'P'}
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-900 block leading-tight">
+                        {req.patient_name || 'Citizen'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {req.place_region || 'Rural Health Post'} • {formatDate(req.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{t('pending_badge')}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded-xl bg-emerald-50/60 border border-emerald-100">
+                    <span className="text-[10px] text-emerald-700 font-bold block">{t('botanical_herb_label')}</span>
+                    <span className="font-extrabold text-slate-900 truncate block mt-0.5">
+                      🌿 {req.remedy_name_local}
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-100">
+                    <span className="text-[10px] text-blue-700 font-bold block">{t('modern_medicine_label')}</span>
+                    <span className="font-extrabold text-slate-900 truncate block mt-0.5">
+                      💊 {req.confirmed_medicine || 'Prescription Drug'}
+                    </span>
+                  </div>
+                </div>
+
+                {req.interaction_type && (
+                  <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 font-medium flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span className="truncate">{req.interaction_type}</span>
+                  </div>
+                )}
+
+                <div className="pt-1 flex items-center justify-between text-xs font-bold text-emerald-700 group-hover:text-emerald-800">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>{t('open_case_signoff')}</span>
+                  </span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Helpful Botanical & Alternative Tools */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between px-1 mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            {t('clinical_references_title')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/* Action 1: Veda Pustak (Knowledge Book) */}
+          <div 
+            onClick={onOpenKnowledge}
+            className="bg-white p-3.5 rounded-3xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-xs cursor-pointer transition-all flex flex-col justify-between group"
+          >
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
+                <BookOpen className="w-4 h-4 text-emerald-700" />
+              </div>
+              <h3 className="font-bold text-xs text-slate-900">
+                {t('nav_knowledge')}
+              </h3>
+              <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                {t('verified_ayurvedic_sub')}
+              </p>
+            </div>
+            <div className="mt-3 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-emerald-700">
+              <span>{t('open_pustak')}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Action 2: Alternative Medicine Resolver */}
+          <div 
+            onClick={onOpenAlternatives}
+            className="bg-white p-3.5 rounded-3xl border border-slate-200/90 hover:border-teal-500 hover:shadow-xs cursor-pointer transition-all flex flex-col justify-between group"
+          >
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center mb-2">
+                <Pill className="w-4 h-4 text-teal-700" />
+              </div>
+              <h3 className="font-bold text-xs text-slate-900">
+                {t('nav_alternatives')}
+              </h3>
+              <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                {t('jan_aushadhi_sub')}
+              </p>
+            </div>
+            <div className="mt-3 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-teal-700">
+              <span>{t('find_substitutes')}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* History & Case Log Feed */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="font-extrabold text-sm text-slate-900">
+              {isCitizen ? 'My Submitted Reviews' : 'Recent Verified Cases'}
+            </h2>
+            <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {recentRecords.length}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {recentRecords.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="text-[11px] font-semibold text-slate-400 hover:text-red-600 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={() => loadData(true)}
+              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {recentRecords.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 space-y-1">
+            <ClipboardList className="w-7 h-7 mx-auto text-slate-300" />
+            <p className="text-xs font-bold text-slate-600">No Cases Recorded Yet</p>
+            <p className="text-[11px] text-slate-400">
+              {isCitizen 
+                ? 'Follow Step 1, 2, and 3 above to submit your first safety check.' 
+                : 'Verified cases will be archived in the National Clinical Audit Ledger.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentRecords.slice(0, 4).map(rec => (
+              <div
+                key={rec.id}
+                onClick={() => handleRecordClick(rec)}
+                className="p-3 bg-slate-50 hover:bg-emerald-50/50 rounded-2xl border border-slate-200 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-slate-900">
+                      {rec.remedy_name_local || 'Local Botanical'}
+                    </span>
+                    {rec.confirmed_medicine && (
+                      <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 font-medium">
+                        + {rec.confirmed_medicine}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    {rec.used_for_condition || 'General health wellness'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    rec.status === 'completed' 
+                      ? 'bg-emerald-100 text-emerald-800' 
+                      : rec.status === 'pending_review'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {rec.status === 'completed' ? 'Verified Safe' : rec.status === 'pending_review' ? 'In Review' : 'Draft'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block mt-1">
+                    {formatDate(rec.created_at)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Inspect Modal if record clicked by citizen */}
+      {inspectRecord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm text-slate-900">Case Audit Details</h3>
+              <button onClick={() => setInspectRecord(null)} className="p-1 rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="text-xs space-y-2 text-slate-700">
+              <p><strong>Remedy:</strong> {inspectRecord.remedy_name_local}</p>
+              <p><strong>Condition:</strong> {inspectRecord.used_for_condition}</p>
+              <p><strong>Medicine:</strong> {inspectRecord.confirmed_medicine || 'None'}</p>
+              <p><strong>Status:</strong> {inspectRecord.status}</p>
+              <p><strong>Region:</strong> {inspectRecord.place_region || 'India'}</p>
+              {inspectRecord.decision_notes && (
+                <p className="p-2 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200">
+                  <strong>Clinician Guidance:</strong> {inspectRecord.decision_notes}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setInspectRecord(null)}
+              className="w-full py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 font-bold text-xs text-slate-800"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

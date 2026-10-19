@@ -9,6 +9,7 @@ import { remedyRouter } from './routes/remedyRoutes.js';
 import { plantRouter } from './routes/plantRoutes.js';
 import { prescriptionRouter } from './routes/prescriptionRoutes.js';
 import { safetyRouter } from './routes/safetyRoutes.js';
+import { adminRouter } from './routes/adminRoutes.js';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/remedies', remedyRouter);
 app.use('/api/plants', plantRouter);
 app.use('/api/prescriptions', prescriptionRouter);
 app.use('/api/safety', safetyRouter);
+app.use('/api/admin', adminRouter);
 
 // Root health
 app.get('/health', async (req, res) => {

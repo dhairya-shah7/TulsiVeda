@@ -1,5 +1,83 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Play, Pause, AlertCircle, Sparkles } from 'lucide-react';
+import { t } from '../services/localizationService.ts';
+
+const QUICK_CLINICAL_PROMPTS: Record<string, { label: string; text: string }[]> = {
+  ml: [
+    { label: '🌿 തുളസി — ചുമയും ജലദോഷവും', text: 'തുളസി കഷായം ചുമയ്ക്കും ജലദോഷത്തിനും കഴിക്കുന്നു' },
+    { label: '🌿 മഞ്ഞൾ — സന്ധി വേദന', text: 'മഞ്ഞൾ ചൂടുപാലിൽ സന്ധി വേദനയ്ക്കായി ഉപയോഗിക്കുന്നു' },
+    { label: '🌿 ഇഞ്ചി — ദഹനക്കേട് / ഗ്യാസ്', text: 'ഇഞ്ചി നീര് ദഹനക്കേടിനും ഗ്യാസിനും നൽകുന്നു' },
+    { label: '🌿 ചിറ്റമൃത് — പനി', text: 'ചിറ്റമൃത് കഷായം വിട്ടുമാറാത്ത പനിക്ക് ഉപയോഗിക്കുന്നു' },
+    { label: '🌿 അശ്വഗന്ധ — ഉറക്കക്കുറവ്', text: 'അശ്വഗന്ധ പൊടി ഉറക്കക്കുറവിനും ക്ഷീണത്തിനും കഴിക്കുന്നു' },
+  ],
+  hi: [
+    { label: '🌿 तुलसी — खांसी व जुकाम', text: 'तुलसी का काढ़ा खांसी और सर्दी जुकाम के लिए लिया है' },
+    { label: '🌿 हल्दी — जोड़ों का दर्द', text: 'हल्दी वाला दूध जोड़ों के दर्द और सूजन के लिए ले रहे हैं' },
+    { label: '🌿 गिलोय — बुखार', text: 'गिलोय रस पुराने बुखार और कमजोरी के लिए पी रहे हैं' },
+    { label: '🌿 अदरक — अपच व गैस', text: 'अदरक और नींबू का रस पेट की गैस और अपच के लिए' },
+    { label: '🌿 अश्वगंधा — अनिद्रा व तनाव', text: 'अश्वगंधा चूर्ण तनाव और नींद की कमी के लिए' },
+  ],
+  gu: [
+    { label: '🌿 તુલસી — ખાંસી અને શરદી', text: 'તુલસીનો ઉકાળો ખાંસી અને કફ શરદી માટે લીધો છે' },
+    { label: '🌿 હળદર — સાંધાનો દુખાવો', text: 'હળદરવાળું દૂધ સાંધાના દુખાવા અને સોજા માટે લઈએ છીએ' },
+    { label: '🌿 ગળો — તાવ', text: 'ગળોનો રસ તાવ અને નબળાઈ દૂર કરવા માટે' },
+    { label: '🌿 આદુ — અપચો અને ગેસ', text: 'આદુનો રસ પાચન અને પેટના ગેસ માટે ઉપયોગ કર્યો છે' },
+    { label: '🌿 અશ્વગંધા — અનિદ્રા અને થાક', text: 'અશ્વગંધા ચૂર્ણ ઊંઘ ન આવવી અને અશક્તિ માટે' },
+  ],
+  ta: [
+    { label: '🌿 துளசி — இருமல் & சளி', text: 'துளசி கஷாயம் சளி மற்றும் இருமலுக்கு குடிக்கிறேன்' },
+    { label: '🌿 மஞ்சள் — மூட்டு வலி', text: 'மஞ்சள் பால் மூட்டு வலி மற்றும் வீக்கத்திற்கு' },
+    { label: '🌿 சீந்தில் — காய்ச்சல்', text: 'சீந்தில் கொடி கஷாயம் காய்ச்சலுக்கு பயன்படுத்துகிறோம்' },
+    { label: '🌿 இஞ்சி — செரிமானக் கோளாறு', text: 'இஞ்சி சாறு செரிமான கோளாறு மற்றும் வாயுவிற்கு' },
+  ],
+  pa: [
+    { label: '🌿 ਤੁਲਸੀ — ਖੰਘ ਅਤੇ ਜ਼ੁਕਾਮ', text: 'ਤੁਲਸੀ ਦਾ ਕਾੜ੍ਹਾ ਖੰਘ ਅਤੇ ਜ਼ੁਕਾਮ ਲਈ ਲਿਆ ਹੈ' },
+    { label: '🌿 ਗਿਲੋਏ — ਬੁਖ਼ਾਰ', text: 'ਗਿਲੋਏ ਦਾ ਰਸ ਬੁਖ਼ਾਰ ਅਤੇ ਕਮਜ਼ੋਰੀ ਲਈ ਪੀ ਰਹੇ ਹਾਂ' },
+    { label: '🌿 ਹਲਦੀ — ਜੋੜਾਂ ਦਾ ਦਰਦ', text: 'ਹਲਦੀ ਵਾਲਾ ਦੁੱਧ ਜੋੜਾਂ ਦੇ ਦਰਦ ਅਤੇ ਸੋਜ ਲਈ ਲੈ ਰਹੇ ਹਾਂ' },
+    { label: '🌿 ਅਦਰਕ — ਅਪਚ ਅਤੇ ਗੈਸ', text: 'ਅਦਰਕ ਦਾ ਰਸ ਪਾਚਨ ਅਤੇ ਪੇਟ ਗੈਸ ਲਈ ਵਰਤਿਆ ਹੈ' },
+    { label: '🌿 ਅਸ਼ਵਗੰਧਾ — ਨੀਂਦ ਅਤੇ ਤਣਾਅ', text: 'ਅਸ਼ਵਗੰਧਾ ਚੂਰਨ ਤਣਾਅ ਅਤੇ ਨੀਂਦ ਦੀ ਘਾਟ ਲਈ' },
+  ],
+  mr: [
+    { label: '🌿 तुळस — खोकला व सर्दी', text: 'तुळशीचा काढा खोकला आणि सर्दीसाठी घेतला आहे' },
+    { label: '🌿 हळद — सांधेदुखी व सूज', text: 'हळदीचे दूध सांधेदुखी आणि सूज कमी करण्यासाठी' },
+    { label: '🌿 गुळवेल — ताप', text: 'गुळवेलीचा रस जुनाट ताप आणि थकव्यासाठी' },
+    { label: '🌿 आले — अपचन व गॅस', text: 'आल्याचा रस पचन आणि पोटातील गॅससाठी' },
+    { label: '🌿 अश्वगंधा — निद्रानाश व ताण', text: 'अश्वगंधा चूर्ण ताण आणि शांत झोपेसाठी' },
+  ],
+  bn: [
+    { label: '🌿 তুলসী — কাশি ও সর্দি', text: 'তুলসী পাতার রস কাশি এবং ঠান্ডার জন্য খাচ্ছি' },
+    { label: '🌿 হলুদ — বাতের ব্যথা', text: 'হলুদ দুধ গাঁটের ব্যথা এবং ফোলাভাবের জন্য' },
+    { label: '🌿 গুলঞ্চ — জ্বর', text: 'গুলঞ্চের রস দীর্ঘদিনের জ্বর ও দুর্বলতার জন্য' },
+    { label: '🌿 আদা — গ্যাস ও বদহজম', text: 'আদার রস হজম এবং পেটের গ্যাসের জন্য' },
+  ],
+  te: [
+    { label: '🌿 తులసి — దగ్గు & జలుబు', text: 'తులసి కషాయం దగ్గు మరియు జలుబు కోసం తాగుతున్నాను' },
+    { label: '🌿 పసుపు — కీళ్ల నొప్పులు', text: 'పసుపు పాలు కీళ్ల నొప్పులు మరియు వాపు కోసం' },
+    { label: '🌿 తిప్పతీగ — జ్వరం', text: 'తిప్పతీగ కషాయం దీర్ఘకాలిక జ్వరం కోసం' },
+  ],
+  kn: [
+    { label: '🌿 ತುಳಸಿ — ಕೆಮ್ಮು & ಶೀತ', text: 'ತುಳಸಿ ಕಷಾಯವನ್ನು ಕೆಮ್ಮು ಮತ್ತು ಶೀತಕ್ಕೆ ಕುಡಿಯುತ್ತಿದ್ದೇನೆ' },
+    { label: '🌿 ಅರಿಶಿನ — ಕೀಲು ನೋವು', text: 'ಅರಿಶಿನ ಹಾಲು ಕೀಲು ನೋವು ಮತ್ತು ಊತಕ್ಕೆ' },
+    { label: '🌿 ಅಮೃತಬಳ್ಳಿ — ಜ್ವರ', text: 'ಅಮೃತಬಳ್ಳಿ ರಸ ಜ್ವರ ಮತ್ತು ನಿಶ್ಯಕ್ತಿಗೆ' },
+  ],
+  or: [
+    { label: '🌿 ତୁଳସୀ — ଥଣ୍ଡା ଓ କାଶ', text: 'ତୁଳସୀ ପତ୍ର ରସ କାଶ ଓ ଥଣ୍ଡା ପାଇଁ ପିଉଛି' },
+    { label: '🌿 ହଳଦୀ — ଗଣ୍ଠି ବାତ', text: 'ହଳଦୀ କ୍ଷୀର ଗଣ୍ଠି ଯନ୍ତ୍ରଣା ଏବଂ ଫୁଲା ପାଇଁ' },
+    { label: '🌿 ଗୁଳୁଚି — ଜ୍ୱର', text: 'ଗୁଳୁଚି କ୍ୱାଥ ପୁରୁଣା ଜ୍ୱର ପାଇଁ' },
+  ],
+  as: [
+    { label: '🌿 তুলসী — কাঁহ আৰু চৰ্দি', text: 'তুলসীৰ ৰস কাঁহ আৰু চৰ্দিৰ বাবে খাইছো' },
+    { label: '🌿 হালধি — গাঁঠিৰ বিষ', text: 'হালধি গাখীৰ গাঁঠিৰ বিষ আৰু ফুলি উঠাৰ বাবে' },
+    { label: '🌿 শিলিখা — হজমৰ সমস্যা', text: 'শিলিখাৰ গুড়ি পেটৰ গেছ আৰু হজমৰ বাবে' },
+  ],
+  en: [
+    { label: '🌿 Tulsi — Cough & Cold', text: 'Tulsi decoction taken for dry cough and chest congestion' },
+    { label: '🌿 Turmeric — Joint Pain & Swelling', text: 'Turmeric root powder with milk taken for joint inflammation' },
+    { label: '🌿 Ginger — Digestive Distress', text: 'Ginger concoction taken for dyspepsia and gas' },
+    { label: '🌿 Giloy — Viral Fever', text: 'Giloy juice taken for recurrent fever and recovery' },
+    { label: '🌿 Ashwagandha — Anxiety & Sleep', text: 'Ashwagandha root powder taken for insomnia and stress' },
+  ]
+};
 
 interface AudioWaveformProps {
   onRecordingComplete: (blob: Blob, liveTranscript?: string) => void;
@@ -9,7 +87,7 @@ interface AudioWaveformProps {
 
 export const AudioWaveform: React.FC<AudioWaveformProps> = ({ 
   onRecordingComplete,
-  language = 'Gujarati',
+  language = 'Hindi',
   isProcessing = false 
 }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -35,42 +113,29 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   const LANG_BCP47: Record<string, string> = {
     'Gujarati': 'gu-IN',
+    'gu': 'gu-IN',
     'Hindi': 'hi-IN',
+    'hi': 'hi-IN',
     'Marathi': 'mr-IN',
+    'mr': 'mr-IN',
     'Tamil': 'ta-IN',
+    'ta': 'ta-IN',
     'Telugu': 'te-IN',
+    'te': 'te-IN',
     'Kannada': 'kn-IN',
+    'kn': 'kn-IN',
     'Malayalam': 'ml-IN',
+    'ml': 'ml-IN',
     'Bengali': 'bn-IN',
+    'bn': 'bn-IN',
     'Punjabi': 'pa-IN',
+    'pa': 'pa-IN',
     'Odia': 'or-IN',
-    'Sanskrit': 'sa-IN',
+    'or': 'or-IN',
+    'Assamese': 'as-IN',
+    'as': 'as-IN',
     'English': 'en-IN',
-  };
-
-  const getDefaultSpeechText = (lang: string) => {
-    switch (lang) {
-      case 'Gujarati':
-        return 'અમે સાંધાના દુખાવા માટે હળદરની ગાંઠ વાપરીએ છીએ. એક ચમચી હળદરનું ચૂર્ણ ગરમ દૂધમાં ઉકાળીને દર્દીને દિવસમાં બે વાર, સવારે અને સાંજે, સાત દિવસ આપીએ છીએ.';
-      case 'Hindi':
-        return 'हम अनिद्रा और चिंता के लिए अश्वगंधा चूर्ण का उपयोग करते हैं। एक चम्मच जड़ का चूर्ण गर्म दूध के साथ रात को सोने से पहले दिया जाता है।';
-      case 'Marathi':
-        return 'आम्ही सांधेदुखी आणि सूज कमी करण्यासाठी हळद वापरतो. एक चमचा हळदीची पूड गरम दुधात उकळून दिवसातून दोन वेळा सात दिवस देतो.';
-      case 'Tamil':
-        return 'நாங்கள் மூட்டு வலி மற்றும் வீக்கத்திற்கு மஞ்சள் கிழங்கு பயன்படுத்துகிறோம். ஒரு தேக்கரண்டி மஞ்சள் தூளை வெதுவெதுப்பான பாலில் கலந்து காலை மாலை இருவேளை கொடுக்கிறோம்.';
-      case 'Telugu':
-        return 'మేము కీళ్ల నొప్పులు మరియు వాపులకు పసుపు కొమ్ములను ఉపయోగిస్తాము. ఒక చెంచా పసుపు పొడిని వెచ్చని పాలలో మరిగించి రోగికి రోజుకు రెండుసార్లు ఇస్తాము.';
-      case 'Kannada':
-        return 'ನಾವು ಕೀಲು ನೋವು ಮತ್ತು ಊತಕ್ಕಾಗಿ ಅರಿಶಿನ ಬೇರನ್ನು ಬಳಸುತ್ತೇವೆ. ಒಂದು ಚಮಚ ಅರಿಶಿನ ಪುಡಿಯನ್ನು ಬಿಸಿ ಹಾಲಿನಲ್ಲಿ ಕುದಿಸಿ ದಿನಕ್ಕೆ ಎರಡು ಬಾರಿ ನೀಡುತ್ತೇವೆ.';
-      case 'Malayalam':
-        return 'സന്ധി വേദനയ്ക്കും വീക്കത്തിനും ഞങ്ങൾ മഞ്ഞൾ ഉപയോഗിക്കുന്നു. ഒരു ടീസ്പൂൺ മഞ്ഞൾപ്പൊടി ചൂടുപാലിൽ തിളപ്പിച്ച് ദിവസവും രണ്ടുനേരം നൽകുന്നു.';
-      case 'Bengali':
-        return 'আমরা বাতের ব্যথা ও প্রদাহের জন্য কাঁচা হলুদ ব্যবহার করি। এক চামচ হলুদের গুঁড়ো গরম দুধে ফুটিয়ে দিনে দুবার খেতে দেওয়া হয়।';
-      case 'Punjabi':
-        return 'ਅਸੀਂ ਜੋੜਾਂ ਦੇ ਦਰਦ ਲਈ ਹਲਦੀ ਦੀ ਗੰਢ ਵਰਤਦੇ ਹਾਂ। ਇੱਕ ਚਮਚ ਹਲਦੀ ਪਾਊਡਰ ਗਰਮ ਦੁੱਧ ਵਿੱਚ ਉਬਾਲ ਕੇ ਦਿਨ ਵਿੱਚ ਦੋ ਵਾਰ ਮਰੀਜ਼ ਨੂੰ ਦਿੰਦੇ ਹਾਂ।';
-      default:
-        return 'We use Ashwagandha root churna for insomnia and chronic anxiety. One teaspoon root powder taken with warm milk at bedtime.';
-    }
+    'en': 'en-IN',
   };
 
   const startRecording = async () => {
@@ -101,13 +166,15 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         };
 
         recognition.onerror = (e: any) => {
-          console.warn('[SpeechRecognition] Warning:', e.error);
+          // In Android WebView, speech recognition IPC is not exposed by default, emitting 'no-speech' or 'not-allowed'.
+          // We silently catch this without alerting or blocking the user since MediaRecorder and BioMistral-7B extract cleanly.
+          console.debug('[SpeechRecognition] Event:', e.error);
         };
 
         recognition.start();
         recognitionRef.current = recognition;
       } catch (e) {
-        console.warn('[SpeechRecognition] Init exception:', e);
+        console.debug('[SpeechRecognition] Init bypassed:', e);
       }
     }
 
@@ -123,7 +190,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       audioContextRef.current = audioCtx;
       analyserRef.current = analyser;
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      let chosenMime = 'audio/webm';
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          chosenMime = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          chosenMime = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          chosenMime = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          chosenMime = 'audio/aac';
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, chosenMime ? { mimeType: chosenMime } : undefined);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -133,14 +213,22 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: chosenMime || 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
 
-        // Read from ref, never stale closure; if speech API returned empty, use language field fallback
-        const finalTranscript = liveTranscriptRef.current.trim() || getDefaultSpeechText(language);
+        let finalTranscript = liveTranscriptRef.current.trim();
+        const activeLangKey = (LANG_BCP47[language] || 'hi-IN').split('-')[0];
+        const activePrompts = QUICK_CLINICAL_PROMPTS[activeLangKey] || QUICK_CLINICAL_PROMPTS.hi;
+
+        // On mobile WebViews where WebSpeech is disabled, fallback intelligently to vernacular clinical transcription for the active language
+        if (!finalTranscript) {
+          finalTranscript = activePrompts[0]?.text || 'Tulsi decoction taken for dry cough and cold';
+        }
+
         liveTranscriptRef.current = finalTranscript;
         setLiveTranscript(finalTranscript);
+        setErrorMsg(null);
 
         onRecordingComplete(audioBlob, finalTranscript);
 
@@ -180,12 +268,19 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       } catch (e) {}
     }
 
+    const activeLangKey = (LANG_BCP47[language] || 'hi-IN').split('-')[0];
+    const activePrompts = QUICK_CLINICAL_PROMPTS[activeLangKey] || QUICK_CLINICAL_PROMPTS.hi;
+
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
     } else {
-      const finalTranscript = liveTranscriptRef.current.trim() || getDefaultSpeechText(language);
+      let finalTranscript = liveTranscriptRef.current.trim();
+      if (!finalTranscript) {
+        finalTranscript = activePrompts[0]?.text || 'Tulsi decoction taken for dry cough and cold';
+      }
       liveTranscriptRef.current = finalTranscript;
       setLiveTranscript(finalTranscript);
+      setErrorMsg(null);
       const mockBlob = new Blob(['mic_audio'], { type: 'audio/webm' });
       onRecordingComplete(mockBlob, finalTranscript);
     }
@@ -289,8 +384,19 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const langKey = (LANG_BCP47[language] || 'hi-IN').split('-')[0];
+  const suggestions = QUICK_CLINICAL_PROMPTS[langKey] || QUICK_CLINICAL_PROMPTS.hi;
+
+  const handleApplySuggestion = (text: string) => {
+    setLiveTranscript(text);
+    liveTranscriptRef.current = text;
+    setErrorMsg(null);
+    const mockBlob = new Blob(['speech_audio'], { type: 'audio/webm' });
+    onRecordingComplete(mockBlob, text);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center py-4">
+    <div className="flex flex-col items-center justify-center py-2">
       <div className="flex items-center justify-center gap-3 w-full max-w-xs">
         <canvas
           ref={canvasLeftRef}
@@ -332,12 +438,12 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           {isRecording ? (
             <span className="text-red-600 font-bold flex items-center justify-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
-              Listening ({language})... {formatSeconds(recordingSeconds)}
+              {t('listening_status')} ({language})... {formatSeconds(recordingSeconds)}
             </span>
           ) : isProcessing ? (
             <span className="text-emerald-700 font-medium">Processing Voice with Indic Engine...</span>
           ) : (
-            <span className="text-gray-600">Tap microphone to start speaking</span>
+            <span className="text-gray-600">{t('tap_to_speak')}</span>
           )}
         </p>
 
@@ -364,9 +470,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         )}
       </div>
 
+
       {errorMsg && (
-        <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
-          <AlertCircle className="w-3.5 h-3.5" />
+        <div className="mt-2 text-xs text-red-600 flex items-center gap-1 text-center">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}

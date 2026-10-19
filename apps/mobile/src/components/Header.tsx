@@ -1,44 +1,105 @@
 import React from 'react';
-import { Leaf, Bell, ChevronLeft, User } from 'lucide-react';
+import { Leaf, Bell, ChevronLeft, User, PhoneCall, Globe } from 'lucide-react';
+import { useCurrentLanguage, SUPPORTED_LANGUAGES, t } from '../services/localizationService';
 
 interface HeaderProps {
-  currentScreen: number;
+  currentScreen: string;
   onBack?: () => void;
   title?: string;
+  onOpenProfile: () => void;
+  onOpenNotifications: () => void;
+  onOpenIvr: () => void;
+  unreadAlertsCount?: number;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentScreen, onBack }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  currentScreen, 
+  onBack, 
+  title,
+  onOpenProfile,
+  onOpenNotifications,
+  onOpenIvr,
+  unreadAlertsCount = 2
+}) => {
+  const currentLang = useCurrentLanguage();
+  const langObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_LANGUAGES[0];
+
+  const isMainHub = ['home', 'dashboard'].includes(currentScreen);
+
   return (
-    <header className="flex items-center justify-between px-5 py-3.5 bg-white border-b border-gray-100 sticky top-0 z-40">
+    <header className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-3 bg-white border-b border-emerald-100/80 sticky top-0 z-40 shadow-xs">
+      {/* Left side: Back or Logo */}
       <div className="flex items-center gap-2.5">
-        {currentScreen > 1 ? (
+        {!isMainHub && onBack ? (
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-emerald-700 transition-colors py-1 pr-2 rounded-lg"
+            className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-emerald-700 active:scale-95 transition-all py-1 px-2 rounded-xl bg-slate-50 border border-slate-200"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-            <span className="font-semibold text-gray-800">Back</span>
+            <ChevronLeft className="w-5 h-5 text-slate-700" />
+            <span className="truncate max-w-[120px]">{title || t('back')}</span>
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 shadow-sm">
-              <Leaf className="w-5 h-5 fill-emerald-600 text-emerald-600" />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-sm ring-2 ring-emerald-100">
+              <Leaf className="w-5 h-5 fill-white/20 text-white" />
             </div>
-            <span className="font-heading font-bold text-lg tracking-tight text-gray-900">
-              TulsiVeda <span className="text-emerald-700 font-extrabold">AI</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="font-heading font-extrabold text-base tracking-tight text-slate-900 leading-tight">
+                TulsiVeda <span className="text-emerald-700">AI</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold tracking-wide">
+                Bharat Health Engine
+              </span>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <button className="relative p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+      {/* Right side: Hotline button, Language trigger, Alerts, Profile */}
+      <div className="flex items-center gap-2">
+        {/* Nokia / Feature Phone Hotline Simulator button */}
+        <button
+          onClick={onOpenIvr}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 text-xs font-bold active:scale-95 transition-all shadow-2xs"
+          title="1800-TULSIVEDA Voice Hotline for Keypad/Rural Users"
+        >
+          <PhoneCall className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+          <span className="hidden sm:inline">1800 IVR</span>
         </button>
-        <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+
+        {/* Language selector chip */}
+        <button
+          onClick={onOpenProfile}
+          className="flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+          title="Change native Indian language"
+        >
+          <Globe className="w-3.5 h-3.5 text-emerald-700" />
+          <span className="text-[11px] font-bold">{langObj.nativeName}</span>
+        </button>
+
+        {/* Notifications */}
+        <button 
+          onClick={onOpenNotifications}
+          className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors"
+          title="Active safety alerts & surveillance"
+        >
+          <Bell className="w-4 h-4 text-slate-700" />
+          {unreadAlertsCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-ping" />
+          )}
+          {unreadAlertsCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white" />
+          )}
+        </button>
+
+        {/* User Profile */}
+        <button
+          onClick={onOpenProfile}
+          className="w-8 h-8 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white flex items-center justify-center font-semibold text-xs shadow-sm active:scale-95 transition-transform"
+          title="Profile & Settings"
+        >
           <User className="w-4 h-4" />
-        </div>
+        </button>
       </div>
     </header>
   );

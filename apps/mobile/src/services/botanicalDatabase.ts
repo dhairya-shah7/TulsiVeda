@@ -1,6 +1,8 @@
 export interface BotanicalSpecies {
   scientificName: string;
   commonName: string;
+  punjabiName?: string;
+  hindiName?: string;
   family: string;
   vernacularAliases: string[];
   primaryParts: string[];
@@ -14,7 +16,9 @@ export interface BotanicalSpecies {
 export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Curcuma longa',
-    commonName: 'Turmeric / Haldi (હળદર)',
+    commonName: 'Turmeric / Haldi',
+    punjabiName: 'ਹਲਦੀ (Haldi)',
+    hindiName: 'हल्दी (Haldi)',
     family: 'Zingiberaceae',
     vernacularAliases: [
       'હળદર', 'હલ્દી', 'हल्दी', 'हळद', 'மஞ்சள்', 'పసుపు', 'ಅರಿಶಿನ', 'മഞ്ഞൾ', 'হলুদ', 'ਹਲਦੀ', 
@@ -29,7 +33,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Curcuma aromatica',
-    commonName: 'Wild Turmeric / Aamba Haldi (આંબા હળદર)',
+    commonName: 'Wild Turmeric / Aamba Haldi',
+    punjabiName: 'ਜੰਗਲੀ ਹਲਦੀ (Aamba Haldi)',
+    hindiName: 'जंगली हल्दी (आम्बा हल्दी)',
     family: 'Zingiberaceae',
     vernacularAliases: ['આંબા હળદર', 'आम्बा हल्दी', 'aamba haldi', 'wild turmeric', 'kasthuri manjal', 'ran halad'],
     primaryParts: ['Rhizome'],
@@ -41,7 +47,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Curcuma zedoaria',
-    commonName: 'White Turmeric / Kachur (કચૂર)',
+    commonName: 'White Turmeric / Kachur',
+    punjabiName: 'ਕਚੂਰ (Kachur)',
+    hindiName: 'कचूर (Kachur)',
     family: 'Zingiberaceae',
     vernacularAliases: ['કચૂર', 'કચૂરો', 'कचूर', 'kachur', 'white turmeric', 'zedoary', 'narkachur'],
     primaryParts: ['Rhizome'],
@@ -53,7 +61,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Ocimum sanctum',
-    commonName: 'Tulsi / Holy Basil (તુલસી)',
+    commonName: 'Tulsi / Holy Basil',
+    punjabiName: 'ਤੁਲਸੀ (Tulsi)',
+    hindiName: 'तुलसी (Tulsi)',
     family: 'Lamiaceae',
     vernacularAliases: [
       'તુલસી', 'શ્યામ તુલસી', 'રામ તુલસી', 'तुलसी', 'तुळस', 'துளசி', 'తులసి', 'ತುಳಸಿ', 'തുളസി', 'তুলসী', 'ਤੁਲਸੀ',
@@ -68,7 +78,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Ocimum basilicum',
-    commonName: 'Sweet Basil / Damro (ડમરો)',
+    commonName: 'Sweet Basil / Sabja',
+    punjabiName: 'ਮਰੂਆ / ਸਬਜ਼ਾ (Sabja)',
+    hindiName: 'मरुआ / सबजा (Sabja)',
     family: 'Lamiaceae',
     vernacularAliases: ['ડમરો', 'ડમરા', 'मरुआ', 'damro', 'sweet basil', 'sabja'],
     primaryParts: ['Leaves', 'Seeds'],
@@ -80,7 +92,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Ocimum gratissimum',
-    commonName: 'Clove Basil / Ram Tulsi (રામ તુલસી)',
+    commonName: 'Clove Basil / Ram Tulsi',
+    punjabiName: 'ਰਾਮ ਤੁਲਸੀ (Ram Tulsi)',
+    hindiName: 'राम तुलसी (Ram Tulsi)',
     family: 'Lamiaceae',
     vernacularAliases: ['રામ તુલસી', 'વન તુલસી', 'ram tulsi', 'van tulsi', 'clove basil'],
     primaryParts: ['Leaves', 'Flowering tops'],
@@ -92,7 +106,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Withania somnifera',
-    commonName: 'Ashwagandha / Indian Ginseng (અશ્વગંધા)',
+    commonName: 'Ashwagandha / Indian Ginseng',
+    punjabiName: 'ਅਸ਼ਵਗੰਧਾ (Ashwagandha)',
+    hindiName: 'अश्वगंधा (Ashwagandha)',
     family: 'Solanaceae',
     vernacularAliases: [
       'અશ્વગંધા', 'આસોંધ', 'अश्वगंधा', 'अश्वगंध', 'அஸ்வகந்தா', 'అశ్వగంధ', 'ಅಶ್ವಗಂಧ', 'അശ്വഗന്ധ', 'অশ্বগন্ধা', 'ਅਸ਼ਵਗੰਧਾ',
@@ -107,7 +123,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Withania coagulans',
-    commonName: 'Paneer Dodi / Indian Rennet (પનીર ડોડી)',
+    commonName: 'Paneer Dodi / Indian Rennet',
+    punjabiName: 'ਪਨੀਰ ਡੋਡੀ (Paneer Dodi)',
+    hindiName: 'पनीर डोडी (Paneer Dodi)',
     family: 'Solanaceae',
     vernacularAliases: ['પનીર ડોડી', 'પનીર ફૂલ', 'पनीर डोडी', 'paneer dodi', 'paneer phool', 'indian rennet'],
     primaryParts: ['Berries', 'Flowers'],
@@ -119,7 +137,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Azadirachta indica',
-    commonName: 'Neem / Nimba (લીમડો / મીઠો નહીં, કડવો લીમડો)',
+    commonName: 'Neem / Nimba',
+    punjabiName: 'ਨਿੰਮ (Neem)',
+    hindiName: 'नीम (Neem)',
     family: 'Meliaceae',
     vernacularAliases: [
       'લીમડો', 'કડવો લીમડો', 'नीम', 'कडुनिंब', 'வேம்பு', 'వేప', 'ಬೇವು', 'ആര്യവേപ്പ്', 'নিম', 'ਨਿੰਮ',
@@ -134,7 +154,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Murraya koenigii',
-    commonName: 'Curry Leaves / Meetho Limdo (મીઠો લીમડો)',
+    commonName: 'Curry Leaves / Kadi Patta',
+    punjabiName: 'ਕੜ੍ਹੀ ਪੱਤਾ (Kadi Patta)',
+    hindiName: 'कढ़ी पत्ता (Kadi Patta)',
     family: 'Rutaceae',
     vernacularAliases: ['મીઠો લીમડો', 'કઢી પત્તા', 'मीठा नीम', 'curry leaves', 'meetho limdo', 'kadi patta', 'karivepaku', 'kariveppila'],
     primaryParts: ['Leaves'],
@@ -146,7 +168,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Tinospora cordifolia',
-    commonName: 'Giloy / Guduchi / Galo (ગળો / ગિલોય)',
+    commonName: 'Giloy / Guduchi',
+    punjabiName: 'ਗਿਲੋਏ (Giloy)',
+    hindiName: 'गिलोय (Giloy)',
     family: 'Menispermaceae',
     vernacularAliases: [
       'ગળો', 'ગિલોય', 'गिलोय', 'गुळवेल', 'சீந்தில்', 'తిప్పతీగ', 'ಅಮೃತಬಳ್ಳಿ', 'ചിറ്റമൃത്', 'গুলঞ্চ', 'ਗਿਲੋਏ',
@@ -161,7 +185,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Zingiber officinale',
-    commonName: 'Ginger / Aadhu / Sunthi (આદુ / સૂંઠ)',
+    commonName: 'Ginger / Adrak / Sunthi',
+    punjabiName: 'ਅਦਰਕ / ਸੁੰਢ (Adrak)',
+    hindiName: 'अदरक / सोंठ (Adrak)',
     family: 'Zingiberaceae',
     vernacularAliases: [
       'આદુ', 'સૂંઠ', 'अदरक', 'सोंठ', 'आले', 'சுக்கு', 'இஞ்சி', 'అల్లం', 'ಶುಂಠಿ', 'ഇഞ്ചി', 'আদা', 'ਅਦਰਕ',
@@ -176,7 +202,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Allium sativum',
-    commonName: 'Garlic / Lasan (લસણ)',
+    commonName: 'Garlic / Lahsun',
+    punjabiName: 'ਲਸਣ (Lasan)',
+    hindiName: 'लहसुन (Lahsun)',
     family: 'Amaryllidaceae',
     vernacularAliases: [
       'લસણ', 'लहसुन', 'लसूण', 'பூண்டு', 'వెల్లుల్లి', 'ಬೆಳ್ಳುಳ್ಳಿ', 'വെളുത്തുള്ളി', 'রসুন', 'ਲਸਣ',
@@ -191,7 +219,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Commiphora mukul',
-    commonName: 'Guggulu / Guggul (ગુગળ)',
+    commonName: 'Guggulu / Guggul',
+    punjabiName: 'ਗੁੱਗੁਲ (Guggul)',
+    hindiName: 'गुग्गुल (Guggul)',
     family: 'Burseraceae',
     vernacularAliases: ['ગુગળ', 'ગૂગળ', 'गुग्गुल', 'guggul', 'guggulu', 'commiphora', 'guggulu'],
     primaryParts: ['Gum resin / Oleo-gum'],
@@ -203,7 +233,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Glycyrrhiza glabra',
-    commonName: 'Licorice / Jethimadh (જેઠીમધ)',
+    commonName: 'Licorice / Mulethi / Yashtimadhu',
+    punjabiName: 'ਮੁਲੱਠੀ (Mulethi)',
+    hindiName: 'मुलेठी (Mulethi)',
     family: 'Fabaceae',
     vernacularAliases: [
       'જેઠીમધ', 'મુલેઠી', 'मुलेठी', 'ज्येष्ठमध', 'அதிமதுரம்', 'యస్టిమధు', 'ಜ್ಯೇಷ್ಠಮಧು', 'ഇരട്ടിമധുരം', 'যষ্টিমধু', 'ਮੁਲੱਠੀ',
@@ -218,7 +250,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Gymnema sylvestre',
-    commonName: 'Gudmar / Madhunashini (ગુડમાર / મધુનાશિની)',
+    commonName: 'Gudmar / Madhunashini',
+    punjabiName: 'ਗੁੜਮਾਰ / ਮਧੂਨਾਸ਼ਿਨੀ (Gudmar)',
+    hindiName: 'गुड़मार / मधुनाशिनी (Gudmar)',
     family: 'Apocynaceae',
     vernacularAliases: ['ગુડમાર', 'મધુનાશિની', 'गुड़मार', 'gudmar', 'gymnema', 'sugar destroyer', 'madhunashini'],
     primaryParts: ['Leaves'],
@@ -230,7 +264,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Andrographis paniculata',
-    commonName: 'Kalmegh / Kariyatu (કરિયાતું / કાલમેઘ)',
+    commonName: 'Kalmegh / King of Bitters',
+    punjabiName: 'ਕਾਲਮੇਘ (Kalmegh)',
+    hindiName: 'कालमेघ (Kalmegh)',
     family: 'Acanthaceae',
     vernacularAliases: ['કરિયાતું', 'કાલમેઘ', 'कालमेघ', 'kariyatu', 'kalmegh', 'andrographis', 'king of bitters'],
     primaryParts: ['Whole aerial plant', 'Leaves'],
@@ -242,7 +278,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Terminalia arjuna',
-    commonName: 'Arjuna / Arjun Sadad (અર્જુન સાદડ)',
+    commonName: 'Arjuna / Arjun Bark',
+    punjabiName: 'ਅਰਜੁਨ (Arjuna)',
+    hindiName: 'अर्जुन (Arjuna)',
     family: 'Combretaceae',
     vernacularAliases: ['અર્જુન', 'અર્જુન સાદડ', 'अर्जुन', 'arjuna', 'arjun sadad', 'terminalia'],
     primaryParts: ['Stem bark'],
@@ -254,7 +292,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Phyllanthus emblica',
-    commonName: 'Amla / Indian Gooseberry (આમળાં)',
+    commonName: 'Amla / Indian Gooseberry',
+    punjabiName: 'ਔਂਵਲਾ (Amla)',
+    hindiName: 'आंवला (Amla)',
     family: 'Phyllanthaceae',
     vernacularAliases: ['આમળાં', 'આંબળા', 'आंवला', 'amla', 'amalaki', 'indian gooseberry', 'emblica'],
     primaryParts: ['Fruit'],
@@ -266,7 +306,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Tribulus terrestris',
-    commonName: 'Gokshura / Gokhru (ગોખરુ)',
+    commonName: 'Gokshura / Gokhru',
+    punjabiName: 'ਗੋਖਰੂ (Gokhru)',
+    hindiName: 'गोखरू (Gokhru)',
     family: 'Zygophyllaceae',
     vernacularAliases: ['ગોખરુ', 'ગોખરૂ', 'गोखरू', 'gokshura', 'gokhru', 'tribulus', 'puncture vine'],
     primaryParts: ['Fruits', 'Roots'],
@@ -278,7 +320,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Bacopa monnieri',
-    commonName: 'Brahmi / Neer-Brahmi (બ્રાહ્મી)',
+    commonName: 'Brahmi / Water Hyssop',
+    punjabiName: 'ਬ੍ਰਾਹਮੀ (Brahmi)',
+    hindiName: 'ब्राह्मी (Brahmi)',
     family: 'Plantaginaceae',
     vernacularAliases: ['બ્રાહ્મી', 'ब्राह्मी', 'brahmi', 'bacopa', 'water hyssop', 'memory booster'],
     primaryParts: ['Whole aerial creeping herb'],
@@ -290,7 +334,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Adhatoda vasica',
-    commonName: 'Ardusi / Vasaka (અરડૂસી / વાસા)',
+    commonName: 'Vasaka / Malabar Nut',
+    punjabiName: 'ਵਾਸਾ / ਅਡੂਸਾ (Vasaka)',
+    hindiName: 'वासा / अडूसा (Vasaka)',
     family: 'Acanthaceae',
     vernacularAliases: ['અરડૂસી', 'અડુસી', 'अडूसा', 'ardusi', 'vasaka', 'adusa', 'malabar nut'],
     primaryParts: ['Leaves', 'Roots'],
@@ -302,7 +348,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Asparagus racemosus',
-    commonName: 'Shatavari (શતાવરી)',
+    commonName: 'Shatavari / Asparagus',
+    punjabiName: 'ਸ਼ਤਾਵਰੀ (Shatavari)',
+    hindiName: 'शतावरी (Shatavari)',
     family: 'Asparagaceae',
     vernacularAliases: ['શતાવરી', 'सतावर', 'shatavari', 'asparagus', 'satavari'],
     primaryParts: ['Tuberous roots'],
@@ -314,7 +362,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Boerhavia diffusa',
-    commonName: 'Punarnava / Vakhapho (પુનર્નવા / સાટોડી)',
+    commonName: 'Punarnava / Hogweed',
+    punjabiName: 'ਪੁਨਰਨਵਾ (Punarnava)',
+    hindiName: 'पुनर्नवा (Punarnava)',
     family: 'Nyctaginaceae',
     vernacularAliases: ['પુનર્નવા', 'સાટોડી', 'पुનર્નવા', 'punarnava', 'satodi', 'boerhavia', 'hogweed'],
     primaryParts: ['Roots', 'Whole plant'],
@@ -326,7 +376,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Moringa oleifera',
-    commonName: 'Drumstick / Saragvo (સરગવો)',
+    commonName: 'Drumstick / Moringa / Sahjan',
+    punjabiName: 'ਸੁਹਾਂਜਣਾ / ਮੋਰਿੰਗਾ (Sahjan)',
+    hindiName: 'सहजन / मोरिंगा (Sahjan)',
     family: 'Moringaceae',
     vernacularAliases: ['સરગવો', 'સરગવાની શિંગ', 'सहजन', 'saragvo', 'moringa', 'drumstick', 'sahjan'],
     primaryParts: ['Leaves', 'Pods', 'Seeds', 'Bark'],
@@ -338,7 +390,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Cinnamomum verum',
-    commonName: 'Cinnamon / Taj (તજ / દાલચીની)',
+    commonName: 'Cinnamon / Dalchini',
+    punjabiName: 'ਦਾਲਚੀਨੀ (Dalchini)',
+    hindiName: 'दालचीनी (Dalchini)',
     family: 'Lauraceae',
     vernacularAliases: ['તજ', 'દાલચીની', 'दालचीनी', 'taj', 'dalchini', 'cinnamon', 'cinnamomum'],
     primaryParts: ['Inner stem bark'],
@@ -350,7 +404,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Syzygium aromaticum',
-    commonName: 'Clove / Laving (લવિંગ)',
+    commonName: 'Clove / Laung',
+    punjabiName: 'ਲੌਂਗ (Laung)',
+    hindiName: 'लौंग (Laung)',
     family: 'Myrtaceae',
     vernacularAliases: ['લવિંગ', 'લવંગ', 'लौंग', 'laving', 'clove', 'syzygium'],
     primaryParts: ['Flower buds'],
@@ -362,7 +418,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Piper nigrum',
-    commonName: 'Black Pepper / Mari / Golmirch (મરી)',
+    commonName: 'Black Pepper / Kali Mirch',
+    punjabiName: 'ਕਾਲੀ ਮਿਰਚ (Kali Mirch)',
+    hindiName: 'काली मिर्च (Kali Mirch)',
     family: 'Piperaceae',
     vernacularAliases: ['મરી', 'કાળા મરી', 'काली मिर्च', 'mari', 'black pepper', 'piperine', 'kali mirch'],
     primaryParts: ['Dried berries'],
@@ -374,7 +432,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Piper longum',
-    commonName: 'Long Pepper / Pipramul / Ganthoda (પીપરીમૂળ / ગંઠોડા / લીંડીપીપર)',
+    commonName: 'Long Pepper / Pippali / Pipramul',
+    punjabiName: 'ਪਿੱਪਲੀ / ਗੰਠੋਡ਼ਾ (Pippali)',
+    hindiName: 'पिप्पली / गंठोड़ा (Pippali)',
     family: 'Piperaceae',
     vernacularAliases: ['પીપરીમૂળ', 'ગંઠોડા', 'લીંડીપીપર', 'पिप्पली', 'pipramul', 'ganthoda', 'pippali', 'long pepper'],
     primaryParts: ['Roots (Ganthoda)', 'Fruiting spikes (Pippali)'],
@@ -386,7 +446,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Aloe vera',
-    commonName: 'Aloe Vera / Kuvarpathu (કુંવારપાઠું)',
+    commonName: 'Aloe Vera / Ghritkumari',
+    punjabiName: 'ਘਿਓ ਕੁਆਰ / ਐਲੋਵੇਰਾ (Aloe Vera)',
+    hindiName: 'घृतकुमारी / एलोवेरा (Aloe Vera)',
     family: 'Asphodelaceae',
     vernacularAliases: ['કુંવારપાઠું', 'ઘીકુંવાર', 'एलोवेरा', 'kuvarpathu', 'aloe vera', 'ghritkumari'],
     primaryParts: ['Gel / Mucilage', 'Latex'],
@@ -398,7 +460,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Momordica charantia',
-    commonName: 'Bitter Gourd / Karela (કારેલાં)',
+    commonName: 'Bitter Gourd / Karela',
+    punjabiName: 'ਕਰੇਲਾ (Karela)',
+    hindiName: 'करेला (Karela)',
     family: 'Cucurbitaceae',
     vernacularAliases: ['કારેલાં', 'કારેલું', 'करेला', 'karela', 'bitter melon', 'momordica'],
     primaryParts: ['Fruits', 'Seeds'],
@@ -410,7 +474,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Trigonella foenum-graecum',
-    commonName: 'Fenugreek / Methi (મેથી)',
+    commonName: 'Fenugreek / Methi',
+    punjabiName: 'ਮੇਥੀ (Methi)',
+    hindiName: 'मेथी (Methi)',
     family: 'Fabaceae',
     vernacularAliases: ['મેથી', 'મેથી દાણા', 'मेथी', 'methi', 'fenugreek', 'trigonella'],
     primaryParts: ['Seeds', 'Leaves'],
@@ -422,7 +488,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Embelia ribes',
-    commonName: 'Vidanga / Vavding (વાવડિંગ)',
+    commonName: 'Vidanga / False Black Pepper',
+    punjabiName: 'ਵਾਇਵਿਡੰਗ (Vidanga)',
+    hindiName: 'वायविडंग (Vidanga)',
     family: 'Primulaceae',
     vernacularAliases: ['વાવડિંગ', 'વિડંગ', 'वायविडंग', 'vavding', 'vidanga', 'embelia'],
     primaryParts: ['Berries / Fruits'],
@@ -434,7 +502,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Carum copticum',
-    commonName: 'Ajwain / Ajmo (અજમો)',
+    commonName: 'Ajwain / Carom Seeds',
+    punjabiName: 'ਅਜਵਾਇਨ (Ajwain)',
+    hindiName: 'अजवाइन (Ajwain)',
     family: 'Apiaceae',
     vernacularAliases: ['અજમો', 'અજવાઈન', 'अजवाइन', 'ajmo', 'ajwain', 'trachyspermum ammi'],
     primaryParts: ['Seeds / Fruits'],
@@ -446,7 +516,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Cassia angustifolia',
-    commonName: 'Senna / Sonamukhi (સોનામુખી)',
+    commonName: 'Senna / Sonamukhi',
+    punjabiName: 'ਸਨਾਇ / ਸੋਨਾਮੁਖੀ (Senna)',
+    hindiName: 'सनाय / सोनामुखी (Senna)',
     family: 'Fabaceae',
     vernacularAliases: ['સોનામુખી', 'સેના', 'सनाय', 'sonamukhi', 'senna', 'cassia'],
     primaryParts: ['Leaves', 'Pods'],
@@ -458,7 +530,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Punica granatum',
-    commonName: 'Pomegranate / Daadam (દાડમની છાલ / દાડમ)',
+    commonName: 'Pomegranate / Anar',
+    punjabiName: 'ਅਨਾਰ (Anar)',
+    hindiName: 'अनार (Anar)',
     family: 'Lythraceae',
     vernacularAliases: ['દાડમ', 'દાડમની છાલ', 'अनार', 'dadam', 'anar', 'pomegranate', 'punica'],
     primaryParts: ['Fruit rind / Peel', 'Seeds'],
@@ -471,6 +545,8 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Ginkgo biloba',
     commonName: 'Ginkgo / Maidenhair Tree',
+    punjabiName: 'ਗਿੰਕਗੋ (Ginkgo)',
+    hindiName: 'जिन्कगो (Ginkgo)',
     family: 'Ginkgoaceae',
     vernacularAliases: ['ગિંકગો', 'जिन्कगो', 'ginkgo', 'ginkgo biloba', 'maidenhair tree'],
     primaryParts: ['Standardized leaf extract'],
@@ -482,7 +558,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Centella asiatica',
-    commonName: 'Gotu Kola / Mandukaparni (ખડબ્રહ્મી / મંડૂકપર્ણી)',
+    commonName: 'Gotu Kola / Mandukaparni',
+    punjabiName: 'ਮੰਡੂਕਪਰਣੀ / ਗੋਤੂ ਕੋਲਾ',
+    hindiName: 'मंडूकपर्णी / गोतु कोला',
     family: 'Apiaceae',
     vernacularAliases: ['ખડબ્રહ્મી', 'મંડૂકપર્ણી', 'मंडूकपर्णी', 'gotu kola', 'centella', 'mandukaparni'],
     primaryParts: ['Whole plant'],
@@ -494,7 +572,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Rauvolfia serpentina',
-    commonName: 'Sarpagandha (સર્પગંધા)',
+    commonName: 'Sarpagandha / Indian Snakeroot',
+    punjabiName: 'ਸਰਪਗੰਧਾ (Sarpagandha)',
+    hindiName: 'सर्पगंधा (Sarpagandha)',
     family: 'Apocynaceae',
     vernacularAliases: ['સર્પગંધા', 'सर्पगंधा', 'sarpagandha', 'snakeroot', 'rauvolfia'],
     primaryParts: ['Roots'],
@@ -506,7 +586,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   },
   {
     scientificName: 'Plumbago zeylanica',
-    commonName: 'Chitrak (ચિત્રક)',
+    commonName: 'Chitrak / Leadwort',
+    punjabiName: 'ਚਿੱਤਰਕ (Chitrak)',
+    hindiName: 'चित्रक (Chitrak)',
     family: 'Plumbaginaceae',
     vernacularAliases: ['ચિત્રક', 'चित्रक', 'chitrak', 'plumbago', 'leadwort'],
     primaryParts: ['Roots'],
@@ -517,3 +599,9 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     diagnosticReasoning: 'Pungent naphthoquinone plumbagin strongly fires digestive Agni; contraindicated in pregnancy due to abortifacient action.',
   },
 ];
+
+export function getLocalizedBotanicalName(plant: BotanicalSpecies, lang: string = 'en'): string {
+  if (lang === 'pa' && plant.punjabiName) return plant.punjabiName;
+  if (lang === 'hi' && plant.hindiName) return plant.hindiName;
+  return plant.commonName;
+}

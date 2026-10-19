@@ -5,7 +5,7 @@ export interface StoredRecord {
   prepared_by?: string;
   place_region?: string;
   language?: string;
-  status: 'draft' | 'extracted' | 'identified' | 'reviewed' | 'completed';
+  status: 'draft' | 'extracted' | 'identified' | 'reviewed' | 'completed' | 'pending_review';
   created_at: string;
   updated_at?: string;
   decision?: string;
@@ -17,6 +17,9 @@ export interface StoredRecord {
   transcript?: string;
   extracted_details?: any;
   confidence?: string;
+  patient_name?: string;
+  submitted_by_role?: 'citizen' | 'asha' | 'doctor';
+  reviewed_by_role?: 'asha' | 'doctor';
 }
 
 export interface DashboardStats {
@@ -29,14 +32,63 @@ export interface DashboardStats {
 const STORAGE_KEY = 'tulsiveda_recent_records_v2';
 const OLD_STORAGE_KEY = 'tulsiveda_recent_records';
 
+const DEMO_REVIEW_REQUESTS: StoredRecord[] = [
+  {
+    id: 'req_demo_01',
+    patient_name: 'Gurpreet Singh',
+    remedy_name_local: 'Tulsi Leaves Decoction (Ocimum sanctum)',
+    confirmed_species: 'Ocimum sanctum',
+    confirmed_medicine: 'Warfarin 5mg (Coumadin)',
+    used_for_condition: 'Chest tightness & Blood Thinner',
+    prepared_by: 'Citizen Gurpreet (Self-Intake)',
+    place_region: 'Amritsar, Punjab',
+    language: 'Punjabi',
+    status: 'pending_review',
+    created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+    interaction_type: 'High Clash Risk: CYP2C9 Enzyme Competitive Inhibition',
+    evidence_level: 'Mechanistic',
+    submitted_by_role: 'citizen',
+  },
+  {
+    id: 'req_demo_02',
+    patient_name: 'Pooja Devi',
+    remedy_name_local: 'Ashwagandha Churna (Withania somnifera)',
+    confirmed_species: 'Withania somnifera',
+    confirmed_medicine: 'Clonazepam 0.5mg',
+    used_for_condition: 'Insomnia & Restlessness',
+    prepared_by: 'Citizen Pooja (Self-Intake)',
+    place_region: 'Madhubani, Bihar',
+    language: 'Hindi',
+    status: 'pending_review',
+    created_at: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+    interaction_type: 'Moderate Interaction: GABA receptor additive sedation',
+    evidence_level: 'Clinical In Vivo',
+    submitted_by_role: 'citizen',
+  },
+  {
+    id: 'req_demo_03',
+    patient_name: 'K. Balakrishnan',
+    remedy_name_local: 'Turmeric Milk (Curcuma longa)',
+    confirmed_species: 'Curcuma longa',
+    confirmed_medicine: 'Metformin 500mg',
+    used_for_condition: 'Type 2 Diabetes',
+    prepared_by: 'Citizen Balakrishnan',
+    place_region: 'Palakkad, Kerala',
+    language: 'Malayalam',
+    status: 'pending_review',
+    created_at: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
+    interaction_type: 'Synergistic: Potential hypoglycemic augmentation',
+    evidence_level: 'Systematic Review',
+    submitted_by_role: 'citizen',
+  }
+];
+
 export class StorageService {
   /**
    * Retrieves all records stored locally.
-   * Starts with 0 records (blank slate for clean demo).
    */
   static getLocalRecords(): StoredRecord[] {
     try {
-      // Clear legacy seeded storage if present
       if (localStorage.getItem(OLD_STORAGE_KEY)) {
         localStorage.removeItem(OLD_STORAGE_KEY);
       }
@@ -47,7 +99,6 @@ export class StorageService {
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        // Filter out any leftover seed records just in case
         return parsed.filter((r) => !r.id?.startsWith('rec_seed_'));
       }
       return [];
@@ -55,6 +106,19 @@ export class StorageService {
       console.warn('[StorageService] Error reading localStorage:', e);
       return [];
     }
+  }
+
+  /**
+   * Retrieves pending review requests for Doctors and ASHA workers.
+   * If user has created pending requests, returns those; otherwise provides realistic demo requests.
+   */
+  static getPendingReviewRequests(): StoredRecord[] {
+    const records = this.getLocalRecords();
+    const userPending = records.filter(r => r.status === 'pending_review' || (!r.decision && (r.confirmed_species || r.remedy_name_local)));
+    if (userPending.length > 0) {
+      return userPending;
+    }
+    return DEMO_REVIEW_REQUESTS;
   }
 
   /**

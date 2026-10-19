@@ -15,7 +15,7 @@ plantRouter.post('/resolve', upload.single('image'), async (req, res) => {
     const observationId = req.body.observationId as string;
     const file = req.file;
 
-    const candidates = await PlantService.resolveCandidates(vernacularName, file?.buffer);
+    const candidates = await PlantService.resolveCandidates(vernacularName, !!file?.buffer);
 
     // If observationId exists, persist candidate rows
     if (observationId) {
