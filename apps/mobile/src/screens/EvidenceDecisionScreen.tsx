@@ -199,7 +199,7 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
         <div className="bg-gradient-to-br from-emerald-800 to-teal-900 rounded-3xl p-5 text-white shadow-md space-y-3">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-semibold text-emerald-200 border border-white/15">
-              🌾 Patient Safety Advisory
+              🌾 {t('patient_advisory_title')}
             </span>
             <AudioNarrator 
               textToNarrate={vernacularExplanation}
@@ -209,7 +209,7 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
           </div>
 
           <h1 className="text-xl font-extrabold text-white">
-            Safety Clearance Status
+            {t('decision_title')}
           </h1>
 
           <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 space-y-2">
@@ -274,7 +274,7 @@ export const EvidenceDecisionScreen: React.FC<EvidenceDecisionScreenProps> = ({
                 className="w-full py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Return to Home Dashboard</span>
+                <span>{t('return_home_btn')}</span>
               </button>
             )}
           </div>

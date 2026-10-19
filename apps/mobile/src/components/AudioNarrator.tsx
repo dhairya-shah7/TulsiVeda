@@ -168,12 +168,14 @@ export const AudioNarrator: React.FC<AudioNarratorProps> = ({
       {isSpeaking ? (
         <>
           <VolumeX className="w-4 h-4 text-amber-700 animate-spin" />
-          <span>{LocalizationService.t('stopAudio')}</span>
+          <span>{LocalizationService.t('stop_audio')}</span>
         </>
       ) : (
         <>
           <Volume2 className="w-4 h-4 text-emerald-700" />
-          <span>{label || LocalizationService.t('listenInNative')}</span>
+          {label !== '' && (
+            <span>{label || LocalizationService.t('listen_native')}</span>
+          )}
         </>
       )}
     </button>

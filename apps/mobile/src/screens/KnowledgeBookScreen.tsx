@@ -132,13 +132,14 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
       {activeCatalog === 'clinical_records' && (
         <div className="space-y-3.5">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
-            <span>Official Clinical Protocols ({filteredClinicalRecords.length} Conditions)</span>
-            <span className="text-emerald-700 font-bold">100% Offline Capable</span>
+            <span>{t('protocols_label')} ({filteredClinicalRecords.length})</span>
+            <span className="text-emerald-700 font-bold">{t('offline_ready')}</span>
           </div>
 
           {filteredClinicalRecords.map((item) => {
+            const localizedRec = NationalClinicalKnowledgeEngine.getLocalizedRecord(item, lang);
             const isSelected = activeRecord?.id === item.id;
-            const title = item.conditionName;
+            const title = localizedRec.conditionName;
 
             return (
               <div
@@ -151,7 +152,7 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
               >
                 {/* Header Card */}
                 <div
-                  onClick={() => setActiveRecord(isSelected ? null : item)}
+                  onClick={() => setActiveRecord(isSelected ? null : localizedRec)}
                   className="p-4 cursor-pointer flex items-start justify-between gap-3"
                 >
                   <div className="flex items-start gap-3">
@@ -179,7 +180,7 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
 
                   <div className="flex flex-col items-end gap-2">
                     <AudioNarrator 
-                      textToSpeak={`${title}. Jan Aushadhi generic: ${item.officialGeneric.medicineName}. Classical AYUSH remedy: ${item.ayushClassicalFormulation.formulationName}. Kitchen remedy: ${item.verifiedHomeRemedy.kitchenItem}.`}
+                      textToNarrate={`${title}. ${localizedRec.officialGeneric.medicineName}. ${localizedRec.ayushClassicalFormulation.formulationName}. ${localizedRec.verifiedHomeRemedy.kitchenItem}.`}
                       label=""
                       className="p-1.5"
                     />
@@ -254,8 +255,8 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
       {activeCatalog === 'botanical_plants' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
-            <span>Found {filteredPlants.length} Pharmacopeial Botanicals</span>
-            <span className="text-[11px] text-emerald-700 font-bold">100% Deterministic AYUSH Data</span>
+            <span>{t('medicinal_botanicals')} ({filteredPlants.length})</span>
+            <span className="text-[11px] text-emerald-700 font-bold">{t('offline_ready')}</span>
           </div>
 
           {filteredPlants.map((plant) => {

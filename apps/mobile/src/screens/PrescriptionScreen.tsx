@@ -318,9 +318,9 @@ export const PrescriptionScreen: React.FC<PrescriptionScreenProps> = ({ onNext }
             <button
               type="button"
               onClick={handleAddManualMedicine}
-              className="w-full py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs"
+              className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs"
             >
-              Add to Active Rx List
+              {t('add_rx_medicine_btn')}
             </button>
           </div>
         )}
@@ -329,8 +329,8 @@ export const PrescriptionScreen: React.FC<PrescriptionScreenProps> = ({ onNext }
         {medicines.length === 0 ? (
           <div className="text-center py-6 text-slate-400 space-y-1">
             <Pill className="w-8 h-8 mx-auto text-slate-300" />
-            <p className="text-xs font-bold text-slate-600">No Medicines Added Yet</p>
-            <p className="text-[11px] text-slate-400">Search above or upload a prescription slip to begin.</p>
+            <p className="text-xs font-bold text-slate-600">{t('no_cases_recorded')}</p>
+            <p className="text-[11px] text-slate-400">{t('step2_desc')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -375,7 +375,7 @@ export const PrescriptionScreen: React.FC<PrescriptionScreenProps> = ({ onNext }
           onClick={handleProceed}
           className="w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 transition-all"
         >
-          <span>Run Bio-Kinetic Clash Check</span>
+          <span>{t('run_clash_check')}</span>
         </button>
       )}
     </div>

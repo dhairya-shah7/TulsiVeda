@@ -130,10 +130,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-semibold text-emerald-200 border border-white/15">
             <span>
               {currentRole === 'doctor' 
-                ? '👨‍⚕️ Medical Officer Review Desk' 
+                ? `👨‍⚕️ ${t('doctor_desk')}` 
                 : currentRole === 'asha' 
-                  ? '🩺 ASHA Community Health Portal' 
-                  : (currentMode === 'village' ? '🌾 Village First • Audio Active' : '🏙️ Citizen Safety Portal')}
+                  ? `🩺 ${t('asha_portal')}` 
+                  : (currentMode === 'village' ? `🌾 ${t('village_mode_label')}` : `🏙️ ${t('citizen_portal')}`)}
             </span>
           </div>
           <AudioNarrator 
@@ -145,216 +145,211 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         <h1 className="text-2xl font-extrabold tracking-tight mt-2 text-white">
           {currentRole === 'doctor' 
-            ? 'Clinical Review Desk' 
+            ? t('doctor_desk') 
             : currentRole === 'asha' 
-              ? 'ASHA Health Post' 
+              ? t('asha_portal') 
               : t('welcome_title')}
         </h1>
         <p className="text-xs text-emerald-100/90 mt-1 font-medium leading-relaxed">
           {isCitizen 
-            ? 'Follow the 3 simple steps below to verify if your home remedy is safe with your medicine.' 
-            : 'Review citizen drug-herb interactions, verify causal graphs, and confirm safety decisions.'}
+            ? t('welcome_subtitle') 
+            : t('welcome_subtitle')}
         </p>
       </div>
 
       {/* ========================================================
-          ROLE 1: CITIZEN VIEW - 3-STEP GUIDED AUDIO / VISUAL FLOW
+          ROLE 1: CITIZEN VIEW - CLEAN, TOUCH-FRIENDLY ACTION CARDS
          ======================================================== */}
       {isCitizen && (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
               <span>{t('step_guide_heading')}</span>
             </h2>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               {t('guided_flow')}
             </span>
           </div>
 
           {/* STEP 1: RECORD BOTANICAL REMEDY */}
-          <div className={`p-4 rounded-3xl border transition-all ${
-            hasHerb 
-              ? 'bg-emerald-50/60 border-emerald-300' 
-              : 'bg-white border-slate-200 shadow-xs hover:border-emerald-500'
-          }`}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
-                  hasHerb ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
-                }`}>
-                  {hasHerb ? '✓' : '1'}
+          {hasHerb ? (
+            <div className="p-4 rounded-3xl bg-emerald-50/80 border-2 border-emerald-400 shadow-sm transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-base shrink-0 shadow-xs">
+                  ✓
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">
-                    {t('step1_title')}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">
+                      {t('step')} 1 • {t('added_label')}
+                    </span>
+                  </div>
+                  <h3 className="font-black text-sm text-emerald-950 mt-0.5">
+                    🌿 {activeDraft?.remedyNameLocal || activeDraft?.scientificName}
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                    {hasHerb 
-                      ? `${t('added_label')}: ${activeDraft?.remedyNameLocal || activeDraft?.scientificName}` 
-                      : t('step1_desc')}
-                  </p>
                 </div>
               </div>
-              <AudioNarrator 
-                textToNarrate={t('step1_desc')}
-                className="shrink-0"
-              />
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-slate-100">
-              {hasHerb ? (
-                <div className="flex items-center justify-between p-2.5 bg-emerald-100/70 rounded-2xl border border-emerald-300">
-                  <span className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
-                    🌿 {activeDraft?.remedyNameLocal || activeDraft?.scientificName}
-                  </span>
-                  <button 
-                    onClick={onStartRemedy}
-                    className="text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-xl bg-white shadow-xs"
-                  >
-                    {t('change_btn')}
-                  </button>
-                </div>
-              ) : (
-                <button
+              <div className="flex items-center gap-2">
+                <button 
                   onClick={onStartRemedy}
-                  className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-900 text-white shadow-md shadow-emerald-700/20 flex items-center justify-between transition-all active:scale-[0.98] group"
+                  className="text-xs font-bold text-emerald-900 hover:text-emerald-950 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 shadow-xs active:scale-95 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
-                      <Leaf className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <span className="block font-black text-sm text-white tracking-tight leading-snug">
-                        {t('speak_or_type_herb')}
-                      </span>
-                      <span className="block text-[11px] text-emerald-100 font-medium mt-0.5">
-                        {t('step1_desc')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
-                    <ChevronRight className="w-4 h-4 text-white" />
-                  </div>
+                  {t('change_btn')}
                 </button>
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              onClick={onStartRemedy}
+              className="p-4 rounded-3xl bg-white border-2 border-slate-200/90 hover:border-emerald-500 shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200/80 group-hover:scale-105 transition-transform">
+                    <Leaf className="w-6 h-6 text-emerald-700" />
+                  </div>
+                  <div className="text-left">
+                    <div className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 uppercase tracking-wider">
+                      <span>{t('step')} 1</span>
+                    </div>
+                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-800 transition-colors">
+                      {t('step1_title')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1">
+                      {t('speak_or_type_herb')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <AudioNarrator 
+                      textToNarrate={t('step1_desc')}
+                      className="p-2"
+                    />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition-all">
+                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* STEP 2: ADD MODERN PRESCRIPTION MEDICINE */}
-          <div className={`p-4 rounded-3xl border transition-all ${
-            hasMedicine 
-              ? 'bg-blue-50/60 border-blue-300' 
-              : 'bg-white border-slate-200 shadow-xs hover:border-blue-500'
-          }`}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
-                  hasMedicine ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {hasMedicine ? '✓' : '2'}
+          {hasMedicine ? (
+            <div className="p-4 rounded-3xl bg-blue-50/80 border-2 border-blue-400 shadow-sm transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-base shrink-0 shadow-xs">
+                  ✓
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">
-                    {t('step2_title')}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">
+                      {t('step')} 2 • {t('added_label')}
+                    </span>
+                  </div>
+                  <h3 className="font-black text-sm text-blue-950 mt-0.5">
+                    💊 {activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                    {hasMedicine 
-                      ? `${t('added_label')}: ${activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}` 
-                      : t('step2_desc')}
-                  </p>
                 </div>
               </div>
-              <AudioNarrator 
-                textToNarrate={t('step2_desc')}
-                className="shrink-0"
-              />
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-slate-100">
-              {hasMedicine ? (
-                <div className="flex items-center justify-between p-2.5 bg-blue-100/70 rounded-2xl border border-blue-300">
-                  <span className="text-xs font-black text-blue-900 flex items-center gap-1.5">
-                    💊 {activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}
-                  </span>
-                  <button 
-                    onClick={onStartPrescription}
-                    className="text-xs font-bold text-blue-800 hover:text-blue-950 px-2.5 py-1 rounded-xl bg-white shadow-xs"
-                  >
-                    {t('change_btn')}
-                  </button>
-                </div>
-              ) : (
-                <button
+              <div className="flex items-center gap-2">
+                <button 
                   onClick={onStartPrescription}
-                  className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white shadow-md shadow-blue-700/20 flex items-center justify-between transition-all active:scale-[0.98] group"
+                  className="text-xs font-bold text-blue-900 hover:text-blue-950 px-3 py-1.5 rounded-xl bg-white border border-blue-300 shadow-xs active:scale-95 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
-                      <ClipboardList className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <span className="block font-black text-sm text-white tracking-tight leading-snug">
-                        {t('add_rx_medicine_btn')}
-                      </span>
-                      <span className="block text-[11px] text-blue-100 font-medium mt-0.5">
-                        {t('step2_desc')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
-                    <ChevronRight className="w-4 h-4 text-white" />
-                  </div>
+                  {t('change_btn')}
                 </button>
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              onClick={onStartPrescription}
+              className="p-4 rounded-3xl bg-white border-2 border-slate-200/90 hover:border-blue-500 shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200/80 group-hover:scale-105 transition-transform">
+                    <Pill className="w-6 h-6 text-blue-700" />
+                  </div>
+                  <div className="text-left">
+                    <div className="inline-flex items-center gap-1 text-[10px] font-black text-blue-700 uppercase tracking-wider">
+                      <span>{t('step')} 2</span>
+                    </div>
+                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-blue-800 transition-colors">
+                      {t('step2_title')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1">
+                      {t('add_rx_medicine_btn')}
+                    </p>
+                  </div>
+                </div>
 
-          {/* STEP 3: SUBMIT FOR ASHA / DOCTOR REVIEW */}
-          <div className={`p-4 rounded-3xl border transition-all ${
-            readyToSubmit 
-              ? 'bg-amber-50/70 border-amber-300 shadow-sm' 
-              : 'bg-white border-slate-200'
-          }`}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 ${
-                  readyToSubmit ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'
-                }`}>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <AudioNarrator 
+                      textToNarrate={t('step2_desc')}
+                      className="p-2"
+                    />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-all">
+                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: RUN SAFETY AUDIT / REVIEW */}
+          {readyToSubmit ? (
+            <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/25 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-black text-xs text-white">
+                    3
+                  </span>
+                  <span className="font-black text-sm tracking-tight text-white">
+                    {t('step3_title')}
+                  </span>
+                </div>
+                <AudioNarrator 
+                  textToNarrate={t('step3_desc')}
+                  className="bg-white/20 text-white border-white/30"
+                />
+              </div>
+              <p className="text-xs text-amber-100 font-medium mb-3">
+                {t('step3_desc')}
+              </p>
+              <button
+                onClick={onSubmitReviewRequest}
+                className="w-full py-3.5 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-md flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span>{t('run_clash_check')}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-3xl bg-slate-50 border border-dashed border-slate-200 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-200/80 text-slate-500 flex items-center justify-center font-black text-sm shrink-0">
                   3
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">
+                  <h3 className="font-bold text-xs text-slate-600">
                     {t('step3_title')}
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                    {readyToSubmit 
-                      ? t('step3_desc') 
-                      : t('awaiting_details')}
+                  <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                    ⏳ {t('awaiting_details')}
                   </p>
                 </div>
               </div>
               <AudioNarrator 
-                textToNarrate={t('step3_desc')}
+                textToNarrate={t('awaiting_details')}
                 className="shrink-0"
               />
             </div>
-
-            <div className="mt-3 pt-2 border-t border-slate-100">
-              {readyToSubmit ? (
-                <button
-                  onClick={onSubmitReviewRequest}
-                  className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-98 animate-pulse"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>{t('send_for_review_btn')}</span>
-                </button>
-              ) : (
-                <div className="text-[11px] text-slate-400 font-medium text-center py-1">
-                  ⏳ {t('awaiting_details')}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -454,7 +449,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="font-extrabold text-sm text-slate-900">
-              {isCitizen ? 'My Submitted Reviews' : 'Recent Verified Cases'}
+              {isCitizen ? t('my_cases_heading') : t('recent_cases_heading')}
             </h2>
             <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               {recentRecords.length}
@@ -467,7 +462,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 onClick={handleClearAll}
                 className="text-[11px] font-semibold text-slate-400 hover:text-red-600 transition-colors"
               >
-                Clear
+                {t('clear_btn')}
               </button>
             )}
             <button
@@ -483,7 +478,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <div className="text-center py-4 px-3 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
             <p className="text-xs font-semibold text-slate-500">
               {isCitizen 
-                ? '🌿 Complete Step 1 & 2 above to check your first remedy safety.' 
+                ? `🌿 ${t('awaiting_details')}` 
                 : '🛡️ Incoming patient requests will appear here for clinical sign-off.'}
             </p>
           </div>
@@ -518,7 +513,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-slate-100 text-slate-700'
                   }`}>
-                    {rec.status === 'completed' ? 'Verified Safe' : rec.status === 'pending_review' ? 'In Review' : 'Draft'}
+                    {rec.status === 'completed' ? t('verified_safe') : rec.status === 'pending_review' ? t('in_review') : t('draft_label')}
                   </span>
                   <span className="text-[10px] text-slate-400 block mt-1">
                     {formatDate(rec.created_at)}

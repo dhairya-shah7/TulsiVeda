@@ -9,6 +9,7 @@ interface HeaderProps {
   onOpenProfile: () => void;
   onOpenNotifications: () => void;
   onOpenIvr: () => void;
+  onOpenLanguagePicker?: () => void;
   unreadAlertsCount?: number;
 }
 
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
   onOpenNotifications,
   onOpenIvr,
+  onOpenLanguagePicker,
   unreadAlertsCount = 0
 }) => {
   const currentLang = useCurrentLanguage();
@@ -67,14 +69,14 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="hidden sm:inline">1800 IVR</span>
         </button>
 
-        {/* Language selector chip */}
+        {/* 1-Tap Language selector chip */}
         <button
-          onClick={onOpenProfile}
-          className="flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold hover:bg-emerald-100 transition-colors"
-          title="Change native Indian language"
+          onClick={onOpenLanguagePicker || onOpenProfile}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-extrabold hover:bg-emerald-100 active:scale-95 transition-all shadow-2xs"
+          title="Change native Indian language (1-Tap)"
         >
           <Globe className="w-3.5 h-3.5 text-emerald-700" />
-          <span className="text-[11px] font-bold">{langObj.nativeName}</span>
+          <span className="text-xs font-black">{langObj.nativeName}</span>
         </button>
 
         {/* Notifications */}

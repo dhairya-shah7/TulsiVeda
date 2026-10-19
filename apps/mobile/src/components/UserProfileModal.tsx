@@ -91,24 +91,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           {/* Identity Info */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Personal Information
+              {t('personal_info_heading')}
             </h3>
             <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1">Full Name / नागरिक का नाम</label>
+              <label className="text-xs font-medium text-slate-700 block mb-1">{t('full_name_label')}</label>
               <div className="relative">
                 <input 
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 text-sm font-medium"
-                  placeholder="Enter name..."
+                  placeholder="Name / નામ / ಹೆಸರು..."
                 />
                 <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1">Location / District / राज्य व जिला</label>
+              <label className="text-xs font-medium text-slate-700 block mb-1">{t('location_district_label')}</label>
               <div className="relative">
                 <input 
                   type="text"
@@ -126,18 +126,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Operating Role / भूमिका
+                {t('operating_role_label')}
               </h3>
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold uppercase">
-                Active: {currentRole}
+                {currentRole}
               </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'citizen', label: 'Citizen', sub: 'Patient / नागरिक', icon: User, color: 'border-blue-500 bg-blue-50/50 text-blue-900' },
-                { id: 'asha', label: 'ASHA Worker', sub: 'Field / संगिनी', icon: HeartHandshake, color: 'border-emerald-500 bg-emerald-50/50 text-emerald-900' },
-                { id: 'doctor', label: 'Doctor', sub: 'Clinician / चिकित्सक', icon: Stethoscope, color: 'border-purple-500 bg-purple-50/50 text-purple-900' }
+                { id: 'citizen', label: t('citizen_portal').split(' ')[0] || 'Citizen', sub: t('citizen_portal'), icon: User, color: 'border-blue-500 bg-blue-50/50 text-blue-900' },
+                { id: 'asha', label: 'ASHA', sub: t('asha_portal'), icon: HeartHandshake, color: 'border-emerald-500 bg-emerald-50/50 text-emerald-900' },
+                { id: 'doctor', label: 'Doctor', sub: t('doctor_desk'), icon: Stethoscope, color: 'border-purple-500 bg-purple-50/50 text-purple-900' }
               ].map(role => {
                 const Icon = role.icon;
                 const isSelected = currentRole === role.id;
@@ -158,7 +158,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       <Icon className={`w-4 h-4 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
                       <span className="font-bold text-xs">{role.label}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium leading-tight">{role.sub}</p>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight truncate">{role.sub}</p>
                     {isSelected && (
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 absolute top-2 right-2" />
                     )}
@@ -171,7 +171,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           {/* Operating Context Switcher (Village vs City) */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Ecosystem Interface Mode
+              {t('ecosystem_mode_heading')}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -220,7 +220,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Pan-India Language ({SUPPORTED_LANGUAGES.length} Languages)
+                {t('pan_india_lang_heading')} ({SUPPORTED_LANGUAGES.length})
               </h3>
               <Globe className="w-4 h-4 text-emerald-600" />
             </div>
@@ -260,7 +260,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             className="text-xs text-slate-500 hover:text-red-600 font-medium flex items-center gap-1.5 px-3 py-2"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Reset Data
+            {t('clear_btn')}
           </button>
 
           <button
@@ -270,10 +270,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             {savedSuccess ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                Saved Successfully!
+                ✓
               </>
             ) : (
-              'Save & Apply'
+              t('save_profile_btn')
             )}
           </button>
         </div>

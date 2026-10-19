@@ -11,6 +11,7 @@ import { KnowledgeBookScreen } from './screens/KnowledgeBookScreen.tsx';
 import { AlternativeMedicineScreen } from './screens/AlternativeMedicineScreen.tsx';
 import { LanguageOnboardingScreen } from './screens/LanguageOnboardingScreen.tsx';
 import { UserProfileModal } from './components/UserProfileModal.tsx';
+import { LanguageSelectorModal } from './components/LanguageSelectorModal.tsx';
 import { NotificationModal } from './components/NotificationModal.tsx';
 import { IvrHotlineModal } from './components/IvrHotlineModal.tsx';
 import { StorageService, StoredRecord } from './services/storageService.ts';
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
 
   // Modals state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isIvrOpen, setIsIvrOpen] = useState(false);
 
@@ -217,6 +219,7 @@ export const App: React.FC = () => {
         currentScreen={currentScreen}
         onBack={() => setCurrentScreen('home')}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenLanguagePicker={() => setIsLanguagePickerOpen(true)}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenIvr={() => setIsIvrOpen(true)}
       />
@@ -329,6 +332,11 @@ export const App: React.FC = () => {
         currentMode={envMode}
         onModeChange={setEnvMode}
         onLanguageChange={(newLang) => setStoredLanguage(newLang)}
+      />
+
+      <LanguageSelectorModal
+        isOpen={isLanguagePickerOpen}
+        onClose={() => setIsLanguagePickerOpen(false)}
       />
 
       <NotificationModal
