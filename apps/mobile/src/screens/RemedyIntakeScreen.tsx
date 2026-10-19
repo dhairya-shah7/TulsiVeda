@@ -4,7 +4,7 @@ import { AudioWaveform } from '../components/AudioWaveform.tsx';
 import { BOTANICAL_DATABASE } from '../services/botanicalDatabase.ts';
 import { AudioNarrator } from '../components/AudioNarrator.tsx';
 import { LLMService } from '../services/llmService.ts';
-import { t, getStoredLanguage, useCurrentLanguage, SUPPORTED_LANGUAGES, LanguageMeta } from '../services/localizationService.ts';
+import { t, getStoredLanguage, useCurrentLanguage, SUPPORTED_LANGUAGES, LanguageMeta, LocalizationService } from '../services/localizationService.ts';
 
 interface RemedyIntakeScreenProps {
   onNext: (data: {
@@ -137,6 +137,7 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
       setLanguage(currentMeta.name);
     }
   }, [activeLang, currentMeta]);
+
   const [showTypeInstead, setShowTypeInstead] = useState(false);
   const [typedNotes, setTypedNotes] = useState(initialData?.transcript || '');
   
@@ -146,9 +147,20 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
   const [placeRegion, setPlaceRegion] = useState(initialData?.placeRegion || 'India');
 
   const [audioBlob, setAudioBlob] = useState<Blob | undefined>(undefined);
+  const [hasRecordedAudio, setHasRecordedAudio] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [capturedTranscript, setCapturedTranscript] = useState<string>(initialData?.transcript || '');
   const [llmSignature, setLlmSignature] = useState<string>('BioMistral-7B Clinical Entity Extraction Active');
+
+  const handleLanguageChange = (selectedName: string) => {
+    setLanguage(selectedName);
+    const meta = SUPPORTED_LANGUAGES.find(
+      (l) => l.name.toLowerCase() === selectedName.toLowerCase() || l.code.toLowerCase() === selectedName.toLowerCase()
+    );
+    if (meta) {
+      LocalizationService.setLanguage(meta.code);
+    }
+  };
 
   // Extract botanical entities and clinical condition using BioMistral-7B NER engine
   const parseEntities = (text: string) => {
@@ -209,35 +221,42 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
 
   const handleRecordingComplete = async (blob: Blob, liveTranscript?: string) => {
     setAudioBlob(blob);
+    setHasRecordedAudio(true);
     setIsProcessingAudio(true);
 
-    const spokenText = liveTranscript || '';
+    const spokenText = (liveTranscript || '').trim();
     if (spokenText) {
       setCapturedTranscript(spokenText);
       setTypedNotes(spokenText);
       setShowTypeInstead(true);
       parseEntities(spokenText);
+    } else {
+      // In Android WebView, if speech-to-text IPC is unavailable, don't leave user stranded
+      // Automatically show guided selection and manual input so the user can proceed with 1 tap!
+      setShowTypeInstead(true);
     }
 
     try {
-      const formData = new FormData();
-      formData.append('audio', blob, 'field_recording.webm');
-      formData.append('language', language);
-      if (spokenText) {
-        formData.append('transcript', spokenText);
-      }
+      if (typeof window !== 'undefined' && window.location.protocol.startsWith('http') && window.location.hostname !== 'localhost') {
+        const formData = new FormData();
+        formData.append('audio', blob, 'field_recording.webm');
+        formData.append('language', language);
+        if (spokenText) {
+          formData.append('transcript', spokenText);
+        }
 
-      const res = await fetch('/api/remedies/voice', {
-        method: 'POST',
-        body: formData,
-      });
+        const res = await fetch('/api/remedies/voice', {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.transcript && !spokenText) {
-          setCapturedTranscript(data.transcript);
-          setTypedNotes(data.transcript);
-          parseEntities(data.transcript);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.transcript && !spokenText) {
+            setCapturedTranscript(data.transcript);
+            setTypedNotes(data.transcript);
+            parseEntities(data.transcript);
+          }
         }
       }
     } catch (err) {
@@ -285,35 +304,71 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
           </label>
           <div className="relative">
             <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              value={currentMeta?.name || language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
               className="w-full appearance-none px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer pr-8"
             >
-              <option value="Hindi">Hindi (हिन्दी)</option>
-              <option value="Gujarati">Gujarati (ગુજરાતી)</option>
-              <option value="Marathi">Marathi (मराठी)</option>
-              <option value="Tamil">Tamil (தமிழ்)</option>
-              <option value="Telugu">Telugu (తెలుగు)</option>
-              <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
-              <option value="Malayalam">Malayalam (മലയാളം)</option>
-              <option value="Bengali">Bengali (বাংলা)</option>
-              <option value="Punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
-              <option value="Odia">Odia (ଓଡ଼ିଆ)</option>
-              <option value="Assamese">Assamese (অসমীয়া)</option>
-              <option value="English">Indian English</option>
+              {SUPPORTED_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.name}>
+                  {l.name} ({l.nativeName})
+                </option>
+              ))}
             </select>
             <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
           </div>
         </div>
       </div>
 
-      {/* Audio Waveform & Big Circular Record Button (Zero Preset Chips) */}
+      {/* Audio Waveform & Big Circular Record Button */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-4">
         <AudioWaveform
           onRecordingComplete={handleRecordingComplete}
-          language={language}
+          language={activeLang || language}
           isProcessing={isProcessingAudio}
         />
+
+        {/* Post-recording Guidance Banner if audio was captured without speech text */}
+        {hasRecordedAudio && !remedyNameLocal && (
+          <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl text-xs text-amber-950 space-y-1.5 animate-in fade-in">
+            <div className="flex items-center gap-2 font-bold text-amber-900">
+              <Mic className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+              <span>
+                {activeLang === 'gu'
+                  ? '🎙️ અવાજ સફળતાપૂર્વક રેકોર્ડ થયો! નીચેથી ઔષધિ પસંદ કરો અથવા નામ લખો:'
+                  : activeLang === 'pa'
+                  ? '🎙️ ਆਵਾਜ਼ ਰਿਕਾਰਡ ਹੋ ਗਈ! ਹੇਠਾਂ ਦਿੱਤੀਆਂ ਜੜੀ-ਬੂਟੀਆਂ ਵਿੱਚੋਂ ਚੁਣੋ ਜਾਂ ਨਾਮ ਲਿਖੋ:'
+                  : activeLang === 'hi'
+                  ? '🎙️ आवाज रिकॉर्ड हो गई! नीचे दी गई जड़ी-बूटी चुनें या 1 शब्द लिखें:'
+                  : activeLang === 'mr'
+                  ? '🎙️ आवाज रेकॉर्ड झाला! खालील वनस्पती निवडा किंवा नाव टाईप करा:'
+                  : activeLang === 'ta'
+                  ? '🎙️ குரல் பதிவானது! மூலிகையைத் தேர்ந்தெடுக்கவும் அல்லது தட்டச்சு செய்யவும்:'
+                  : activeLang === 'te'
+                  ? '🎙️ వాయిస్ రికార్డ్ చేయబడింది! క్రింద మూలికను ఎంచుకోండి లేదా టైప్ చేయండి:'
+                  : activeLang === 'kn'
+                  ? '🎙️ ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಆಗಿದೆ! ಕೆಳಗಿನ ಮೂಲಿಕೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ:'
+                  : activeLang === 'ml'
+                  ? '🎙️ ശബ്ദം റെക്കോർഡ് ചെയ്തു! താഴെയുള്ള ഔഷധസസ്യം തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക:'
+                  : activeLang === 'bn'
+                  ? '🎙️ ভয়েস রেকর্ড হয়েছে! নিচের ভেষজ নির্বাচন করুন বা নাম টাইপ করুন:'
+                  : activeLang === 'or'
+                  ? '🎙️ ସ୍ୱର ରେକର୍ଡ ହୋଇଛି! ତଳେ ଔଷଧୀୟ ଉଦ୍ଭିଦ ବାଛନ୍ତୁ କିମ୍ବା ଟାଇପ କରନ୍ତୁ:'
+                  : activeLang === 'as'
+                  ? '🎙️ কণ্ঠস্বৰ ৰেকৰ্ড হৈছে! তলৰ ঔষধি নিৰ্বাচন কৰক বা নাম লিখক:'
+                  : '🎙️ Voice audio captured! Tap your remedy below or type a word:'}
+              </span>
+            </div>
+            <p className="text-[11px] text-amber-800">
+              {activeLang === 'gu'
+                ? 'તમે બોલેલ દેશી વનસ્પતિ (જેમ કે તુલસી, ગળો, હળદર) પર 1-ટૅપ કરો:'
+                : activeLang === 'pa'
+                ? 'ਤੁਹਾਡੀ ਬੋਲੀ ਗਈ ਜੜੀ-ਬੂਟੀ (ਜਿਵੇਂ ਤੁਲਸੀ, ਗਿਲੋਏ, ਹਲਦੀ) \'ਤੇ 1-ਟੈਪ ਕਰੋ:'
+                : activeLang === 'hi'
+                ? 'अपनी बोली गई जड़ी-बूटी (जैसे तुलसी, गिलोय, हल्दी) पर 1-टैપ करें:'
+                : '1-tap your spoken botanical (e.g. Tulsi, Giloy, Haldi):'}
+            </p>
+          </div>
+        )}
 
         {/* Live Extraction Confirmation Badge & Open-Weight LLM Telemetry */}
         {(remedyNameLocal || usedForCondition) && (
@@ -342,12 +397,39 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
         )}
 
         {/* 1-Tap Fast Botanical Selector in Active Vernacular Language */}
-        <div className="pt-2">
+        <div className={`pt-2 rounded-2xl p-2.5 transition-all ${hasRecordedAudio && !remedyNameLocal ? 'bg-emerald-50/60 ring-2 ring-emerald-500 shadow-sm' : ''}`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-700">
-              {activeLang === 'pa' ? 'ਜਾਂ ਤੁਰੰਤ ਜੜੀ-ਬੂਟੀ ਚੁਣੋ' : activeLang === 'hi' ? 'या तुरंत पारंपरिक जड़ी-बूटी चुनें' : activeLang === 'gu' ? 'અથવા ઝડપથી ઔષધિ પસંદ કરો' : 'Or Select Common Botanical'}
+            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>
+                {activeLang === 'gu'
+                  ? 'ઝડપથી ઔષધિ પસંદ કરો (1-ટૅપ)'
+                  : activeLang === 'pa'
+                  ? 'ਜਾਂ ਤੁਰੰਤ ਜੜੀ-ਬੂਟੀ ਚੁਣੋ (1-ਟੈਪ)'
+                  : activeLang === 'hi'
+                  ? 'या तुरंत पारंपरिक जड़ी-बूटी चुनें (1-टैप)'
+                  : activeLang === 'mr'
+                  ? 'किंवा पटकन वनस्पती निवडा (1-टॅप)'
+                  : activeLang === 'ta'
+                  ? 'அல்லது மூலிகையைத் தேர்ந்தெடுக்கவும் (1-தட்டு)'
+                  : activeLang === 'te'
+                  ? 'లేదా మూలికను ఎంచుకోండి (1-ట్యాప్)'
+                  : activeLang === 'kn'
+                  ? 'ಅಥವಾ ಮೂಲಿಕೆಯನ್ನು ಆರಿಸಿ (1-ಟ್ಯಾಪ್)'
+                  : activeLang === 'ml'
+                  ? 'അല്ലെങ്കിൽ ഔഷധസസ്യം തിരഞ്ഞെടുക്കുക'
+                  : activeLang === 'bn'
+                  ? 'বা দ্রুত ভেষজ নির্বাচন করুন'
+                  : activeLang === 'or'
+                  ? 'କିମ୍ବା ଔଷଧୀୟ ଉଦ୍ଭିଦ ବାଛନ୍ତୁ'
+                  : activeLang === 'as'
+                  ? 'বা ঔষধীয় উদ্ভিদ বাছক'
+                  : 'Or Select Common Botanical (1-Tap)'}
+              </span>
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">1-Tap Fast Intake</span>
+            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+              Instant NER
+            </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {(VERNACULAR_HERBS[activeLang || 'en'] || VERNACULAR_HERBS.en).map((herb, idx) => (
@@ -355,7 +437,11 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
                 key={idx}
                 type="button"
                 onClick={() => handleSelectHerbFast(herb)}
-                className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all active:scale-95 group"
+                className={`p-2.5 rounded-xl border text-left transition-all active:scale-95 group ${
+                  remedyNameLocal.includes(herb.scientific) || remedyNameLocal.includes(herb.name.split('(')[0].trim())
+                    ? 'border-emerald-600 bg-emerald-100/90 ring-2 ring-emerald-500 shadow-sm'
+                    : 'border-slate-200 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50'
+                }`}
               >
                 <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 line-clamp-1">
                   🌿 {herb.name}
@@ -387,6 +473,7 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
           </button>
         </div>
       </div>
+
 
       {/* Manual Input Fields (When toggled or populated) */}
       {showTypeInstead && (

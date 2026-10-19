@@ -137,10 +137,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             </span>
           </div>
           <AudioNarrator 
-            textToNarrate={isCitizen 
-              ? "Welcome to Tulsi Veda. Step 1: Speak or enter your herbal remedy. Step 2: Add your prescription medicine. Step 3: Send it for review to your local ASHA worker or doctor."
-              : "Clinical review desk. Inspect incoming review requests submitted by patients and confirm safety using the Bio-Kinetic Causal Engine."
-            }
+            textToNarrate={t('narrate_dashboard')}
             label={t('listen_native')}
             className="bg-white/15 border-white/20 text-white"
           />
@@ -204,15 +201,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               />
             </div>
 
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="mt-3 pt-2 border-t border-slate-100">
               {hasHerb ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-800">
+                <div className="flex items-center justify-between p-2.5 bg-emerald-100/70 rounded-2xl border border-emerald-300">
+                  <span className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
                     🌿 {activeDraft?.remedyNameLocal || activeDraft?.scientificName}
                   </span>
                   <button 
                     onClick={onStartRemedy}
-                    className="text-[11px] font-bold text-slate-500 hover:text-emerald-700 underline"
+                    className="text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-xl bg-white shadow-xs"
                   >
                     {t('change_btn')}
                   </button>
@@ -220,11 +217,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ) : (
                 <button
                   onClick={onStartRemedy}
-                  className="w-full py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+                  className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-900 text-white shadow-md shadow-emerald-700/20 flex items-center justify-between transition-all active:scale-[0.98] group"
                 >
-                  <Leaf className="w-4 h-4" />
-                  <span>{t('speak_or_type_herb')}</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
+                      <Leaf className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-black text-sm text-white tracking-tight leading-snug">
+                        {t('speak_or_type_herb')}
+                      </span>
+                      <span className="block text-[11px] text-emerald-100 font-medium mt-0.5">
+                        {t('step1_desc')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </div>
                 </button>
               )}
             </div>
@@ -260,15 +270,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               />
             </div>
 
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="mt-3 pt-2 border-t border-slate-100">
               {hasMedicine ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-blue-800">
+                <div className="flex items-center justify-between p-2.5 bg-blue-100/70 rounded-2xl border border-blue-300">
+                  <span className="text-xs font-black text-blue-900 flex items-center gap-1.5">
                     💊 {activeDraft?.confirmedMedicine?.brandName || activeDraft?.confirmedMedicine?.genericName}
                   </span>
                   <button 
                     onClick={onStartPrescription}
-                    className="text-[11px] font-bold text-slate-500 hover:text-blue-700 underline"
+                    className="text-xs font-bold text-blue-800 hover:text-blue-950 px-2.5 py-1 rounded-xl bg-white shadow-xs"
                   >
                     {t('change_btn')}
                   </button>
@@ -276,11 +286,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ) : (
                 <button
                   onClick={onStartPrescription}
-                  className="w-full py-2.5 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+                  className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white shadow-md shadow-blue-700/20 flex items-center justify-between transition-all active:scale-[0.98] group"
                 >
-                  <ClipboardList className="w-4 h-4" />
-                  <span>{t('add_rx_medicine_btn')}</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
+                      <ClipboardList className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-black text-sm text-white tracking-tight leading-snug">
+                        {t('add_rx_medicine_btn')}
+                      </span>
+                      <span className="block text-[11px] text-blue-100 font-medium mt-0.5">
+                        {t('step2_desc')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </div>
                 </button>
               )}
             </div>

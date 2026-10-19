@@ -14,12 +14,25 @@ interface LanguageOnboardingScreenProps {
 export const LanguageOnboardingScreen: React.FC<LanguageOnboardingScreenProps> = ({ onComplete }) => {
   const [selectedLang, setSelectedLang] = useState<SupportedLanguage>('hi');
 
+  const WELCOME_GREETINGS: Record<SupportedLanguage, string> = {
+    hi: 'तुलसीवेद एआई में आपका स्वागत है। आपने हिन्दी भाषा चुनी है।',
+    gu: 'તુલસીવેદ એઆઈમાં આપનું સ્વાગત છે. આપે ગુજરાતી ભાષા પસંદ કરી છે.',
+    pa: 'ਤੁਲਸੀਵੇਦ ਏਆਈ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਤੁਸੀਂ ਪੰਜਾਬੀ ਭਾਸ਼ਾ ਚੁਣੀ ਹੈ।',
+    mr: 'तुलसीवेद एआय मध्ये आपले स्वागत आहे. आपण मराठी भाषा निवडली आहे.',
+    ta: 'துளசிவேத் AI-க்கு உங்களை வரவேற்கிறோம். நீங்கள் தமிழ் மொழியைத் தேர்ந்தெடுத்துள்ளீர்கள்.',
+    te: 'తులసివేద్ AI కి స్వాగతం. మీరు తెలుగు భాషను ఎంచుకున్నారు.',
+    kn: 'ತುಳಸಿವೇದ್ AI ಗೆ ಸುಸ್ವಾಗತ. ನೀವು ಕನ್ನಡ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    ml: 'തുളസിവേദ് AI-ലേക്ക് സ്വാഗതം. നിങ്ങൾ മലയാളം തിരഞ്ഞെടുത്തു.',
+    bn: 'তুলসীবেদ এআই-তে আপনাকে স্বাগতম। আপনি বাংলা ভাষা বেছে নিয়েছেন।',
+    or: 'ତୁଳସୀବେଦ AI କୁ ସ୍ୱାଗତ। ଆପଣ ଓଡ଼ିଆ ଭାଷା ବାଛିଛନ୍ତି।',
+    as: 'তুলসীবেদ এআইলৈ স্বাগতম। আপুনি অসমীয়া ভাষা বাছি লৈছে।',
+    en: 'Welcome to TulsiVeda AI. You have selected Indian English.',
+  };
+
   const handleSelect = (code: SupportedLanguage) => {
     setSelectedLang(code);
-    const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
-    if (lang) {
-      playNativeTTS(`तुलसीवेद एआई में आपका स्वागत है। आपने ${lang.nativeName} भाषा चुनी है।`, code);
-    }
+    const greeting = WELCOME_GREETINGS[code] || WELCOME_GREETINGS.hi;
+    playNativeTTS(greeting, code);
   };
 
   const handleContinue = () => {

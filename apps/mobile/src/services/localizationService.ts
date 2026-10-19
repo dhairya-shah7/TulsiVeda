@@ -1716,6 +1716,10 @@ export class LocalizationService {
     return this.currentLang;
   }
 
+  public static getCurrentLanguage(): SupportedLanguage {
+    return this.getLanguage();
+  }
+
   public static t(key: string): string {
     const lang = this.getLanguage();
 
