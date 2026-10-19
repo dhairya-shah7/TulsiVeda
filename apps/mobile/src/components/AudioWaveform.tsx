@@ -217,15 +217,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
 
-        let finalTranscript = liveTranscriptRef.current.trim();
-        const activeLangKey = (LANG_BCP47[language] || 'hi-IN').split('-')[0];
-        const activePrompts = QUICK_CLINICAL_PROMPTS[activeLangKey] || QUICK_CLINICAL_PROMPTS.hi;
-
-        // On mobile WebViews where WebSpeech is disabled, fallback intelligently to vernacular clinical transcription for the active language
-        if (!finalTranscript) {
-          finalTranscript = activePrompts[0]?.text || 'Tulsi decoction taken for dry cough and cold';
-        }
-
+        const finalTranscript = liveTranscriptRef.current.trim();
         liveTranscriptRef.current = finalTranscript;
         setLiveTranscript(finalTranscript);
         setErrorMsg(null);
@@ -268,16 +260,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       } catch (e) {}
     }
 
-    const activeLangKey = (LANG_BCP47[language] || 'hi-IN').split('-')[0];
-    const activePrompts = QUICK_CLINICAL_PROMPTS[activeLangKey] || QUICK_CLINICAL_PROMPTS.hi;
-
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
     } else {
-      let finalTranscript = liveTranscriptRef.current.trim();
-      if (!finalTranscript) {
-        finalTranscript = activePrompts[0]?.text || 'Tulsi decoction taken for dry cough and cold';
-      }
+      const finalTranscript = liveTranscriptRef.current.trim();
       liveTranscriptRef.current = finalTranscript;
       setLiveTranscript(finalTranscript);
       setErrorMsg(null);

@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
   onOpenNotifications,
   onOpenIvr,
-  unreadAlertsCount = 2
+  unreadAlertsCount = 0
 }) => {
   const currentLang = useCurrentLanguage();
   const langObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_LANGUAGES[0];

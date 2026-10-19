@@ -158,25 +158,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             ? 'Follow the 3 simple steps below to verify if your home remedy is safe with your medicine.' 
             : 'Review citizen drug-herb interactions, verify causal graphs, and confirm safety decisions.'}
         </p>
-
-        {/* Feature Phone IVR Callout banner for Rural/Keypad Users */}
-        <div className="mt-4 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
-              <PhoneCall className="w-4 h-4 animate-bounce" />
-            </div>
-            <div>
-              <span className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider block">Keypad Phone Hotline</span>
-              <span className="text-xs font-black text-white">1800-TULSIVEDA (Toll Free)</span>
-            </div>
-          </div>
-          <button
-            onClick={onOpenIvr}
-            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[11px] shadow-sm transition-all"
-          >
-            Launch Call
-          </button>
-        </div>
       </div>
 
       {/* ========================================================
@@ -443,60 +424,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
       )}
 
-      {/* Helpful Botanical & Alternative Tools */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between px-1 mb-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {t('clinical_references_title')}
-          </h2>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* Action 1: Veda Pustak (Knowledge Book) */}
-          <div 
-            onClick={onOpenKnowledge}
-            className="bg-white p-3.5 rounded-3xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-xs cursor-pointer transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
-                <BookOpen className="w-4 h-4 text-emerald-700" />
-              </div>
-              <h3 className="font-bold text-xs text-slate-900">
-                {t('nav_knowledge')}
-              </h3>
-              <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
-                {t('verified_ayurvedic_sub')}
-              </p>
-            </div>
-            <div className="mt-3 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-emerald-700">
-              <span>{t('open_pustak')}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          {/* Action 2: Alternative Medicine Resolver */}
-          <div 
-            onClick={onOpenAlternatives}
-            className="bg-white p-3.5 rounded-3xl border border-slate-200/90 hover:border-teal-500 hover:shadow-xs cursor-pointer transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center mb-2">
-                <Pill className="w-4 h-4 text-teal-700" />
-              </div>
-              <h3 className="font-bold text-xs text-slate-900">
-                {t('nav_alternatives')}
-              </h3>
-              <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
-                {t('jan_aushadhi_sub')}
-              </p>
-            </div>
-            <div className="mt-3 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-teal-700">
-              <span>{t('find_substitutes')}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* History & Case Log Feed */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3">
@@ -529,13 +457,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
 
         {recentRecords.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 space-y-1">
-            <ClipboardList className="w-7 h-7 mx-auto text-slate-300" />
-            <p className="text-xs font-bold text-slate-600">No Cases Recorded Yet</p>
-            <p className="text-[11px] text-slate-400">
+          <div className="text-center py-4 px-3 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
+            <p className="text-xs font-semibold text-slate-500">
               {isCitizen 
-                ? 'Follow Step 1, 2, and 3 above to submit your first safety check.' 
-                : 'Verified cases will be archived in the National Clinical Audit Ledger.'}
+                ? '🌿 Complete Step 1 & 2 above to check your first remedy safety.' 
+                : '🛡️ Incoming patient requests will appear here for clinical sign-off.'}
             </p>
           </div>
         ) : (
