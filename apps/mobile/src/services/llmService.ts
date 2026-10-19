@@ -115,7 +115,7 @@ export class LLMService {
     // BioMistral-7B clinical named-entity recognition dictionary
     const HERB_MAP: { patterns: RegExp[]; name: string; scientific: string; defaultPart: string; defaultPrep: string }[] = [
       {
-        patterns: [/ਤੁਲਸੀ|तुलसी|તુલસી|துளசி|తులసి|ತುಳಸಿ|തുളസി|তুলসী|ତୁଳସୀ|tulsi|holy basil|ocimum/i],
+        patterns: [/ਤੁਲਸੀ|तुलसी|તુલસી|तुळस|तुळशी|துளசி|తులసి|ತುಳಸಿ|തുളസി|তুলসী|ତୁଳସୀ|tulsi|holy basil|ocimum/i],
         name: 'Tulsi (Holy Basil)',
         scientific: 'Ocimum tenuiflorum',
         defaultPart: 'Leaves',
@@ -207,7 +207,7 @@ export class LLMService {
     let detectedCondition = '';
     if (/ਜੋੜਾਂ|ਦਰਦ|जोड़ों|दर्द|સાંધા|દુખાવો|மூட்டு|வலி|కీళ్ల|ನೋವು|സന്ധി|വേദന|বাতের|ব্যথা|joint|pain|arthritis|swelling|सूजन/i.test(text)) {
       detectedCondition = 'Joint Pain & Arthritis Inflammation';
-    } else if (/ਖੰਘ|ਜ਼ੁਕਾਮ|खांसी|जुकाम|ખાંસી|શરદી|சளி|இருமல்|దగ్గు|జలుబు|ಕೆಮ್ಮು|ചുമ|কাশি|সর্দি|cough|cold|bronchitis/i.test(text)) {
+    } else if (/ਖੰਘ|ਜ਼ੁਕਾਮ|खांसी|जुकाम|ખાંસી|શરદી|खोकला|सर्दी|कफ|சளி|இருமல்|దగ్గు|జలుబు|ಕೆಮ್ಮು|ಚുമ|কাশি|সর্দি|cough|cold|bronchitis/i.test(text)) {
       detectedCondition = 'Upper Respiratory Tract Infection / Cough';
     } else if (/ਬੁਖ਼ਾਰ|बुखार|તાવ|காய்ச்சல்|జ్వరం|ಜ್ವರ|പനി|জ্বর|fever|pyrexia/i.test(text)) {
       detectedCondition = 'Acute Febrile Illness / Viral Fever';
