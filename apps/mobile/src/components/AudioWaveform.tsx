@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Play, Pause, AlertCircle, Sparkles } from 'lucide-react';
+import { Capacitor, PluginListenerHandle } from '@capacitor/core';
+import { SpeechRecognition as CapSpeechRecognition } from '@capacitor-community/speech-recognition';
 import { t } from '../services/localizationService.ts';
 
 const QUICK_CLINICAL_PROMPTS: Record<string, { label: string; text: string }[]> = {
@@ -105,6 +107,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<number | null>(null);
   const recognitionRef = useRef<any>(null);
+  const capListenerRef = useRef<PluginListenerHandle | null>(null);
 
   const canvasLeftRef = useRef<HTMLCanvasElement | null>(null);
   const canvasRightRef = useRef<HTMLCanvasElement | null>(null);
@@ -145,36 +148,95 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     setLiveTranscript('');
     liveTranscriptRef.current = '';
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
+    const bcp47 = LANG_BCP47[language] || 'gu-IN';
+
+    // 1. Android Native SpeechRecognizer execution via Capacitor
+    if (Capacitor.isNativePlatform()) {
       try {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        
-        recognition.lang = LANG_BCP47[language] || 'en-IN';
+        const perm = await CapSpeechRecognition.checkPermissions();
+        if (perm.speechRecognition !== 'granted') {
+          await CapSpeechRecognition.requestPermissions();
+        }
 
-        recognition.onresult = (event: any) => {
-          let text = '';
-          for (let i = 0; i < event.results.length; i++) {
-            text += event.results[i][0].transcript;
+        const avail = await CapSpeechRecognition.available();
+        if (avail.available) {
+          if (capListenerRef.current) {
+            await capListenerRef.current.remove();
+            capListenerRef.current = null;
           }
-          if (text) {
-            liveTranscriptRef.current = text;
-            setLiveTranscript(text);
-          }
-        };
 
-        recognition.onerror = (e: any) => {
-          // In Android WebView, speech recognition IPC is not exposed by default, emitting 'no-speech' or 'not-allowed'.
-          // We silently catch this without alerting or blocking the user since MediaRecorder and BioMistral-7B extract cleanly.
-          console.debug('[SpeechRecognition] Event:', e.error);
-        };
+          capListenerRef.current = await CapSpeechRecognition.addListener('partialResults', (data: { matches: string[] }) => {
+            if (data.matches && data.matches.length > 0) {
+              const text = data.matches[0];
+              liveTranscriptRef.current = text;
+              setLiveTranscript(text);
+            }
+          });
 
-        recognition.start();
-        recognitionRef.current = recognition;
-      } catch (e) {
-        console.debug('[SpeechRecognition] Init bypassed:', e);
+          CapSpeechRecognition.start({
+            language: bcp47,
+            maxResults: 5,
+            prompt: `તમારો રોગ કે ઔષધિ બોલો (${language})...`,
+            partialResults: true,
+            popup: false,
+          }).then((res) => {
+            if (res?.matches && res.matches.length > 0) {
+              const text = res.matches[0];
+              liveTranscriptRef.current = text;
+              setLiveTranscript(text);
+            }
+          }).catch(async (err) => {
+            console.warn('[Native Speech Recognizer] Retrying with popup:', err);
+            try {
+              const res2 = await CapSpeechRecognition.start({
+                language: bcp47,
+                maxResults: 5,
+                prompt: `Speak in ${language}...`,
+                popup: true,
+              });
+              if (res2?.matches && res2.matches.length > 0) {
+                const text = res2.matches[0];
+                liveTranscriptRef.current = text;
+                setLiveTranscript(text);
+              }
+            } catch (err2) {
+              console.warn('[Native Speech Recognizer Popup] Failed:', err2);
+            }
+          });
+        }
+      } catch (nativeErr) {
+        console.warn('[Native Speech Recognition] Init error:', nativeErr);
+      }
+    } else {
+      // 2. Web browser fallback using webkitSpeechRecognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = bcp47;
+
+          recognition.onresult = (event: any) => {
+            let text = '';
+            for (let i = 0; i < event.results.length; i++) {
+              text += event.results[i][0].transcript;
+            }
+            if (text) {
+              liveTranscriptRef.current = text;
+              setLiveTranscript(text);
+            }
+          };
+
+          recognition.onerror = (e: any) => {
+            console.debug('[WebSpeech] Event:', e.error);
+          };
+
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.debug('[WebSpeech] Init bypassed:', e);
+        }
       }
     }
 
@@ -254,6 +316,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   };
 
   const stopRecording = () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        if (capListenerRef.current) {
+          capListenerRef.current.remove();
+          capListenerRef.current = null;
+        }
+        CapSpeechRecognition.stop().catch((e) => console.warn('[Native Speech] Stop error:', e));
+      } catch (e) {}
+    }
+
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -433,12 +505,15 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           )}
         </p>
 
-        {isRecording && liveTranscript && (
-          <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-medium animate-fadeIn">
-            <div className="flex items-center gap-1 text-[10px] text-emerald-700 font-bold uppercase tracking-wider mb-0.5">
-              <Sparkles className="w-3 h-3" /> Live Voice Detected:
+        {liveTranscript && (
+          <div className="mt-2.5 p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-950 font-medium animate-fadeIn text-left shadow-xs">
+            <div className="flex items-center gap-1.5 text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+              <span>🎙️ બોલેલા શબ્દો (Recognized Speech):</span>
             </div>
-            "{liveTranscript}"
+            <p className="text-emerald-950 font-bold text-sm bg-white/80 p-2 rounded-xl border border-emerald-200">
+              "{liveTranscript}"
+            </p>
           </div>
         )}
 

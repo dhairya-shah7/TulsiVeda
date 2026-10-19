@@ -35,6 +35,13 @@
         </provider>
     </application>
 
+    <!-- Queries for Android 11+ (API 30+) Speech Recognition Service -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

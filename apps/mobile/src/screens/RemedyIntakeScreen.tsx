@@ -45,11 +45,13 @@ const VERNACULAR_HERBS: Record<string, { name: string; scientific: string; condi
     { name: 'आंवला (Amla)', scientific: 'Phyllanthus emblica', condition: 'रोग प्रतिरोधक क्षमता' },
   ],
   gu: [
-    { name: 'તુલસી (Tulsi)', scientific: 'Ocimum tenuiflorum', condition: 'ખાંસી અને શરદી' },
+    { name: 'હળદર (Haldi)', scientific: 'Curcuma longa', condition: 'સાંધાનો દુખાવો અને સોજો' },
     { name: 'ગળો (Giloy)', scientific: 'Tinospora cordifolia', condition: 'તાવ અને નબળાઈ' },
-    { name: 'હળદર (Haldi)', scientific: 'Curcuma longa', condition: 'સાંધાનો દુખાવો' },
-    { name: 'આદુ (Adrak)', scientific: 'Zingiber officinale', condition: 'પાચન અને ગેસ' },
+    { name: 'તુલસી (Tulsi)', scientific: 'Ocimum tenuiflorum', condition: 'ખાંસી અને શરદી' },
+    { name: 'અરડૂસી (Ardusi)', scientific: 'Justicia adhatoda', condition: 'ઉધરસ અને કફ' },
+    { name: 'આદુ / સૂંઠ (Ginger)', scientific: 'Zingiber officinale', condition: 'પાચન અને ગેસ' },
     { name: 'અશ્વગંધા (Ashwagandha)', scientific: 'Withania somnifera', condition: 'અનિદ્રા અને થાક' },
+    { name: 'લીમડો (Neem)', scientific: 'Azadirachta indica', condition: 'ચામડીના રોગ અને લોહી શુદ્ધિ' },
     { name: 'આંબળા (Amla)', scientific: 'Phyllanthus emblica', condition: 'રોગપ્રતિકારક શક્તિ' },
   ],
   mr: [

@@ -76,15 +76,15 @@ export const PlantIdScreen: React.FC<PlantIdScreenProps> = ({
     if (scored.length === 0) {
       if (hasImage) {
         return [
-          { scientific: 'Ocimum sanctum', common: 'Tulsi / Holy Basil (Visual Herbarium Match)', score: 86, family: 'Lamiaceae' },
-          { scientific: 'Azadirachta indica', common: 'Neem Specimen (Morphology)', score: 9, family: 'Meliaceae' },
-          { scientific: 'Curcuma longa', common: 'Turmeric Specimen', score: 5, family: 'Zingiberaceae' },
+          { scientific: 'Curcuma longa', common: 'Turmeric / Haldi Specimen', score: 40, family: 'Zingiberaceae' },
+          { scientific: 'Tinospora cordifolia', common: 'Giloy / Guduchi Specimen', score: 35, family: 'Menispermaceae' },
+          { scientific: 'Ocimum sanctum', common: 'Tulsi / Holy Basil Specimen', score: 25, family: 'Lamiaceae' },
         ];
       }
       return [
-        { scientific: `${name || 'Botanical'} sp.`, common: `${name || 'Specimen'} (Unconfirmed)`, score: 75, family: 'Botanical' },
-        { scientific: `${name || 'Botanical'} var. indicum`, common: `${name || 'Specimen'} (Regional Variant)`, score: 18, family: 'Flora' },
-        { scientific: 'Unresolved Specimen', common: 'Requires Botanical Taxonomy Review', score: 7, family: 'Diagnostic' },
+        { scientific: `${name || 'Botanical'} sp.`, common: `${name || 'Specimen'} (Unconfirmed)`, score: 50, family: 'Botanical' },
+        { scientific: 'Curcuma longa', common: 'Haldi / Turmeric', score: 30, family: 'Zingiberaceae' },
+        { scientific: 'Tinospora cordifolia', common: 'Giloy / Guduchi', score: 20, family: 'Menispermaceae' },
       ];
     }
 

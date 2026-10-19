@@ -332,6 +332,10 @@ export const App: React.FC = () => {
         currentMode={envMode}
         onModeChange={setEnvMode}
         onLanguageChange={(newLang) => setStoredLanguage(newLang)}
+        onOpenLanguagePicker={() => {
+          setIsProfileOpen(false);
+          setIsLanguagePickerOpen(true);
+        }}
       />
 
       <LanguageSelectorModal

@@ -117,6 +117,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }
   };
 
+  const [userName, setUserName] = useState<string>(() => {
+    return localStorage.getItem('tulsiveda_user_name') || 
+      (currentRole === 'doctor' ? 'Dr. Sharma' : currentRole === 'asha' ? 'Sunita Didi' : 'Aarav');
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const stored = localStorage.getItem('tulsiveda_user_name');
+      if (stored) {
+        setUserName(stored);
+      } else {
+        setUserName(currentRole === 'doctor' ? 'Dr. Sharma' : currentRole === 'asha' ? 'Sunita Didi' : 'Aarav');
+      }
+    };
+    handleStorageChange();
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentRole]);
+
   const isCitizen = currentRole === 'citizen';
   const hasHerb = !!(activeDraft?.remedyNameLocal || activeDraft?.scientificName);
   const hasMedicine = !!(activeDraft?.confirmedMedicine);
@@ -125,36 +144,66 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   return (
     <div className="space-y-4 max-w-md mx-auto pb-24">
       {/* Welcome & Ecosystem Hero Banner */}
-      <div className="bg-gradient-to-br from-emerald-800 via-teal-800 to-emerald-950 rounded-3xl p-5 text-white shadow-md relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-semibold text-emerald-200 border border-white/15">
-            <span>
-              {currentRole === 'doctor' 
-                ? `👨‍⚕️ ${t('doctor_desk')}` 
-                : currentRole === 'asha' 
-                  ? `🩺 ${t('asha_portal')}` 
-                  : (currentMode === 'village' ? `🌾 ${t('village_mode_label')}` : `🏙️ ${t('citizen_portal')}`)}
-            </span>
-          </div>
-          <AudioNarrator 
-            textToNarrate={t('narrate_dashboard')}
-            label={t('listen_native')}
-            className="bg-white/15 border-white/20 text-white"
-          />
-        </div>
+      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 p-5 sm:p-6 text-white shadow-xl shadow-emerald-950/20 border border-emerald-500/20">
+        {/* Ambient Decorative Glow and Botanical Leaf Watermark */}
+        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+        <Leaf className="absolute -right-6 -bottom-8 w-44 h-44 text-emerald-400/10 pointer-events-none transform -rotate-12" />
 
-        <h1 className="text-2xl font-extrabold tracking-tight mt-2 text-white">
-          {currentRole === 'doctor' 
-            ? t('doctor_desk') 
-            : currentRole === 'asha' 
-              ? t('asha_portal') 
-              : t('welcome_title')}
-        </h1>
-        <p className="text-xs text-emerald-100/90 mt-1 font-medium leading-relaxed">
-          {isCitizen 
-            ? t('welcome_subtitle') 
-            : t('welcome_subtitle')}
-        </p>
+        <div className="relative z-10 space-y-3.5">
+          {/* Top Bar: Role Pill & Native Voice Narrator */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-bold text-emerald-200 border border-white/15 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                {currentRole === 'doctor' 
+                  ? `👨‍⚕️ ${t('doctor_desk')}` 
+                  : currentRole === 'asha' 
+                    ? `🩺 ${t('asha_portal')}` 
+                    : (currentMode === 'village' ? `🌾 ${t('village_mode_label')}` : `🏙️ ${t('citizen_portal')}`)}
+              </span>
+            </div>
+
+            <AudioNarrator 
+              textToNarrate={`${userName}, ${t('narrate_dashboard')}`}
+              label={t('listen_native')}
+              className="bg-white/15 hover:bg-white/20 border-white/25 text-white shadow-xs font-bold text-xs px-3 py-1.5"
+            />
+          </div>
+
+          {/* Personalized Greeting & App Title */}
+          <div>
+            <div className="text-xs font-semibold text-emerald-300/90 tracking-wide flex items-center gap-1.5">
+              <span>🙏</span>
+              <span>{t('appName')} • {userName}</span>
+            </div>
+            <h1 className="text-2xl sm:text-[26px] font-black tracking-tight text-white mt-0.5 leading-tight">
+              {currentRole === 'doctor' 
+                ? t('doctor_desk') 
+                : currentRole === 'asha' 
+                  ? t('asha_portal') 
+                  : t('welcome_title')}
+            </h1>
+            <p className="text-xs text-emerald-100/90 mt-1 font-medium leading-relaxed max-w-sm">
+              {t('welcome_subtitle')}
+            </p>
+          </div>
+
+          {/* Quick Capability / Trust Badges (Crucial for village trust & doctor assurance) */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/10">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 backdrop-blur-xs text-[10px] font-bold text-emerald-200 border border-white/10">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Bio-Kinetic AI</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 backdrop-blur-xs text-[10px] font-bold text-teal-200 border border-white/10">
+              <Leaf className="w-3.5 h-3.5 text-teal-300" />
+              <span>50+ AYUSH Herbs</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 backdrop-blur-xs text-[10px] font-bold text-amber-200 border border-white/10">
+              <span>⚡</span>
+              <span>{t('offline_ready')}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ========================================================
