@@ -47,8 +47,8 @@ export const AlternativeMedicineScreen: React.FC<AlternativeMedicineScreenProps>
           </h1>
           <AudioNarrator 
             textToNarrate={t('narrate_alternatives')}
-            label={t('listen')}
-            className="bg-white/15 border-white/20 text-white shrink-0"
+            label=""
+            className="bg-white/15 border-white/20 text-white shrink-0 p-2.5 rounded-full"
           />
         </div>
         <p className="text-xs text-teal-100/90 mt-1 font-medium leading-relaxed">
@@ -78,9 +78,6 @@ export const AlternativeMedicineScreen: React.FC<AlternativeMedicineScreenProps>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{t('identified_condition')}</span>
               <span className="text-sm font-extrabold text-slate-800">{selectedResult.condition}</span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              {t('safe_alternatives_ready')}
-            </span>
           </div>
 
           {/* Tier Switcher Tabs */}
@@ -140,7 +137,6 @@ export const AlternativeMedicineScreen: React.FC<AlternativeMedicineScreenProps>
 
               <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 text-xs text-blue-950 space-y-1">
                 <p><strong>{t('mechanism_label')}:</strong> {selectedResult.tier1JanAushadhi.mechanism}</p>
-                <p><strong>Bio-Equivalence:</strong> 100% CDSCO / PMBJP standard.</p>
               </div>
 
               {onCheckSafety && (
@@ -202,9 +198,6 @@ export const AlternativeMedicineScreen: React.FC<AlternativeMedicineScreenProps>
                   <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">
                     {selectedResult.tier3KitchenRemedy.kitchenItem}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    100% Kitchen First-Aid
-                  </p>
                 </div>
                 <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                   Safe Home Relief

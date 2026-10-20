@@ -173,8 +173,10 @@ export const AudioNarrator: React.FC<AudioNarratorProps> = ({
       ) : (
         <>
           <Volume2 className="w-4 h-4 text-emerald-700" />
-          {label !== '' && (
-            <span>{label || LocalizationService.t('listen_native')}</span>
+          {label !== undefined && label !== '' ? (
+            <span>{label}</span>
+          ) : label === '' ? null : (
+            <span>{LocalizationService.t('listen_native')}</span>
           )}
         </>
       )}

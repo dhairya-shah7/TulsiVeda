@@ -72,8 +72,8 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
           </h1>
           <AudioNarrator 
             textToSpeak={t('narrate_knowledge')}
-            label={t('listen')}
-            className="bg-white/15 border-white/20 text-white shrink-0"
+            label=""
+            className="bg-white/15 border-white/20 text-white shrink-0 p-2.5 rounded-full"
           />
         </div>
         <p className="text-xs text-emerald-100/90 mt-1 font-medium leading-relaxed">
@@ -131,11 +131,6 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
       {/* VIEW 1: OFFICIAL GOVERNMENT CLINICAL RECORDS (SYMPTOMS -> REMEDIES & MEDICINES) */}
       {activeCatalog === 'clinical_records' && (
         <div className="space-y-3.5">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
-            <span>{t('protocols_label')} ({filteredClinicalRecords.length})</span>
-            <span className="text-emerald-700 font-bold">{t('offline_ready')}</span>
-          </div>
-
           {filteredClinicalRecords.map((item) => {
             const localizedRec = NationalClinicalKnowledgeEngine.getLocalizedRecord(item, lang);
             const isSelected = activeRecord?.id === item.id;
@@ -254,11 +249,6 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
       {/* VIEW 2: BOTANICAL HERBS & PHYTOCHEMICAL MONOGRAPHS */}
       {activeCatalog === 'botanical_plants' && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
-            <span>{t('medicinal_botanicals')} ({filteredPlants.length})</span>
-            <span className="text-[11px] text-emerald-700 font-bold">{t('offline_ready')}</span>
-          </div>
-
           {filteredPlants.map((plant) => {
             const isSelected = activeSpecies?.scientificName === plant.scientificName;
             
@@ -312,31 +302,19 @@ export const KnowledgeBookScreen: React.FC<KnowledgeBookScreenProps> = ({
                   <div className="px-4 pb-4 pt-2 border-t border-slate-100 space-y-3.5 bg-slate-50/50 rounded-b-2xl">
                     <div className="p-3 bg-white rounded-xl border border-slate-200">
                       <span className="text-[11px] font-bold text-emerald-800 block uppercase tracking-wider mb-1">
-                        Active Phyto-Chemical Constituents
+                        Active Natural Phyto-Constituents
                       </span>
                       <div className="flex flex-wrap gap-1">
                         {plant.activeConstituents.map((c, i) => (
                           <span key={i} className="text-xs font-semibold text-emerald-950 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                            ⚗️ {c}
+                            🌿 {c}
                           </span>
                         ))}
                       </div>
                     </div>
 
-                    <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200">
-                      <span className="text-[11px] font-bold text-amber-900 block uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
-                        CYP450 & Receptor Modulation
-                      </span>
-                      <ul className="text-xs text-amber-950 space-y-1 font-medium list-disc list-inside">
-                        {plant.metabolicEnzymes.map((e, i) => (
-                          <li key={i}>{e}</li>
-                        ))}
-                      </ul>
-                    </div>
-
                     <div className="text-xs text-slate-600 leading-relaxed bg-white p-3 rounded-xl border border-slate-200">
-                      <strong className="text-slate-800 font-semibold block mb-0.5">Pharmacological Note:</strong>
+                      <strong className="text-slate-800 font-semibold block mb-0.5">Therapeutic Safety Note:</strong>
                       {plant.diagnosticReasoning}
                     </div>
 

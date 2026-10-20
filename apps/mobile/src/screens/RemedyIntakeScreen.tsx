@@ -372,17 +372,12 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
           </div>
         )}
 
-        {/* Live Extraction Confirmation Badge & Open-Weight LLM Telemetry */}
+        {/* Live Extraction Confirmation Badge */}
         {(remedyNameLocal || usedForCondition) && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 space-y-2">
-            <div className="flex items-center justify-between gap-1.5 font-bold text-emerald-900">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{t('realtime_extraction')}</span>
-              </div>
-              <span className="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-full font-mono font-semibold">
-                BioMistral-7B
-              </span>
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{t('realtime_extraction')}</span>
             </div>
             <div className="flex flex-col gap-1 text-[11px] pt-0.5">
               {remedyNameLocal && (
@@ -391,9 +386,6 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
               {usedForCondition && (
                 <span><strong>{t('symptom_condition')}:</strong> {usedForCondition}</span>
               )}
-            </div>
-            <div className="text-[10px] text-emerald-700/80 italic font-mono pt-0.5 border-t border-emerald-200/60">
-              {llmSignature}
             </div>
           </div>
         )}
@@ -428,9 +420,6 @@ export const RemedyIntakeScreen: React.FC<RemedyIntakeScreenProps> = ({
                   ? 'বা ঔষধীয় উদ্ভিদ বাছক'
                   : 'Or Select Common Botanical (1-Tap)'}
               </span>
-            </span>
-            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-              Instant NER
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
