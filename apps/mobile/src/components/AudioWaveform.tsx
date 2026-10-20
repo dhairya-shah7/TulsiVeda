@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Play, Pause, AlertCircle, Sparkles } from 'lucide-react';
 import { Capacitor, PluginListenerHandle } from '@capacitor/core';
 import { SpeechRecognition as CapSpeechRecognition } from '@capacitor-community/speech-recognition';
+import { VoiceEngineService } from '../services/voiceEngineService.ts';
 import { t } from '../services/localizationService.ts';
 
 const QUICK_CLINICAL_PROMPTS: Record<string, { label: string; text: string }[]> = {
@@ -274,12 +275,26 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: chosenMime || 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
 
-        const finalTranscript = liveTranscriptRef.current.trim();
+        let finalTranscript = liveTranscriptRef.current.trim();
+
+        // If on-device speech transcript was empty, run AI4Bharat Indic-Transcribe ASR
+        if (!finalTranscript && audioBlob.size > 1000) {
+          try {
+            const langCode = (language || 'gu').toLowerCase().slice(0, 2) as any;
+            const asrRes = await VoiceEngineService.transcribeAudio(audioBlob, langCode, finalTranscript);
+            if (asrRes.text) {
+              finalTranscript = asrRes.text;
+            }
+          } catch (e) {
+            console.debug('[ASR Engine Note]:', e);
+          }
+        }
+
         liveTranscriptRef.current = finalTranscript;
         setLiveTranscript(finalTranscript);
         setErrorMsg(null);
