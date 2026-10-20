@@ -285,6 +285,7 @@ export function resolveMedicineFromText(rawText: string): {
   if (!rawText || rawText.trim().length < 2) return null;
 
   const clean = rawText.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean.length < 3) return null;
 
   // 1. Direct key match
   if (INDIAN_BRANDS[clean]) {
@@ -328,7 +329,7 @@ export function resolveMedicineFromText(rawText: string): {
   // 3. Match against generic names directly
   for (const [genName, details] of Object.entries(DRUG_CATALOG)) {
     const genClean = genName.toLowerCase();
-    if (clean.includes(genClean) || genClean.includes(clean)) {
+    if (clean.length >= 3 && (clean.includes(genClean) || (clean.length >= 4 && genClean.includes(clean)))) {
       return {
         brandName: genName,
         genericName: genName,

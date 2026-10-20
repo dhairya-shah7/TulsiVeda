@@ -1,8 +1,12 @@
 export interface BotanicalSpecies {
   scientificName: string;
   commonName: string;
+  englishName?: string;
   punjabiName?: string;
   hindiName?: string;
+  gujaratiName?: string;
+  tamilName?: string;
+  teluguName?: string;
   family: string;
   vernacularAliases: string[];
   primaryParts: string[];
@@ -11,12 +15,15 @@ export interface BotanicalSpecies {
   metabolicEnzymes: string[];
   traditionalUses: string[];
   diagnosticReasoning: string;
+  formType?: 'herb' | 'polyherbal_mixture' | 'liquid_decoction_arishta' | 'mineral_pitch_resin' | 'churna' | 'syrup_avaleha' | 'oil';
 }
 
 export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Curcuma longa',
     commonName: 'Turmeric / Haldi',
+    englishName: 'Turmeric',
+    gujaratiName: 'હળદર (Haldi)',
     punjabiName: 'ਹਲਦੀ (Haldi)',
     hindiName: 'हल्दी (Haldi)',
     family: 'Zingiberaceae',
@@ -62,6 +69,8 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Ocimum sanctum',
     commonName: 'Tulsi / Holy Basil',
+    englishName: 'Tulsi (Holy Basil)',
+    gujaratiName: 'તુલસી (Tulsi)',
     punjabiName: 'ਤੁਲਸੀ (Tulsi)',
     hindiName: 'तुलसी (Tulsi)',
     family: 'Lamiaceae',
@@ -107,6 +116,8 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Withania somnifera',
     commonName: 'Ashwagandha / Indian Ginseng',
+    englishName: 'Ashwagandha',
+    gujaratiName: 'અશ્વગંધા (Ashwagandha)',
     punjabiName: 'ਅਸ਼ਵਗੰਧਾ (Ashwagandha)',
     hindiName: 'अश्वगंधा (Ashwagandha)',
     family: 'Solanaceae',
@@ -169,6 +180,8 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Tinospora cordifolia',
     commonName: 'Giloy / Guduchi',
+    englishName: 'Giloy (Guduchi)',
+    gujaratiName: 'ગળો (Galo)',
     punjabiName: 'ਗਿਲੋਏ (Giloy)',
     hindiName: 'गिलोय (Giloy)',
     family: 'Menispermaceae',
@@ -186,6 +199,8 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
   {
     scientificName: 'Zingiber officinale',
     commonName: 'Ginger / Adrak / Sunthi',
+    englishName: 'Ginger',
+    gujaratiName: 'આદુ / સૂંઠ (Aadu)',
     punjabiName: 'ਅਦਰਕ / ਸੁੰਢ (Adrak)',
     hindiName: 'अदरक / सोंठ (Adrak)',
     family: 'Zingiberaceae',
@@ -598,10 +613,400 @@ export const BOTANICAL_DATABASE: BotanicalSpecies[] = [
     traditionalUses: ['Appetite stimulation', 'Liver congestion', 'Obesity', 'Hemorrhoids'],
     diagnosticReasoning: 'Pungent naphthoquinone plumbagin strongly fires digestive Agni; contraindicated in pregnancy due to abortifacient action.',
   },
+  // ========================================================
+  // CLASSICAL AYURVEDIC FORMULATIONS, LIQUIDS & MINERAL RESINS
+  // ========================================================
+  {
+    scientificName: 'Triphala Formulation (Emblica officinalis, Terminalia chebula, Terminalia bellirica)',
+    commonName: 'Triphala / Trifala',
+    englishName: 'Triphala Formulation',
+    hindiName: 'त्रिफला (Triphala)',
+    gujaratiName: 'ત્રિફળા (Trifala)',
+    tamilName: 'திரிபலா (Triphala)',
+    family: 'Combretaceae & Phyllanthaceae (Classical Triad)',
+    vernacularAliases: [
+      'ત્રિફળા', 'ત્રિફળા ચૂર્ણ', 'ત્રિફલા', 'त्रिफला', 'त्रिफला चूर्ण', 'திரிபலா', 'త్రిఫల', 'ತ್ರಿಫಲ', 'ത്രിഫല',
+      'triphala', 'trifala', 'triphala churna', 'trifala churna', 'triphala kwath', 'triphala juice', 'triphala guggulu'
+    ],
+    primaryParts: ['Pericarp of 3 dried fruits: Amalaki, Haritaki, Bibhitaki'],
+    activeConstituents: ['Chebulagic acid', 'Chebulinic acid', 'Gallic acid', 'Ellagic acid', 'Ascorbic acid (Vitamin C)', 'Corilagin'],
+    pharmacologicalClass: 'Polyherbal Rasayana & Tannin-Flavonoid Complex',
+    metabolicEnzymes: ['CYP3A4 (Mild modulator)', 'CYP2C9 (Weak inhibitor)', 'Alpha-glucosidase inhibitor', 'Intestinal motility promoter'],
+    traditionalUses: ['Digestive regularity & Chronic constipation', 'Ophthalmic health & Vision', 'Gut microbiome detoxification', 'Metabolic blood sugar balance', 'Hyperacidity'],
+    diagnosticReasoning: 'Equi-proportional blend of Haritaki, Bibhitaki, and Amalaki rich in chebulinic and gallic polyphenols modulating colonic peristalsis and mucosal protection.',
+    formType: 'polyherbal_mixture',
+  },
+  {
+    scientificName: 'Asphaltum punjabianum (Purified Shilajit Pitch)',
+    commonName: 'Shilajit / Mumijo',
+    englishName: 'Shilajit Mineral Resin',
+    hindiName: 'शिलाजीत (Shilajit)',
+    gujaratiName: 'શિલાજીત (Shilajit)',
+    tamilName: 'ஷிலாஜித் (Shilajit)',
+    family: 'Herbo-Mineral Mountain Exudate / Humus Complex',
+    vernacularAliases: [
+      'શિલાજીત', 'શિલાજીત રસાયણ', 'शिलाजीत', 'शिलाजीत भस्म', 'ஷிலாஜித்', 'శిలాజిత్', 'ಶಿಲಾಜಿತ್', 'ശിലാജിത്',
+      'shilajit', 'shilajeet', 'salajeet', 'shilajit gold', 'shilajit resin', 'shilajit drops', 'shilajit liquid', 'mumijo', 'asphaltum'
+    ],
+    primaryParts: ['Purified organic mountain resin / Bitumen exudate'],
+    activeConstituents: ['Fulvic acid (>50%)', 'Humic acid', 'Dibenzo-alpha-pyrones (DBPs)', '84+ Trace ionic minerals', 'Chromoproteins'],
+    pharmacologicalClass: 'Herbo-Mineral Bio-Energetic Rasayana',
+    metabolicEnzymes: ['eNOS (Endothelial Nitric Oxide) inducer', 'AMPK mitochondrial activator', 'CYP3A4 weak substrate', 'Systemic vasodilator'],
+    traditionalUses: ['Chronic physical fatigue & Vigor', 'Male and female stamina & Vitality', 'Cognitive enhancement & Memory', 'Metabolic sugar regulation', 'Altitude sickness'],
+    diagnosticReasoning: 'Exudate formed over centuries from microbial humus breakdown in high Himalayas; rich in fulvic acid chelators that cross blood-brain barrier and enhance ATP synthesis.',
+    formType: 'mineral_pitch_resin',
+  },
+  {
+    scientificName: 'Trikatu Formulation (Zingiber officinale, Piper nigrum, Piper longum)',
+    commonName: 'Trikatu / Tri-Pungent',
+    englishName: 'Trikatu Formulation',
+    hindiName: 'त्रिकटु (Trikatu)',
+    gujaratiName: 'ત્રિકટુ (Trikatu)',
+    tamilName: 'திரிகடுகு (Trikadugu)',
+    family: 'Zingiberaceae & Piperaceae (Classical Bioenhancer)',
+    vernacularAliases: [
+      'ત્રિકટુ', 'ત્રિકટુ ચૂર્ણ', 'त्रिकटु', 'त्रिकटु चूर्ण', 'திரிகடுகு', 'త్రికటుకం',
+      'trikatu', 'trikatu churna', 'trikatu powder', 'katutraya', 'sunthi maricha pippali'
+    ],
+    primaryParts: ['Dried ginger rhizome, black pepper fruit, long pepper spikes in equal ratios (1:1:1)'],
+    activeConstituents: ['Piperine', '6-Gingerol', '6-Shogaol', 'Piperlongumine'],
+    pharmacologicalClass: 'Thermogenic Bioenhancer & Carminative',
+    metabolicEnzymes: ['CYP3A4 potent inhibitor', 'P-glycoprotein efflux pump inhibitor', 'Hepatic glucuronidation inhibitor'],
+    traditionalUses: ['Deepana/Pachana (Kindling digestive fire)', 'Respiratory congestion & Productive cough', 'Obesity & Dyslipidemia', 'Enhancing bioavailability of Ayurvedic herbs'],
+    diagnosticReasoning: 'Piperine and gingerols downregulate intestinal P-gp and hepatic CYP3A4, markedly multiplying systemic blood levels of co-administered drugs.',
+    formType: 'polyherbal_mixture',
+  },
+  {
+    scientificName: 'Chyawanprash Classical Rasayana (Amalaki, Dashamoola, Ashwagandha, Pippali)',
+    commonName: 'Chyawanprash / Chyavanaprasha',
+    englishName: 'Chyawanprash Herbal Jam',
+    hindiName: 'च्यवनप्राश (Chyawanprash)',
+    gujaratiName: 'ચ્યવનપ્રાશ (Chyawanprash)',
+    tamilName: 'சியவனபிராசம் (Chyawanprash)',
+    family: 'Polyherbal Classical Avaleha Complex (40+ Herbs in Amla Base)',
+    vernacularAliases: [
+      'ચ્યવનપ્રાશ', 'ચ્યવનપ્રાશ રસાયણ', 'च्यवनप्राश', 'च्यवनप्राश अवलेह', 'சியவனபிராசம்',
+      'chyawanprash', 'chavanprash', 'chyavanaprasha', 'chyavanaprasam', 'chyawanprash avleha'
+    ],
+    primaryParts: ['Fresh Amalaki fruit pulp cooked in ghee, sesame oil, honey, sugar and 40+ herb decoctions'],
+    activeConstituents: ['Emblicanin A & B', 'Ascorbic acid', 'Withanolides', 'Piperine', 'Flavonoid polyphenols'],
+    pharmacologicalClass: 'Immunomodulatory Polyherbal Avaleha (Herbal Jam)',
+    metabolicEnzymes: ['Macrophage phagocytosis enhancer', 'Antioxidant endothelial preserver', 'High glycemic carbohydrate matrix'],
+    traditionalUses: ['Respiratory recurrent infections', 'Debility & Convalescence after fever', 'General vigor & Anti-aging', 'Cough & Hoarseness'],
+    diagnosticReasoning: 'Classical Caraka Samhita rasayana combining fresh Amla with Dashamoola roots, Ashwagandha, and Pippali in an energizing herbal paste.',
+    formType: 'syrup_avaleha',
+  },
+  {
+    scientificName: 'Dashamularishta Classical Fermented Decoction (10 Sacred Roots)',
+    commonName: 'Dashamularishta / Dashamula Liquid',
+    englishName: 'Dashamularishta Liquid Tonic',
+    hindiName: 'दशमूलारिष्ट (Dashamularishta)',
+    gujaratiName: 'દશમૂલારિષ્ટ (Dashamularishta)',
+    tamilName: 'தசமூலாரிஷ்டம் (Dashamularishta)',
+    family: 'Polyherbal Hydro-Alcoholic Classical Fermentation (Asava-Arishta)',
+    vernacularAliases: [
+      'દશમૂલારિષ્ટ', 'દશમૂળ', 'દશમૂળ ક્વાથ', 'दशमूलारिष्ट', 'दशमूल', 'दशमूल काढ़ा',
+      'dashamularishta', 'dashmularishta', 'dashmularisht', 'dashamoola', 'dashmool', 'dashamularishta syrup'
+    ],
+    primaryParts: ['Bilha, Agnimantha, Shyonaka, Patala, Gambhari, Brihati, Kantakari, Gokshura, Shalaparni, Prishniparni roots'],
+    activeConstituents: ['Premnazole', 'Oroxylin A', 'Aegeline', 'Luteolin', 'Natural bio-fermented ethanol (5-10%)'],
+    pharmacologicalClass: 'Classical Ayurvedic Liquid Tonic & Nervine Restorative',
+    metabolicEnzymes: ['GABAergic central depressant synergy', 'Peripheral vasodilation', 'Gastric motility stimulant'],
+    traditionalUses: ['Postpartum convalescence & Exhaustion', 'Sciatica, Lumbago & Vata neurological pain', 'Chronic respiratory cough', 'Fatigue and generalized weakness'],
+    diagnosticReasoning: 'Self-generated bio-alcohol extracts deep water- and alcohol-soluble triterpenoids from 10 sacred roots, providing swift neuromuscular soothing.',
+    formType: 'liquid_decoction_arishta',
+  },
+  {
+    scientificName: 'Ashokarishta Classical Fermented Decoction (Saraca asoca)',
+    commonName: 'Ashokarishta Liquid',
+    englishName: 'Ashokarishta Liquid Tonic',
+    hindiName: 'अशोकारिष्ट (Ashokarishta)',
+    gujaratiName: 'અશોકારિષ્ટ (Ashokarishta)',
+    tamilName: 'அசோகாரிஷ்டம் (Ashokarishta)',
+    family: 'Fabaceae / Polyherbal Classical Asava-Arishta',
+    vernacularAliases: [
+      'અશોકારિષ્ટ', 'અશોક છાલ', 'अशोकारिष्ट', 'अशोक',
+      'ashokarishta', 'asokarisht', 'ashoka liquid', 'ashokarishtam'
+    ],
+    primaryParts: ['Saraca asoca stem bark, Dhataki flowers, Amalaki, Haritaki, Bibhitaki, Musta, Sunthi, Jeeraka'],
+    activeConstituents: ['Saracin', '(+)-Catechin', 'Tannins', 'Phytosterols', 'Natural bio-fermented ethanol (5-10%)'],
+    pharmacologicalClass: 'Uterine Astringent & Hemostatic Liquid Tonic',
+    metabolicEnzymes: ['Endometrial vascular tone regulator', 'Estrogenic receptor modulator'],
+    traditionalUses: ['Menorrhagia (Heavy menstrual bleeding)', 'Dysmenorrhea & Uterine cramps', 'Leukorrhea', 'Female hormonal balancing'],
+    diagnosticReasoning: 'Potent astringent tannins and flavanols from Ashoka bark halt excessive uterine micro-vascular bleeding.',
+    formType: 'liquid_decoction_arishta',
+  },
+  {
+    scientificName: 'Arjunarishta Classical Liquid Fermentation (Terminalia arjuna)',
+    commonName: 'Arjunarishta Liquid',
+    englishName: 'Arjunarishta Liquid Heart Tonic',
+    hindiName: 'अर्जुनारिष्ट (Arjunarishta)',
+    gujaratiName: 'અર્જુનારિષ્ટ (Arjunarishta)',
+    tamilName: 'அர்ஜுனாரிஷ்டம் (Arjunarishta)',
+    family: 'Combretaceae / Classical Liquid Arishta',
+    vernacularAliases: [
+      'અર્જુનારિષ્ટ', 'અર્જુન ક્વાથ', 'अर्जुनारिष्ट', 'अर्जुन काढ़ा',
+      'arjunarishta', 'arjunarisht', 'arjuna liquid', 'parthadyarishta'
+    ],
+    primaryParts: ['Terminalia arjuna bark, Draksha (Raisins), Madhuka flowers, Dhataki'],
+    activeConstituents: ['Arjunolic acid', 'Terminic acid', 'Casuarinin', 'Bio-fermented ethanol (5-10%)'],
+    pharmacologicalClass: 'Cardiovascular Inotropic Liquid Tonic',
+    metabolicEnzymes: ['Myocardial Na+/K+ ATPase modulator', 'Endothelial nitric oxide synthase activator'],
+    traditionalUses: ['Angina pectoris & Chest tightness', 'Congestive heart fatigue', 'Palpitations', 'Hypertension support'],
+    diagnosticReasoning: 'Traditional hydro-alcoholic decoction optimizing coronary circulation and cardiac muscle contractile strength.',
+    formType: 'liquid_decoction_arishta',
+  },
+  {
+    scientificName: 'Kumaryasava Classical Fermented Decoction (Aloe vera)',
+    commonName: 'Kumaryasava Liquid',
+    englishName: 'Kumaryasava Liquid Tonic',
+    hindiName: 'कुमारी आसव (Kumaryasava)',
+    gujaratiName: 'કુમારી આસવ (Kumaryasava)',
+    tamilName: 'குமாரியாஸவம் (Kumaryasava)',
+    family: 'Asphodelaceae / Classical Asava',
+    vernacularAliases: [
+      'કુમારી આસવ', 'કુમારી આસવ પ્રવાહી', 'कुमारी आसव',
+      'kumaryasava', 'kumariasav', 'kumaryasavam', 'aloe vera tonic'
+    ],
+    primaryParts: ['Aloe vera leaf juice pulp, Iron calx (Loha Bhasma), Tamra, Haritaki, Bibhitaki, Trikatu'],
+    activeConstituents: ['Aloin', 'Acemannan', 'Anthraquinones', 'Natural bio-ethanol (5-10%)', 'Bio-available elemental iron'],
+    pharmacologicalClass: 'Digestive, Hepato-Splenic & Hematinic Liquid Asava',
+    metabolicEnzymes: ['Hepatic microsomal clearance booster', 'Colonic peristalsis promoter'],
+    traditionalUses: ['Liver and spleen enlargement (Hepatomegaly)', 'Anemia and pale complexion', 'Menstrual irregularities & Amenorrhea', 'Chronic digestive sluggishness'],
+    diagnosticReasoning: 'Aloe juice co-fermented with purified iron calx delivers high bioavailability hematinic action for liver and menstrual vitality.',
+    formType: 'liquid_decoction_arishta',
+  },
+  {
+    scientificName: 'Convolvulus pluricaulis',
+    commonName: 'Shankhpushpi / Brain Tonic',
+    englishName: 'Shankhpushpi',
+    hindiName: 'शंखपुष्पी (Shankhpushpi)',
+    gujaratiName: 'શંખપુષ્પી (Shankhpushpi)',
+    tamilName: 'சங்குபுஷ்பி (Shankhpushpi)',
+    family: 'Convolvulaceae',
+    vernacularAliases: [
+      'શંખપુષ્પી', 'શંખાવલી', 'शंखपुष्पी', 'शंखाहुली',
+      'shankhpushpi', 'shankhapushpi', 'shankhavali', 'shankhpushpi syrup', 'shankhpushpi drops'
+    ],
+    primaryParts: ['Whole aerial plant & Flowers'],
+    activeConstituents: ['Convolvine', 'Convolamine', 'Scopoletin', 'Microphyllic acid'],
+    pharmacologicalClass: 'Medhya Rasayana (Nootropic & Anxiolytic)',
+    metabolicEnzymes: ['Hepatic CYP inducer for antiepileptic drugs', 'GABA-A neuromodulator', 'Thyroid hormone modulator'],
+    traditionalUses: ['Memory enhancement & Learning in students', 'Mental stress, Anxiety & Insomnia', 'Mild hypertension of nervous origin', 'Mental fatigue'],
+    diagnosticReasoning: 'Classical Ayurvedic Medhya herb modulating GABAergic receptors and calming mental hyper-excitability.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Boswellia serrata',
+    commonName: 'Shallaki / Indian Frankincense',
+    englishName: 'Shallaki (Boswellia)',
+    hindiName: 'शल्लाकी (Shallaki)',
+    gujaratiName: 'સલાઈ ગૂગળ (Shallaki)',
+    tamilName: 'குங்கிலியம் (Shallaki)',
+    family: 'Burseraceae',
+    vernacularAliases: [
+      'સલાઈ ગૂગળ', 'શલ્લાકી', 'शल्लाकी', 'सलाई गुग्गुल',
+      'shallaki', 'boswellia', 'salai guggul', 'salai guggulu', 'frankincense', 'boswellic acid'
+    ],
+    primaryParts: ['Purified Oleo-gum resin'],
+    activeConstituents: ['Acetyl-11-keto-beta-boswellic acid (AKBA)', '11-keto-beta-boswellic acid', 'Incensole acetate'],
+    pharmacologicalClass: 'Non-steroidal Anti-inflammatory Phytoterpene (5-LOX Inhibitor)',
+    metabolicEnzymes: ['5-Lipoxygenase (5-LOX) selective inhibitor', 'Topoisomerase I/II inhibitor', 'TNF-alpha downregulator'],
+    traditionalUses: ['Knee osteoarthritis & Joint swelling', 'Rheumatoid arthritis (Amavata)', 'Ulcerative colitis & Gut inflammation', 'Asthmatic inflammation'],
+    diagnosticReasoning: 'AKBA selectively inhibits 5-lipoxygenase without ulcerating the stomach lining unlike non-selective NSAIDs.',
+    formType: 'mineral_pitch_resin',
+  },
+  {
+    scientificName: 'Plantago ovata',
+    commonName: 'Isabgol / Psyllium Husk',
+    englishName: 'Isabgol (Psyllium Husk)',
+    hindiName: 'इसबगोल (Isabgol)',
+    gujaratiName: 'ઈસબગુલ (Isabgol)',
+    tamilName: 'இசப்கோல் (Isabgol)',
+    family: 'Plantaginaceae',
+    vernacularAliases: [
+      'ઈસબગુલ', 'ઈસબગોલ', 'ઘોડા જીરું', 'इसबगोल', 'ईसबगोल',
+      'isabgol', 'isabgul', 'psyllium', 'psyllium husk', 'sat isabgol', 'plantago'
+    ],
+    primaryParts: ['Seed husk'],
+    activeConstituents: ['Arabinoxylan mucilage (85%)', 'Polysaccharides', 'Galacturonic acid'],
+    pharmacologicalClass: 'Bulk-Forming Hydrophilic Mucilage & Mechanical Laxative',
+    metabolicEnzymes: ['Physical drug binding matrix', 'Intestinal lumen absorption barrier', 'Bile acid sequestrant'],
+    traditionalUses: ['Habitual constipation', 'Irritable bowel syndrome (IBS)', 'Fissures and hemorrhoids softening', 'High serum cholesterol'],
+    diagnosticReasoning: 'Hydrophilic husk absorbs up to 40 times its weight in water, forming a gel matrix that physically traps oral drugs if taken together.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Picrorhiza kurroa',
+    commonName: 'Kutki / Katuki',
+    englishName: 'Kutki',
+    hindiName: 'कुटकी (Kutki)',
+    gujaratiName: 'કડુ / કટુકી (Kutki)',
+    tamilName: 'கடுகுரோகிணி (Kutki)',
+    family: 'Plantaginaceae',
+    vernacularAliases: [
+      'કડુ', 'કટુકી', 'કડવી કટુકી', 'कुटकी', 'कटुकी',
+      'kutki', 'katuki', 'picrorhiza', 'kadu', 'kadvi kutki'
+    ],
+    primaryParts: ['Dried rhizomes and roots'],
+    activeConstituents: ['Picroside I', 'Picroside II', 'Kutkoside', 'Apocynin'],
+    pharmacologicalClass: 'Iridoid Glycoside & Potent Choleretic Hepatoprotective',
+    metabolicEnzymes: ['Glutathione S-transferase inducer', 'Hepatic CYP2E1 inhibitor', 'Macrophage stimulant'],
+    traditionalUses: ['Infective and toxic hepatitis / Jaundice', 'Fatty liver & Elevated AST/ALT', 'Chronic malaria fevers', 'Autoimmune skin vitiligo'],
+    diagnosticReasoning: 'Intensely bitter iridoids protect hepatocyte membranes from oxidative destruction and stimulate bile acid flow.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Terminalia chebula',
+    commonName: 'Haritaki / Harad',
+    englishName: 'Haritaki (Chebulic Myrobalan)',
+    hindiName: 'हरड़ / हरीतकी (Harad)',
+    gujaratiName: 'હરડે (Harde)',
+    tamilName: 'கடுக்காய் (Kadukkai)',
+    family: 'Combretaceae',
+    vernacularAliases: [
+      'હરડે', 'હરડે પાવડર', 'હિમજ', 'बाल हरड़', 'हरड़', 'हरीतकी', 'கடுக்காய்', 'కరక్కాయ',
+      'haritaki', 'harad', 'harde', 'kadukkai', 'chebulic myrobalan', 'himaj'
+    ],
+    primaryParts: ['Dried pericarp of mature fruits'],
+    activeConstituents: ['Chebulic acid', 'Chebulinic acid', 'Corilagin', 'Gallic acid', 'Tannins (30-40%)'],
+    pharmacologicalClass: 'Anulomana (Mild Astringent Laxative) & Rasayana',
+    metabolicEnzymes: ['CYP3A4 weak inhibitor', 'Iron chelation binder'],
+    traditionalUses: ['Sluggish bowels & Chronic constipation', 'Flatulence & Dyspepsia', 'Wound healing wash', 'Longevity rejuvenation'],
+    diagnosticReasoning: 'Known as the King of Ayurvedic Herbs in Caraka Samhita; possesses 5 out of 6 tastes (devoid of salty) for holistic digestion.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Terminalia bellirica',
+    commonName: 'Bibhitaki / Baheda',
+    englishName: 'Bibhitaki (Belleric Myrobalan)',
+    hindiName: 'बहेड़ा / बिभीतक (Baheda)',
+    gujaratiName: 'બહેડા (Baheda)',
+    tamilName: 'தான்றிக்காய் (Thanrikkai)',
+    family: 'Combretaceae',
+    vernacularAliases: [
+      'બહેડા', 'બહેડા પાવડર', 'बहेड़ा', 'बिभीतक', 'தான்றிக்காய்',
+      'bibhitaki', 'baheda', 'belleric myrobalan', 'thanrikkai'
+    ],
+    primaryParts: ['Dried fruit pericarp'],
+    activeConstituents: ['Gallic acid', 'Ellagic acid', 'Ethyl gallate', 'Chebulagic acid'],
+    pharmacologicalClass: 'Kapha-Reducing Astringent & Respiratory Mucolytic',
+    metabolicEnzymes: ['Alpha-glucosidase inhibitor', 'Lipoxygenase inhibitor'],
+    traditionalUses: ['Chronic cough & Throat hoarseness', 'Bronchial asthma with phlegm', 'Vision health', 'Hair tonic'],
+    diagnosticReasoning: 'Second fruit of Triphala specifically targeting excess respiratory secretions and upper mucosal irritation.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Ricinus communis',
+    commonName: 'Castor Oil / Arandi / Erand',
+    englishName: 'Castor Oil (Erandel)',
+    hindiName: 'अरंडी का तेल (Castor Oil)',
+    gujaratiName: 'દિવેલ / એરંડિયું (Divel)',
+    tamilName: 'விளக்கெண்ணெய் (Castor Oil)',
+    family: 'Euphorbiaceae',
+    vernacularAliases: [
+      'દિવેલ', 'એરંડિયું', 'એરંડા', 'अरंडी का तेल', 'रेड़ी का तेल', 'விளக்கெண்ணெய்',
+      'castor oil', 'divel', 'erandel', 'erand', 'arandi', 'ricinus'
+    ],
+    primaryParts: ['Cold pressed seed oil (purified, ricin-free)'],
+    activeConstituents: ['Ricinoleic acid (85-90%)', 'Oleic acid', 'Linoleic acid'],
+    pharmacologicalClass: 'Stimulant Hydragogue Laxative & Vata-Pacifying Oil',
+    metabolicEnzymes: ['EP3 prostanoid receptor agonist in gut smooth muscle', 'Fat-soluble drug absorption modulator'],
+    traditionalUses: ['Acute refractory constipation', 'Severe joint stiffness and sciatica pain', 'Abdominal bloating colic', 'External hair and scalp conditioning'],
+    diagnosticReasoning: 'Intestinal lipase cleaves oil into ricinoleic acid, which stimulates EP3 prostanoid receptors driving rapid peristaltic fluid emptying.',
+    formType: 'oil',
+  },
+  {
+    scientificName: 'Trachyspermum ammi',
+    commonName: 'Ajwain / Carom Seed Ark',
+    englishName: 'Ajwain (Carom Seeds)',
+    hindiName: 'अजवाइन / अजवाइन अर्क (Ajwain)',
+    gujaratiName: 'અજમો / અજમાનો અર્ક (Ajmo)',
+    tamilName: 'ஓமம் (Omam)',
+    family: 'Apiaceae',
+    vernacularAliases: [
+      'અજમો', 'અજમાનો અર્ક', 'अजवाइन', 'अजवाइन अर्क', 'ஓமம்', 'ఓమము',
+      'ajwain', 'ajmo', 'carom seeds', 'omam', 'trachyspermum', 'ajwain ark'
+    ],
+    primaryParts: ['Fruits / Seeds & Hydro-distilled liquid Ark'],
+    activeConstituents: ['Thymol (35-60%)', 'p-Cymene', 'gamma-Terpinene'],
+    pharmacologicalClass: 'Volatile Phenolic Antispasmodic & Carminative',
+    metabolicEnzymes: ['Smooth muscle relaxant', 'Gastric mucosal acid modulator'],
+    traditionalUses: ['Abdominal colic & Spasmodic pain', 'Flatulence, Gas & Bloating', 'Indigestion from heavy food', 'Asthmatic chest tightness'],
+    diagnosticReasoning: 'Thymol volatile oil directly relaxes intestinal smooth muscle spasms and stops fermentation in gut.',
+    formType: 'liquid_decoction_arishta',
+  },
+  {
+    scientificName: 'Foeniculum vulgare',
+    commonName: 'Fennel / Saunf / Variyali',
+    englishName: 'Fennel Seeds (Saunf)',
+    hindiName: 'सौंफ / सौंफ अर्क (Saunf)',
+    gujaratiName: 'વરિયાળી / વરિયાળી શરબત (Variyali)',
+    tamilName: 'சோம்பு (Sombu)',
+    family: 'Apiaceae',
+    vernacularAliases: [
+      'વરિયાળી', 'વરિયાળી અર્ક', 'સૌંફ', 'सौंफ', 'सौंफ अर्क', 'சோம்பு',
+      'saunf', 'variyali', 'fennel', 'fennel seeds', 'variyali sharbat', 'saunf ark'
+    ],
+    primaryParts: ['Dried seeds & Distilled liquid Ark'],
+    activeConstituents: ['trans-Anethole (60-80%)', 'Fenchone', 'Estragole', 'Limonene'],
+    pharmacologicalClass: 'Cooling Carminative & Pitta-Pacifying Digestive',
+    metabolicEnzymes: ['CYP2D6 mild inhibitor', 'Gastric motility regularizer'],
+    traditionalUses: ['Acid indigestion & Burning sensation', 'Post-meal mouth freshener & Digestive', 'Infantile colic', 'Excessive thirst and body heat'],
+    diagnosticReasoning: 'Sweet anethole essential oil soothes mucosal irritation without generating excess metabolic heat.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Cuminum cyminum',
+    commonName: 'Cumin / Jeera / Jiraka',
+    englishName: 'Cumin Seeds (Jeera)',
+    hindiName: 'जीरा / जीरा पानी (Jeera)',
+    gujaratiName: 'જીરું / જીરું પાણી (Jeeru)',
+    tamilName: 'சீரகம் (Seeragam)',
+    family: 'Apiaceae',
+    vernacularAliases: [
+      'જીરું', 'જીરા પાણી', 'શાહજીરું', 'जीरा', 'जीरा जल', 'சீரகம்', 'జీలకర్ర',
+      'jeera', 'jeeru', 'cumin', 'cumin water', 'jiraka'
+    ],
+    primaryParts: ['Dried seeds'],
+    activeConstituents: ['Cuminaldehyde', 'Cymene', 'Terpenoids', 'Flavonoid luteolin'],
+    pharmacologicalClass: 'Digestive Enzyme Stimulant & Carminative',
+    metabolicEnzymes: ['Pancreatic lipase secretagogue', 'CYP1A2 substrate'],
+    traditionalUses: ['Dyspepsia & Sluggish digestion', 'Postnatal uterine involution (Jeera water)', 'Diarrheal dehydration adjunct', 'Loss of appetite'],
+    diagnosticReasoning: 'Cuminaldehyde triggers cephalic and gastric phase digestive secretions, expediting gastric emptying.',
+    formType: 'herb',
+  },
+  {
+    scientificName: 'Elettaria cardamomum',
+    commonName: 'Cardamom / Elaichi',
+    englishName: 'Cardamom (Elaichi)',
+    hindiName: 'इलायची (Elaichi)',
+    gujaratiName: 'ઈલાયચી (Elaichi)',
+    tamilName: 'ஏலக்காய் (Elakkai)',
+    family: 'Zingiberaceae',
+    vernacularAliases: [
+      'ઈલાયચી', 'એલચી', 'इलायची', 'छोटी इलायची', 'ஏலக்காய்', 'యాలకులు',
+      'elaichi', 'elchi', 'cardamom', 'green cardamom', 'elakkai'
+    ],
+    primaryParts: ['Seeds & Capsules'],
+    activeConstituents: ['1,8-Cineole (Eucalyptol)', 'alpha-Terpinyl acetate', 'Limonene'],
+    pharmacologicalClass: 'Aromatic Carminative & Anti-emetic',
+    metabolicEnzymes: ['Gastric mucosal protectant', 'Mild hypotensive vasodilator'],
+    traditionalUses: ['Nausea, Retching & Morning sickness', 'Halitosis (Bad breath)', 'Digestive cooling', 'Cough and throat tickle'],
+    diagnosticReasoning: 'High cineole monoterpene content directly suppresses chemoreceptor trigger zone impulses for nausea relief.',
+    formType: 'herb',
+  },
+
 ];
 
 export function getLocalizedBotanicalName(plant: BotanicalSpecies, lang: string = 'en'): string {
-  if (lang === 'pa' && plant.punjabiName) return plant.punjabiName;
+  if (lang === 'en') {
+    return plant.englishName || plant.commonName.split('/')[0].trim();
+  }
+  if (lang === 'gu' && plant.gujaratiName) return plant.gujaratiName;
   if (lang === 'hi' && plant.hindiName) return plant.hindiName;
+  if (lang === 'pa' && plant.punjabiName) return plant.punjabiName;
+  if (lang === 'ta' && plant.tamilName) return plant.tamilName;
+  if (lang === 'te' && plant.teluguName) return plant.teluguName;
   return plant.commonName;
 }

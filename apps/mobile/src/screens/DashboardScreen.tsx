@@ -28,7 +28,7 @@ import { t, useCurrentLanguage, LocalizationService } from '../services/localiza
 import { QueryResolverService, UnifiedQueryResponse } from '../services/queryResolverService.ts';
 import { VoiceEngineService } from '../services/voiceEngineService.ts';
 import { SafetyAnalysisResult } from '../services/safetyEngine.ts';
-import { BotanicalSpecies } from '../services/botanicalDatabase.ts';
+import { BotanicalSpecies, getLocalizedBotanicalName } from '../services/botanicalDatabase.ts';
 
 interface DashboardScreenProps {
   onStartRemedy: () => void;
@@ -49,6 +49,274 @@ interface DashboardScreenProps {
   onSubmitReviewRequest?: () => void;
 }
 
+
+const UI_TEXT: Record<string, {
+  villageMode: string;
+  citizenHealth: string;
+  stopVoice: string;
+  heroTitle: string;
+  heroSub: string;
+  listening: string;
+  tapMicToSpeak: string;
+  searchPlaceholder: string;
+  loading: string;
+  yourQuery: string;
+  listen: string;
+  pause: string;
+  diagnosedCondition: string;
+  tier1Badge: string;
+  tier1Sub: string;
+  genericSalt: string;
+  subsidizedPrice: string;
+  schedule: string;
+  tier2Badge: string;
+  tier2Sub: string;
+  botanical: string;
+  activeCompound: string;
+  dosageMedium: string;
+  tier3Badge: string;
+  tier3Sub: string;
+  preparation: string;
+  mode: string;
+  caution: string;
+  hospitalWarning: string;
+  herbDiscoveryBadge: string;
+  multiHerbBadge: string;
+  govtGenericEquiv: string;
+  indication: string;
+  govtPrice: string;
+  usedFor: string;
+  activeCompounds: string;
+  metabolicPathway: string;
+  clashDetected: string;
+  safeToTake: string;
+  confidence: string;
+  evidence: string;
+  caseSentToClinician: string;
+  sendClashToClinician: string;
+  rxBoxTitle: string;
+  rxBoxPlaceholder: string;
+  checkBtn: string;
+  sentToDoctor: string;
+  sendClashToDoctor: string;
+  recordFullIntake: string;
+  synergyTitle: string;
+  precautionTitle: string;
+}> = {
+  en: {
+    villageMode: '🌾 Village Mode',
+    citizenHealth: '🏙️ Citizen Health',
+    stopVoice: 'Stop Voice',
+    heroTitle: 'Ask about any Symptom, Herb or Medicine',
+    heroSub: 'Tap mic to speak in your language or type below:',
+    listening: 'Listening... Speak now',
+    tapMicToSpeak: 'Tap mic to speak',
+    searchPlaceholder: 'e.g. knee pain, Tulsi, cough remedy, Shilajit, Triphala...',
+    loading: 'Consulting National Clinical Records...',
+    yourQuery: 'Your Query',
+    listen: 'Listen',
+    pause: 'Pause',
+    diagnosedCondition: 'Diagnosed Condition',
+    tier1Badge: 'Tier 1 • Official Govt Generic',
+    tier1Sub: 'PMBJP Kendra',
+    genericSalt: 'Generic Salt',
+    subsidizedPrice: 'Govt Subsidized Price',
+    schedule: 'Schedule',
+    tier2Badge: 'Tier 2 • Official AYUSH Monograph',
+    tier2Sub: 'API Pharmacopoeia',
+    botanical: 'Botanical',
+    activeCompound: 'Active Compound',
+    dosageMedium: 'Dosage & Medium',
+    tier3Badge: 'Tier 3 • Verified Kitchen First Aid',
+    tier3Sub: 'Safe Home Recipe',
+    preparation: 'Preparation',
+    mode: 'Mode',
+    caution: 'Caution',
+    hospitalWarning: 'Seek immediate clinic care if:',
+    herbDiscoveryBadge: '🌿 HERB DISCOVERY',
+    multiHerbBadge: '🌿 MULTI-BOTANICAL SYNERGY',
+    govtGenericEquiv: '💊 Govt Generic Equivalent (Jan Aushadhi):',
+    indication: 'Indication',
+    govtPrice: 'Govt Price',
+    usedFor: 'Primary Uses',
+    activeCompounds: 'Active Compounds',
+    metabolicPathway: 'Metabolic Pathway',
+    clashDetected: '⚠️ Herb-Drug Clash Detected',
+    safeToTake: '✓ Safe to Take Together',
+    confidence: 'Confidence',
+    evidence: 'Evidence',
+    caseSentToClinician: '✓ Case sent to Doctor / ASHA Worker',
+    sendClashToClinician: '{ui.sendClashToDoctor} / ASHA Worker',
+    rxBoxTitle: 'Taking any regular medicine? Check for Clashes',
+    rxBoxPlaceholder: 'e.g. Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'Check',
+    sentToDoctor: '✓ Sent to Doctor',
+    sendClashToDoctor: 'Send Clash Report to Doctor',
+    recordFullIntake: 'Want to record full clinical case intake? Tap here',
+    synergyTitle: 'Classical Ayurvedic Synergy',
+    precautionTitle: 'Clinical Precaution',
+  },
+  hi: {
+    villageMode: '🌾 ग्रामीण स्वास्थ्य मोड',
+    citizenHealth: '🏙️ नागरिक स्वास्थ्य',
+    stopVoice: 'आवाज़ रोकें',
+    heroTitle: 'अपनी बीमारी या घरेलू नुस्खे के बारे में पूछें',
+    heroSub: 'माइक दबाकर बोलें या नीचे लिखकर पूछें:',
+    listening: 'सुन रहे हैं... बोलिए',
+    tapMicToSpeak: 'बोलने के लिए माइक दबाएं',
+    searchPlaceholder: 'उदा: घुटने का दर्द, तुलसी, त्रिफला, शिलाजीत...',
+    loading: 'चिकित्सा अभिलेखों में खोज रहे हैं...',
+    yourQuery: 'आपका प्रश्न',
+    listen: 'सुनें',
+    pause: 'रोकें',
+    diagnosedCondition: 'पहचाना गया विकार',
+    tier1Badge: 'टियर 1 • आधिकारिक सरकारी जेनरिक',
+    tier1Sub: 'पीएमबीजेपी केंद्र',
+    genericSalt: 'जेनेरिक साल्ट',
+    subsidizedPrice: 'सरकारी रियायती मूल्य',
+    schedule: 'खुराक अनुसूची',
+    tier2Badge: 'टियर 2 • आधिकारिक आयुष मोनोग्राफ',
+    tier2Sub: 'एपीआई फार्माकोपिया',
+    botanical: 'वानस्पतिक स्रोत',
+    activeCompound: 'सक्रिय घटक',
+    dosageMedium: 'मात्रा व अनुपान',
+    tier3Badge: 'टियर 3 • सुरक्षित घरेलू प्राथमिक उपचार',
+    tier3Sub: 'रसोई नुस्खा',
+    preparation: 'बनाने की विधि',
+    mode: 'सेवन विधि',
+    caution: 'सावधानी',
+    hospitalWarning: 'तुरंत अस्पताल जाएं यदि:',
+    herbDiscoveryBadge: '🌿 औषधि विवरण',
+    multiHerbBadge: '🌿 बहु-औषधीय सम्मिश्रण एवं सामंजस्य',
+    govtGenericEquiv: '💊 सरकारी जन औषधि समतुल्य दवा:',
+    indication: 'उपचार',
+    govtPrice: 'सरकारी मूल्य',
+    usedFor: 'मुख्य उपयोग',
+    activeCompounds: 'सक्रिय तत्व',
+    metabolicPathway: 'चयापचय मार्ग',
+    clashDetected: '⚠️ दवा और औषधि के बीच संभावित टकराव',
+    safeToTake: '✓ दोनों साथ लेना सुरक्षित है',
+    confidence: 'विश्वसनीयता',
+    evidence: 'प्रमाण',
+    caseSentToClinician: '✓ डॉक्टर / आशा कार्यकर्ता को केस भेजा गया',
+    sendClashToClinician: 'डॉक्टर / आशा कार्यकर्ता को जांच हेतु भेजें',
+    rxBoxTitle: 'क्या आप कोई नियमित गोली (बीपी, शुगर, खून पतला) लेते हैं?',
+    rxBoxPlaceholder: 'उदा: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'जांचें',
+    sentToDoctor: '✓ डॉक्टर को भेजा गया',
+    sendClashToDoctor: 'डॉक्टर को रिपोर्ट भेजें',
+    recordFullIntake: 'विस्तृत पर्चा या पौधा दर्ज करने के लिए यहाँ क्लिक करें',
+    synergyTitle: 'शास्त्रीय आयुर्वेदिक सामंजस्य',
+    precautionTitle: 'चिकित्सकीय सावधानी',
+  },
+  gu: {
+    villageMode: '🌾 ગ્રામીણ આરોગ્ય સહાય',
+    citizenHealth: '🏙️ નાગરિક આરોગ્ય',
+    stopVoice: 'અવાજ બંધ કરો',
+    heroTitle: 'તમારી બીમારી કે દેશી ઔષધિ વિશે પૂછો',
+    heroSub: 'માઇક દબાવીને બોલો અથવા નીચે લખો:',
+    listening: 'સાંભળી રહ્યા છીએ... બોલો',
+    tapMicToSpeak: 'બોલવા માટે માઇક દબાવો',
+    searchPlaceholder: 'દા.ત: ગોઠણનો દુખાવો, તુલસી, ત્રિફળા, શિલાજીત...',
+    loading: 'દવા અને ઔષધિ ચકાસી રહ્યા છીએ...',
+    yourQuery: 'તમારો પ્રશ્ન',
+    listen: 'સાંભળો',
+    pause: 'અટકાવો',
+    diagnosedCondition: 'ઓળખાયેલ રોગ/લક્ષણ',
+    tier1Badge: 'ટિયર 1 • સત્તાવાર સરકારી જેનરિક',
+    tier1Sub: 'પીએમબીજેપી કેન્દ્ર',
+    genericSalt: 'જેનરિક સોલ્ટ',
+    subsidizedPrice: 'સરકારી રાહત કિંમત',
+    schedule: 'લેવાનો સમય',
+    tier2Badge: 'ટિયર 2 • અધિકૃત આયુષ મોનોગ્રાફ',
+    tier2Sub: 'એપીઆઈ ફાર્માકોપિયા',
+    botanical: 'વનસ્પતિ સ્ત્રોત',
+    activeCompound: 'સક્રિય ઘટક',
+    dosageMedium: 'માત્રા અને અનુપાન',
+    tier3Badge: 'ટિયર 3 • સુરક્ષિત ઘરગથ્થુ પ્રાથમિક ઉપચાર',
+    tier3Sub: 'રસોડા ઉપચાર',
+    preparation: 'બનાવવાની રીત',
+    mode: 'લેવાની રીત',
+    caution: 'ચેતવણી',
+    hospitalWarning: 'તરત દવાખાને જવું જો:',
+    herbDiscoveryBadge: '🌿 ઔષધિ વિગતો',
+    multiHerbBadge: '🌿 મિશ્ર ઔષધિ પૃથક્કરણ અને યોગ',
+    govtGenericEquiv: '💊 સરકારી જન ઔષધિ સમતુલ્ય દવા:',
+    indication: 'રોગ',
+    govtPrice: 'સરકારી કિંમત',
+    usedFor: 'મુખ્ય ઉપયોગ',
+    activeCompounds: 'સક્રિય તત્વો',
+    metabolicPathway: 'જૈવિક માર્ગ',
+    clashDetected: '⚠️ દવા અને ઔષધિ વચ્ચે વિરોધાભાસ (જોખમ)',
+    safeToTake: '✓ બંને સાથે લેવું સુરક્ષિત છે',
+    confidence: 'વિશ્વાસનીયતા',
+    evidence: 'તબીબી પુરાવા',
+    caseSentToClinician: '✓ ડૉક્ટર / આશા દીદીને કેસ મોકલી દેવાયો છે',
+    sendClashToClinician: 'આ કેસ ડૉક્ટર / આશા દીદીને મોકલો',
+    rxBoxTitle: 'શું તમે કોઈ નિયમિત દવા (બીપી, સુગર, લોહી પાતળું) લો છો?',
+    rxBoxPlaceholder: 'દા.ત: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'ચકાસો',
+    sentToDoctor: '✓ ડૉક્ટરને મોકલાયું',
+    sendClashToDoctor: 'ડૉક્ટરને રિપોર્ટ મોકલો',
+    recordFullIntake: 'સંપૂર્ણ કેસ ફોર્મ ભરવા માટે અહીં ક્લિક કરો',
+    synergyTitle: 'આયુર્વેદિક શાસ્ત્રીય યોગ',
+    precautionTitle: 'તબીબી સાવચેતી',
+  },
+  pa: {
+    villageMode: '🌾 ਪੇਂਡੂ ਸਿਹਤ ਸਹਾਇਤਾ',
+    citizenHealth: '🏙️ ਨਾਗਰਿਕ ਸਿਹਤ',
+    stopVoice: 'ਆਵਾਜ਼ ਰੋਕੋ',
+    heroTitle: 'ਆਪਣੀ ਬਿਮਾਰੀ ਜਾਂ ਦੇਸੀ ਨੁਸਖੇ ਬਾਰੇ ਪੁੱਛੋ',
+    heroSub: 'ਮਾਈਕ ਦਬਾ ਕੇ ਬੋਲੋ ਜਾਂ ਹੇਠਾਂ ਲਿਖੋ:',
+    listening: 'ਸੁਣ ਰਹੇ ਹਾਂ... ਬੋਲੋ',
+    tapMicToSpeak: 'ਬੋਲਣ ਲਈ ਮਾਈਕ ਦਬਾਓ',
+    searchPlaceholder: 'ਉਦਾ: ਗੋਡਿਆਂ ਦਾ ਦਰਦ, ਤੁਲਸੀ, ਸ਼ਿਲਾਜੀਤ...',
+    loading: 'ਸਿਹਤ ਰਿਕਾਰਡਾਂ ਵਿੱਚ ਖੋਜ ਰਹੇ ਹਾਂ...',
+    yourQuery: 'ਤੁਹਾਡਾ ਸਵਾਲ',
+    listen: 'ਸੁਣੋ',
+    pause: 'ਰੋਕੋ',
+    diagnosedCondition: 'ਪਛਾਣਿਆ ਗਿਆ ਵਿਕਾਰ',
+    tier1Badge: 'ਟੀਅਰ 1 • ਸਰਕਾਰੀ ਜਨ ਔਸ਼ਧੀ',
+    tier1Sub: 'ਪੀਐਮਬੀਜੇਪੀ ਕੇਂਦਰ',
+    genericSalt: 'ਜੈਨੇਰਿਕ ਸਾਲਟ',
+    subsidizedPrice: 'ਸਰਕਾਰੀ ਮੁੱਲ',
+    schedule: 'ਖੁਰਾਕ ਅਨੁਸੂਚੀ',
+    tier2Badge: 'ਟੀਅਰ 2 • ਆਯੂਸ਼ ਨੁਸਖਾ',
+    tier2Sub: 'ਏਪੀਆਈ ਫਾਰਮਾਕੋਪੀਆ',
+    botanical: 'ਬੋਟੈਨੀਕਲ ਨਾਮ',
+    activeCompound: 'ਮੁੱਖ ਘਟਕ',
+    dosageMedium: 'ਖੁਰਾਕ ਤੇ ਅਨੁਪਾਨ',
+    tier3Badge: 'ਟੀਅਰ 3 • ਸੁਰੱਖਿਅਤ ਘਰੇਲੂ ਉਪਚਾਰ',
+    tier3Sub: 'ਰਸੋਈ ਨੁਸਖਾ',
+    preparation: 'ਵਿਧੀ',
+    mode: 'ਲੈਣ ਦਾ ਤਰੀਕਾ',
+    caution: 'ਸਾਵਧਾਨੀ',
+    hospitalWarning: 'ਤੁਰੰਤ ਹਸਪਤਾਲ ਜਾਓ ਜੇਕਰ:',
+    herbDiscoveryBadge: '🌿 ਔਸ਼ਧੀ ਵੇਰਵਾ',
+    multiHerbBadge: '🌿 ਬਹੁ-ਔਸ਼ਧੀ ਮਿਸ਼ਰਣ',
+    govtGenericEquiv: '💊 ਸਰਕਾਰੀ ਜਨ ਔਸ਼ਧੀ ਦਵਾਈ:',
+    indication: 'ਰੋਗ',
+    govtPrice: 'ਸਰਕਾਰੀ ਮੁੱਲ',
+    usedFor: 'ਮੁੱਖ ਉਪਯੋਗ',
+    activeCompounds: 'ਮੁੱਖ ਘਟਕ',
+    metabolicPathway: 'ਮੈਟਾਬੋਲਿਕ ਮਾਰਗ',
+    clashDetected: '⚠️ ਦਵਾਈ ਅਤੇ ਔਸ਼ਧੀ ਵਿਚਕਾਰ ਟਕਰਾਅ',
+    safeToTake: '✓ ਦੋਵੇਂ ਇਕੱਠੇ ਲੈਣਾ ਸੁਰੱਖਿਅਤ ਹੈ',
+    confidence: 'ਭਰੋਸੇਯੋਗਤਾ',
+    evidence: 'ਪ੍ਰਮਾਣ',
+    caseSentToClinician: '✓ ਡਾਕਟਰ / ਆਸ਼ਾ ਵਰਕਰ ਨੂੰ ਭੇਜਿਆ ਗਿਆ',
+    sendClashToClinician: 'ਡਾਕਟਰ / ਆਸ਼ਾ ਵਰਕਰ ਨੂੰ ਜਾਂਚ ਲਈ ਭੇਜੋ',
+    rxBoxTitle: 'ਕੀ ਤੁਸੀਂ ਕੋਈ ਰੈਗੂਲਰ ਦਵਾਈ ਲੈਂਦੇ ਹੋ?',
+    rxBoxPlaceholder: 'ਉਦਾ: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'ਜਾਂਚੋ',
+    sentToDoctor: '✓ ਡਾਕਟਰ ਨੂੰ ਭੇਜਿਆ ਗਿਆ',
+    sendClashToDoctor: 'ਡਾਕਟਰ ਨੂੰ ਰਿਪੋਰਟ ਭੇਜੋ',
+    recordFullIntake: 'ਪੂਰਾ ਕੇਸ ਦਰਜ ਕਰਨ ਲਈ ਇੱਥੇ ਕਲਿੱਕ ਕਰੋ',
+    synergyTitle: 'ਆਯੁਰਵੇਦਿਕ ਸਹਿਯੋਗ',
+    precautionTitle: 'ਡਾਕਟਰੀ ਸਾਵਧਾਨੀ',
+  },
+};
+
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onStartRemedy,
   onStartPrescription,
@@ -62,6 +330,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onSubmitReviewRequest
 }) => {
   const lang = useCurrentLanguage();
+  const ui = UI_TEXT[lang] || UI_TEXT.en;
   const [stats, setStats] = useState({ remedies: 0, prescriptions: 0, alerts: 0, decisions: 0 });
   const [recentRecords, setRecentRecords] = useState<StoredRecord[]>([]);
   const [pendingRequests, setPendingRequests] = useState<StoredRecord[]>([]);
@@ -371,20 +640,20 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   // Quick 1-tap localized prompts
   const quickPrompts = lang === 'hi' ? [
-    { label: 'घुटनों में दर्द (Knee Pain)', text: 'मुझे घुटनों में दर्द है, क्या इस्तेमाल करें?' },
-    { label: 'तुलसी (Tulsi)', text: 'तुलसी' },
-    { label: 'खांसी व जुकाम (Cough)', text: 'खांसी और जुकाम के लिए नुस्खा' },
-    { label: 'तुलसी + बीपी की दवा (Clash Check)', text: 'क्या मैं तुलसी और बीपी की दवा साथ ले सकती हूँ?' },
+    { label: 'घुटनों में दर्द', text: 'मुझे घुटनों में दर्द है, क्या इस्तेमाल करें?' },
+    { label: 'त्रिफला और हल्दी', text: 'त्रिफला और हल्दी' },
+    { label: 'शिलाजीत + बीपी दवा', text: 'क्या मैं शिलाजीत और बीपी की दवा साथ ले सकता हूँ?' },
+    { label: 'तुलसी + खांसी', text: 'तुलसी' },
   ] : lang === 'gu' ? [
-    { label: 'ગોઠણનો દુખાવો (Knee Pain)', text: 'મને ગોઠણનો દુખાવો છે, શું વાપરવું?' },
-    { label: 'તુલસી (Tulsi)', text: 'તુલસી' },
-    { label: 'શરદી અને ખાંસી (Cough)', text: 'શરદી અને ખાંસી માટે દવા' },
-    { label: 'તુલસી + બીપી દવા (Clash Check)', text: 'શું હું બીપીની દવા સાથે તુલસીનો ઉકાળો લઈ શકું?' },
+    { label: 'ગોઠણનો દુખાવો', text: 'મને ગોઠણનો દુખાવો છે, શું વાપરવું?' },
+    { label: 'ત્રિફળા અને હળદર', text: 'ત્રિફળા અને હળદર' },
+    { label: 'શિલાજીત + બીપી દવા', text: 'શું હું શિલાજીત અને બીપીની દવા સાથે લઈ શકું?' },
+    { label: 'તુલસી + ખાંસી', text: 'તુલસી' },
   ] : [
     { label: 'Knee Pain', text: 'I have pain in my knees what to use' },
-    { label: 'Tulsi', text: 'Tulsi' },
-    { label: 'Cough & Cold', text: 'Cough and cold remedy' },
-    { label: 'Tulsi + BP Medicine (Clash)', text: 'Can I take Tulsi with BP medicine?' },
+    { label: 'Triphala + Turmeric', text: 'Triphala with turmeric' },
+    { label: 'Shilajit + BP Medicine', text: 'Can I take Shilajit with BP medicine?' },
+    { label: 'Tulsi Remedy', text: 'Tulsi' },
   ];
 
   return (
@@ -400,7 +669,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ? '👨‍⚕️ Medical Officer' 
               : currentRole === 'asha' 
                 ? '🩺 ASHA Community Desk' 
-                : (currentMode === 'village' ? '🌾 Village Mode (આરોગ્ય સહાય)' : '🏙️ Citizen Health')}
+                : (currentMode === 'village' ? ui.villageMode : ui.citizenHealth)}
           </span>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
             {t('namaste') || '🙏'} {userName}
@@ -414,7 +683,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-white font-black text-xs shadow-md animate-pulse active:scale-95 transition-all"
           >
             <VolumeX className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'आवाज़ रोकें' : lang === 'gu' ? 'અવાજ બંધ કરો' : 'Stop Voice'}</span>
+            <span>{ui.stopVoice}</span>
           </button>
         )}
       </div>
@@ -432,18 +701,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="relative z-10 text-center space-y-4">
               <div>
                 <h2 className="text-lg font-black tracking-tight leading-tight">
-                  {lang === 'hi' 
-                    ? 'अपनी बीमारी या घरेलू नुस्खे के बारे में पूछें' 
-                    : lang === 'gu' 
-                    ? 'તમારી બીમારી કે દેશી ઔષધિ વિશે પૂછો' 
-                    : 'Ask about any Symptom, Herb or Medicine'}
+                  {ui.heroTitle}
                 </h2>
                 <p className="text-xs text-emerald-100/80 mt-1 font-medium">
-                  {lang === 'hi' 
-                    ? 'माइक दबाकर बोलें या नीचे लिखकर पूछें:' 
-                    : lang === 'gu' 
-                    ? 'માઇક દબાવીને બોલો અથવા નીચે લખો:' 
-                    : 'Tap mic to speak in your language or type below:'}
+                  {ui.heroSub}
                 </p>
               </div>
 
@@ -466,10 +727,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   {isListening ? (
                     <span className="text-red-300 flex items-center gap-1.5 animate-pulse font-extrabold">
                       <span className="w-2 h-2 rounded-full bg-red-400" />
-                      {speechStatusText || 'Listening... Speak now'}
+                      {speechStatusText || ui.listening}
                     </span>
                   ) : (
-                    lang === 'hi' ? 'बोलने के लिए माइक दबाएं' : lang === 'gu' ? 'બોલવા માટે માઇક દબાવો' : 'Tap mic to speak'
+                    ui.tapMicToSpeak
                   )}
                 </p>
               </div>
@@ -482,13 +743,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     value={queryInput}
                     onChange={(e) => setQueryInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleExecuteQuery(queryInput)}
-                    placeholder={
-                      lang === 'hi' 
-                        ? 'उदा: घुटने का दर्द, तुलसी, या बीपी की दवा...' 
-                        : lang === 'gu' 
-                        ? 'દા.ત: ગોઠણનો દુખાવો, તુલસી, બીપી દવા...' 
-                        : 'e.g. knee pain, Tulsi, cough remedy...'
-                    }
+                    placeholder={ui.searchPlaceholder}
                     className="flex-1 px-3 py-2 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:outline-none bg-transparent"
                   />
                   <button
@@ -524,7 +779,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="p-6 text-center space-y-2 bg-white rounded-3xl border border-slate-200 shadow-sm animate-pulse">
               <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs font-bold text-slate-600">
-                {lang === 'hi' ? 'चिकित्सा अभिलेखों में खोज रहे हैं...' : lang === 'gu' ? 'દવા અને ઔષધિ ચકાસી રહ્યા છીએ...' : 'Consulting National Clinical Records...'}
+                {ui.loading}
               </p>
             </div>
           )}
@@ -539,7 +794,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                    {lang === 'hi' ? 'आपका प्रश्न' : lang === 'gu' ? 'તમારો પ્રશ્ન' : 'Your Query'}
+                    {ui.yourQuery}
                   </span>
                   <p className="text-xs font-black text-slate-900 truncate">
                     "{activeResult.queryText}"
@@ -557,7 +812,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     }`}
                   >
                     {isSpeaking ? <VolumeX className="w-4 h-4 text-amber-700" /> : <Volume2 className="w-4 h-4 text-slate-700" />}
-                    <span className="text-[11px]">{isSpeaking ? 'Pause' : 'Listen'}</span>
+                    <span className="text-[11px]">{isSpeaking ? ui.pause : ui.listen}</span>
                   </button>
 
                   <button
@@ -578,7 +833,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   {/* Identified Disease Title */}
                   <div className="px-1">
                     <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">
-                      {lang === 'hi' ? 'पहचाना गया विकार' : lang === 'gu' ? 'ઓળખાયેલ રોગ/લક્ષણ' : 'Diagnosed Condition'}
+                      {ui.diagnosedCondition}
                     </span>
                     <h3 className="text-base font-black text-slate-900">
                       {activeResult.conditionRecord.conditionName}
@@ -687,13 +942,64 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               )}
 
               {/* ----------------------------------------------------
-                  BRANCH 2: 1 INGREDIENT / HERB -> VICE-VERSA DISCOVERY
+                  BRANCH 2A: MULTI-HERB FORMULATION & SYNERGY
+                 ---------------------------------------------------- */}
+              {activeResult.type === 'multi_herb_combination' && (
+                <div className="p-5 rounded-3xl bg-white border-2 border-teal-500 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-teal-700 text-white text-[10px] font-black uppercase tracking-wider">
+                      {ui.multiHerbBadge}
+                    </span>
+                    <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                      Classical Ayurvedic Blend
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-black text-slate-900">
+                    🌿 {activeResult.detectedPlants ? activeResult.detectedPlants.map(p => getLocalizedBotanicalName(p, lang)).join(' + ') : activeResult.detectedHerbName}
+                  </h3>
+
+                  {/* Synergy Box */}
+                  {activeResult.multiHerbSynergy && (
+                    <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs text-teal-950 space-y-1.5">
+                      <span className="font-black block text-teal-900 text-xs">
+                        {ui.synergyTitle}:
+                      </span>
+                      <p className="text-[11px] leading-relaxed font-semibold">
+                        {activeResult.multiHerbSynergy.synergyNotes}
+                      </p>
+                      <p className="text-[10px] font-bold text-teal-800 pt-0.5">
+                        {activeResult.multiHerbSynergy.precautions}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Components */}
+                  {activeResult.detectedPlants && (
+                    <div className="space-y-2 pt-1">
+                      {activeResult.detectedPlants.map((plant, idx) => (
+                        <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 space-y-0.5">
+                          <p className="font-black text-slate-900">
+                            {idx + 1}. {getLocalizedBotanicalName(plant, lang)} <span className="font-normal italic text-[10px] text-slate-500">({plant.scientificName})</span>
+                          </p>
+                          <p className="text-[11px] text-slate-600">
+                            • <strong>{ui.usedFor}:</strong> {plant.traditionalUses.slice(0, 2).join(', ')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ----------------------------------------------------
+                  BRANCH 2B: 1 INGREDIENT / HERB -> VICE-VERSA DISCOVERY
                  ---------------------------------------------------- */}
               {activeResult.type === 'herb_vice_versa' && activeResult.detectedPlant && (
                 <div className="p-5 rounded-3xl bg-white border-2 border-emerald-400 shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider">
-                      🌿 ઔષધિ વિગતો (Herb Discovery)
+                      {ui.herbDiscoveryBadge}
                     </span>
                     <span className="text-[10px] italic font-semibold text-slate-500">
                       {activeResult.detectedPlant.scientificName}
@@ -701,28 +1007,28 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   </div>
 
                   <h3 className="text-base font-black text-slate-900">
-                    🌿 {activeResult.detectedPlant.commonName}
+                    🌿 {getLocalizedBotanicalName(activeResult.detectedPlant, lang)}
                   </h3>
 
                   {/* Vice Versa: Conditions it treats */}
                   {activeResult.viceVersaGenericMedicine && (
                     <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
                       <span className="font-extrabold block text-blue-950 text-xs">
-                        💊 સમાન સરકારી જન ઔષધિ દવા (Govt Generic Equivalent):
+                        {ui.govtGenericEquiv}
                       </span>
                       <p className="font-bold text-sm text-blue-900">
                         {activeResult.viceVersaGenericMedicine.medicineName}
                       </p>
                       <p className="text-[11px] text-blue-700">
-                        રોગ: {activeResult.viceVersaGenericMedicine.conditionName} • સરકારી કિંમત: {activeResult.viceVersaGenericMedicine.price}
+                        {ui.indication}: {activeResult.viceVersaGenericMedicine.conditionName} • {ui.govtPrice}: {activeResult.viceVersaGenericMedicine.price}
                       </p>
                     </div>
                   )}
 
                   <div className="text-xs text-slate-700 space-y-1">
-                    <p>• <strong>મુખ્ય ઉપયોગ (Used For):</strong> {activeResult.detectedPlant.traditionalUses.slice(0, 3).join(', ')}</p>
-                    <p>• <strong>સક્રિય તત્વો (Active Compounds):</strong> {activeResult.detectedPlant.activeConstituents.join(', ')}</p>
-                    <p>• <strong>જૈવિક માર્ગ:</strong> {activeResult.detectedPlant.metabolicEnzymes.join(', ')}</p>
+                    <p>• <strong>{ui.usedFor}:</strong> {activeResult.detectedPlant.traditionalUses.slice(0, 3).join(', ')}</p>
+                    <p>• <strong>{ui.activeCompounds}:</strong> {activeResult.detectedPlant.activeConstituents.join(', ')}</p>
+                    <p>• <strong>{ui.metabolicPathway}:</strong> {activeResult.detectedPlant.metabolicEnzymes.join(', ')}</p>
                   </div>
                 </div>
               )}
@@ -746,10 +1052,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         ? 'bg-amber-700'
                         : 'bg-emerald-700'
                     }`}>
-                      {activeResult.safetyAnalysis.hasInteraction ? '⚠️ દવા અને ઔષધિ વચ્ચે વિરોધાભાસ (Clash Detected)' : '✓ બંને સાથે લેવું સુરક્ષિત છે (Safe)'}
+                      {activeResult.safetyAnalysis.hasInteraction ? ui.clashDetected : ui.safeToTake}
                     </span>
                     <span className="text-[10px] font-mono font-bold">
-                      {activeResult.safetyAnalysis.confidence} Confidence
+                      {activeResult.safetyAnalysis.confidence} {ui.confidence}
                     </span>
                   </div>
 
@@ -774,7 +1080,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       {clashSent ? (
                         <div className="p-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>✓ ડોક્ટર / આશા દીદીને કેસ મોકલી દેવાયો છે (Sent to Clinician)</span>
+                          <span>{ui.caseSentToClinician}</span>
                         </div>
                       ) : (
                         <button
@@ -782,7 +1088,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                           className="w-full py-3 rounded-2xl bg-rose-700 hover:bg-rose-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
                         >
                           <Send className="w-4 h-4" />
-                          <span>{lang === 'hi' ? 'डॉक्टर / आशा दीदी को जांच हेतु भेजें' : lang === 'gu' ? 'આ કેસ ડોક્ટર / આશા દીદીને મોકલો' : 'Send Clash Report to Doctor / ASHA Worker'}</span>
+                          <span>{ui.sendClashToClinician}</span>
                         </button>
                       )}
                     </div>
@@ -798,11 +1104,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="w-4 h-4 text-emerald-700 shrink-0" />
                     <h4 className="font-extrabold text-xs text-slate-900">
-                      {lang === 'hi' 
-                        ? 'क्या आप कोई नियमित गोली (बीपी, शुगर, खून पतला) लेते हैं?' 
-                        : lang === 'gu' 
-                        ? 'શું તમે કોઈ નિયમિત દવા (બીપી, સુગર, લોહી પાતળું) લો છો?' 
-                        : 'Taking any regular medicine? Check for Clashes'}
+                      {ui.rxBoxTitle}
                     </h4>
                   </div>
 
@@ -811,7 +1113,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       type="text"
                       value={rxInput}
                       onChange={(e) => setRxInput(e.target.value)}
-                      placeholder="e.g. Warfarin, Amlodipine, Metformin, Aspirin"
+                      placeholder={ui.rxBoxPlaceholder}
                       className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     <button
@@ -819,7 +1121,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       disabled={!rxInput.trim() || rxChecking}
                       className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white font-extrabold text-xs shrink-0 shadow-xs active:scale-95 transition-all"
                     >
-                      {rxChecking ? '...' : (lang === 'hi' ? 'जांचें' : lang === 'gu' ? 'ચકાસો' : 'Check')}
+                      {rxChecking ? '...' : ui.checkBtn}
                     </button>
                   </div>
 
@@ -859,7 +1161,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       {rxClashResult.safetyResult?.hasInteraction && (
                         <div className="pt-1.5">
                           {clashSent ? (
-                            <span className="text-[10px] font-bold text-emerald-700">✓ Sent to Doctor</span>
+                            <span className="text-[10px] font-bold text-emerald-700">{ui.sentToDoctor}</span>
                           ) : (
                             <button
                               onClick={handleSendClashToDoctor}
@@ -884,7 +1186,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               onClick={onStartRemedy}
               className="text-xs font-semibold text-slate-500 hover:text-emerald-800 underline transition-colors"
             >
-              {lang === 'hi' ? 'विस्तृत पर्चा या पौधा दर्ज करने के लिए यहाँ क्लिक करें' : lang === 'gu' ? 'સંપૂર્ણ કેસ ફોર્મ ભરવા માટે અહીં ક્લિક કરો' : 'Want to record full clinical case intake? Tap here'}
+              {ui.recordFullIntake}
             </button>
           </div>
 

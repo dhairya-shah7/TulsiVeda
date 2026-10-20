@@ -1,4 +1,4 @@
-import { BOTANICAL_DATABASE, BotanicalSpecies } from './botanicalDatabase';
+import { BOTANICAL_DATABASE, BotanicalSpecies, getLocalizedBotanicalName } from './botanicalDatabase';
 import { DRUG_CATALOG, INDIAN_BRANDS, resolveMedicineFromText } from './pharmacopoeiaDatabase';
 import { SafetyEngine, SafetyAnalysisResult } from './safetyEngine';
 import { 
@@ -8,10 +8,11 @@ import {
 } from './nationalClinicalKnowledge';
 
 export interface UnifiedQueryResponse {
-  type: 'symptom_3tier' | 'direct_safety_check' | 'herb_vice_versa' | 'unrecognized';
+  type: 'symptom_3tier' | 'direct_safety_check' | 'herb_vice_versa' | 'multi_herb_combination' | 'unrecognized';
   queryText: string;
   conditionRecord?: ClinicalConditionRecord;
   detectedPlant?: BotanicalSpecies;
+  detectedPlants?: BotanicalSpecies[];
   detectedHerbName?: string;
   detectedDrugName?: string;
   detectedDrugGeneric?: string;
@@ -25,6 +26,12 @@ export interface UnifiedQueryResponse {
     price: string;
     conditionName: string;
   };
+  multiHerbSynergy?: {
+    primaryHerb: string;
+    secondaryHerb: string;
+    synergyNotes: string;
+    precautions: string;
+  };
 }
 
 export class QueryResolverService {
@@ -36,34 +43,60 @@ export class QueryResolverService {
   }
 
   /**
-   * Detect botanical species from text across 12 Indian languages & English
+   * Detect single botanical species from text across 12 Indian languages & English
    */
   public static extractBotanicalSpecies(text: string): BotanicalSpecies | null {
+    const list = this.extractAllBotanicalSpecies(text);
+    return list.length > 0 ? list[0] : null;
+  }
+
+  /**
+   * Detect ALL botanical species or classical formulations mentioned in query text
+   */
+  public static extractAllBotanicalSpecies(text: string): BotanicalSpecies[] {
     const clean = this.cleanText(text);
-    if (!clean) return null;
+    if (!clean) return [];
+
+    const found: BotanicalSpecies[] = [];
 
     for (const plant of BOTANICAL_DATABASE) {
-      // 1. Scientific name check
-      if (clean.includes(plant.scientificName.toLowerCase())) return plant;
-      
-      // 2. Common name check
-      const commonParts = plant.commonName.toLowerCase().split(/[\/,]/).map(s => s.trim());
-      if (commonParts.some(p => p.length > 2 && clean.includes(p))) return plant;
+      let isMatch = false;
 
-      // 3. Vernacular aliases check
-      for (const alias of plant.vernacularAliases) {
-        const lowerAlias = alias.toLowerCase().trim();
-        if (lowerAlias.length > 2 && clean.includes(lowerAlias)) {
-          return plant;
+      // 1. Scientific name check
+      if (clean.includes(plant.scientificName.toLowerCase())) isMatch = true;
+
+      // 2. English name check
+      if (!isMatch && plant.englishName && clean.includes(plant.englishName.toLowerCase())) isMatch = true;
+
+      // 3. Common name check
+      if (!isMatch) {
+        const commonParts = plant.commonName.toLowerCase().split(/[\/,]/).map(s => s.trim());
+        if (commonParts.some(p => p.length > 2 && clean.includes(p))) isMatch = true;
+      }
+
+      // 4. Vernacular aliases check
+      if (!isMatch) {
+        for (const alias of plant.vernacularAliases) {
+          const lowerAlias = alias.toLowerCase().trim();
+          if (lowerAlias.length > 2 && clean.includes(lowerAlias)) {
+            isMatch = true;
+            break;
+          }
         }
       }
 
-      // 4. Hindi / Punjabi name check
-      if (plant.hindiName && clean.includes(plant.hindiName.toLowerCase())) return plant;
-      if (plant.punjabiName && clean.includes(plant.punjabiName.toLowerCase())) return plant;
+      // 5. Hindi, Gujarati, Punjabi, Tamil
+      if (!isMatch && plant.hindiName && clean.includes(plant.hindiName.toLowerCase())) isMatch = true;
+      if (!isMatch && plant.gujaratiName && clean.includes(plant.gujaratiName.toLowerCase())) isMatch = true;
+      if (!isMatch && plant.punjabiName && clean.includes(plant.punjabiName.toLowerCase())) isMatch = true;
+      if (!isMatch && plant.tamilName && clean.includes(plant.tamilName.toLowerCase())) isMatch = true;
+
+      if (isMatch && !found.some(f => f.scientificName === plant.scientificName)) {
+        found.push(plant);
+      }
     }
 
-    return null;
+    return found;
   }
 
   /**
@@ -109,35 +142,41 @@ export class QueryResolverService {
 
   /**
    * Main Dynamic Query Resolution:
-   * Handles natural questions like:
-   * - "I have pain in my knees what to use"
-   * - "क्या मैं तुलसी का काढ़ा अपनी ब्लड प्रेशर की दवा के साथ ले सकती हूँ?"
-   * - "મને ગોઠણનો દુખાવો છે, શું વાપરવું?"
-   * - "cough and cold remedy"
+   * Handles multi-herb queries, single-herb discovery, disease queries, and herb-drug clash checks.
    */
   public static async resolveQuery(rawQuery: string, currentLang: string = 'en'): Promise<UnifiedQueryResponse> {
     const query = this.cleanText(rawQuery);
     if (!query) {
+      const emptyMsg = currentLang === 'hi' 
+        ? 'कृपया अपनी बीमारी या दवा के बारे में पूछें।'
+        : currentLang === 'gu'
+        ? 'કૃપા કરીને તમારી બીમારી અથવા દવા વિશે પૂછો.'
+        : 'Please ask a health question or describe your symptom.';
+
       return {
         type: 'unrecognized',
         queryText: rawQuery,
-        localizedNarrationText: 'Please ask a health question or describe your symptom.',
+        localizedNarrationText: emptyMsg,
       };
     }
 
-    // Step A: Check for simultaneous Herb + Drug interaction query (e.g. Storyboard query)
-    const detectedPlant = this.extractBotanicalSpecies(query);
+    const detectedPlants = this.extractAllBotanicalSpecies(query);
     const detectedDrug = this.extractDrugEntity(query);
 
-    if (detectedPlant && detectedDrug) {
+    // ========================================================
+    // CASE 1: MULTIPLE BOTANICALS + PRESCRIPTION DRUG CLASH
+    // ========================================================
+    if (detectedPlants.length >= 2 && detectedDrug) {
+      const primaryPlant = detectedPlants[0];
       const safetyResult = await SafetyEngine.analyze({
-        plantSpecies: detectedPlant.scientificName,
+        plantSpecies: primaryPlant.scientificName,
         drugGenericName: detectedDrug.genericName,
         isClinicianConfirmed: true,
       });
 
+      const plantNamesStr = detectedPlants.map(p => getLocalizedBotanicalName(p, currentLang)).join(' + ');
       const narration = this.buildClashNarration(
-        detectedPlant.commonName,
+        plantNamesStr,
         detectedDrug.brandOrGenericName,
         safetyResult,
         currentLang
@@ -146,22 +185,102 @@ export class QueryResolverService {
       return {
         type: 'direct_safety_check',
         queryText: rawQuery,
-        detectedPlant,
-        detectedHerbName: detectedPlant.commonName,
+        detectedPlant: primaryPlant,
+        detectedPlants,
+        detectedHerbName: plantNamesStr,
         detectedDrugName: detectedDrug.brandOrGenericName,
         detectedDrugGeneric: detectedDrug.genericName,
         safetyAnalysis: safetyResult,
         localizedNarrationText: narration,
+        suggestedPrescriptionCheckHerb: primaryPlant.scientificName,
       };
     }
 
-    // Step B: Check for Clinical Symptom or Disease condition in National Clinical Database
+    // ========================================================
+    // CASE 2: MULTIPLE BOTANICALS DETECTED (e.g. Triphala + Turmeric)
+    // ========================================================
+    if (detectedPlants.length >= 2) {
+      const p1 = detectedPlants[0];
+      const p2 = detectedPlants[1];
+      const p1Name = getLocalizedBotanicalName(p1, currentLang);
+      const p2Name = getLocalizedBotanicalName(p2, currentLang);
+
+      let synergyNotes = '';
+      let precautions = '';
+      let narration = '';
+
+      if (currentLang === 'hi') {
+        synergyNotes = `${p1Name} और ${p2Name} का सम्मिश्रण: पाचन शोधन, चयापचय संतुलन एवं सूजन निवारण के लिए एक उत्तम शास्त्रीय आयुर्वेदिक योग है।`;
+        precautions = `यदि आप रक्तचाप (BP), मधुमेह (Sugar) या खून पतला करने की कोई गोली लेते हैं, तो नीचे दिए गए बॉक्स में जांच अवश्य करें।`;
+        narration = `आपने ${p1Name} और ${p2Name} के बारे में पूछा है। यह सम्मिश्रण शरीर के शोधन और सूजन निवारण के लिए गुणकारी है। यदि कोई नियमित गोली लेते हैं तो टकराव की जांच अवश्य करें।`;
+      } else if (currentLang === 'gu') {
+        synergyNotes = `${p1Name} અને ${p2Name}નું મિશ્રણ: પાચન શુદ્ધિ, ચયાપચય સંતુલન અને સોજાના શમન માટે શ્રેષ્ઠ શાસ્ત્રીય આયુર્વેદિક યોગ છે.`;
+        precautions = `જો તમે બીપી, સુગર કે લોહી પાતળું કરવાની દવા લેતા હોવ, તો નીચેના ખાનામાં તેનું નામ લખીને ચકાસો.`;
+        narration = `તમે ${p1Name} અને ${p2Name} વિશે પૂછ્યું છે. આ આયુર્વેદિક યોગ પાચન અને સ્વાસ્થ્ય માટે હિતકારી છે. કોઈ એલોપેથિક દવા ચાલુ હોય તો નીચે વિરોધાભાસ ચકાસો.`;
+      } else {
+        synergyNotes = `Combination of ${p1Name} and ${p2Name}: Traditional Ayurvedic synergy providing dual benefits of deep digestive detoxification, tissue rejuvenation, and systemic anti-inflammatory protection.`;
+        precautions = `If you take prescription medications (blood pressure, diabetes, or anticoagulants), check below to ensure no metabolic clearance clashes occur.`;
+        narration = `You asked about combining ${p1Name} with ${p2Name}. This classical combination supports digestive balance and anti-inflammatory wellness. Please check with your ongoing prescription tablets below.`;
+      }
+
+      return {
+        type: 'multi_herb_combination',
+        queryText: rawQuery,
+        detectedPlant: p1,
+        detectedPlants,
+        detectedHerbName: `${p1Name} + ${p2Name}`,
+        localizedNarrationText: narration,
+        suggestedPrescriptionCheckHerb: p1.scientificName,
+        multiHerbSynergy: {
+          primaryHerb: p1Name,
+          secondaryHerb: p2Name,
+          synergyNotes,
+          precautions,
+        },
+      };
+    }
+
+    // ========================================================
+    // CASE 3: 1 BOTANICAL + 1 PHARMACEUTICAL DRUG CLASH
+    // ========================================================
+    if (detectedPlants.length === 1 && detectedDrug) {
+      const plant = detectedPlants[0];
+      const safetyResult = await SafetyEngine.analyze({
+        plantSpecies: plant.scientificName,
+        drugGenericName: detectedDrug.genericName,
+        isClinicianConfirmed: true,
+      });
+
+      const plantDisplayName = getLocalizedBotanicalName(plant, currentLang);
+      const narration = this.buildClashNarration(
+        plantDisplayName,
+        detectedDrug.brandOrGenericName,
+        safetyResult,
+        currentLang
+      );
+
+      return {
+        type: 'direct_safety_check',
+        queryText: rawQuery,
+        detectedPlant: plant,
+        detectedPlants: [plant],
+        detectedHerbName: plantDisplayName,
+        detectedDrugName: detectedDrug.brandOrGenericName,
+        detectedDrugGeneric: detectedDrug.genericName,
+        safetyAnalysis: safetyResult,
+        localizedNarrationText: narration,
+        suggestedPrescriptionCheckHerb: plant.scientificName,
+      };
+    }
+
+    // ========================================================
+    // CASE 4: CLINICAL SYMPTOM / DISEASE -> 3-TIER TREATMENT
+    // ========================================================
     const matchedConditions = NationalClinicalKnowledgeEngine.searchBySymptomOrCondition(rawQuery, currentLang);
     if (matchedConditions && matchedConditions.length > 0) {
       const condition = matchedConditions[0];
       const narration = this.buildConditionNarration(condition, currentLang);
       
-      // Determine what botanical or remedy can be cross-checked with prescriptions
       const suggestedHerb = condition.ayushClassicalFormulation.scientificBotanical || 
                             condition.verifiedHomeRemedy.kitchenItem;
 
@@ -174,10 +293,14 @@ export class QueryResolverService {
       };
     }
 
-    // Step C: Botanical Vice-Versa Lookup (Single Herb mentioned -> Find conditions & Generics!)
-    if (detectedPlant) {
+    // ========================================================
+    // CASE 5: SINGLE HERB / FORMULATION / LIQUID -> VICE-VERSA LOOKUP
+    // ========================================================
+    if (detectedPlants.length === 1) {
+      const detectedPlant = detectedPlants[0];
       const plantSciLower = detectedPlant.scientificName.toLowerCase();
       const plantCommonLower = detectedPlant.commonName.toLowerCase();
+      const localizedName = getLocalizedBotanicalName(detectedPlant, currentLang);
 
       // Find conditions in National Clinical Knowledge that match this botanical
       const matchingConditions = NATIONAL_CLINICAL_RECORDS.filter(rec => {
@@ -210,27 +333,28 @@ export class QueryResolverService {
       let narration = '';
       if (currentLang === 'hi') {
         narration = primaryCond
-          ? `${detectedPlant.commonName} का मुख्य उपयोग ${primaryCond.conditionName} के लिए होता है। इसके समान सरकारी जन औषधि दवा है: ${primaryCond.officialGeneric.medicineName} (मूल्य ${primaryCond.officialGeneric.pmbjpPriceINR})। घरेलू विधि: ${primaryCond.verifiedHomeRemedy.kitchenItem}।`
-          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। मुख्य घटक: ${detectedPlant.activeConstituents.join(', ')}। पारंपरिक उपयोग: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
+          ? `${localizedName} का मुख्य उपयोग ${primaryCond.conditionName} के लिए होता है। इसके समान सरकारी जन औषधि दवा है: ${primaryCond.officialGeneric.medicineName} (मूल्य ${primaryCond.officialGeneric.pmbjpPriceINR})।`
+          : `${localizedName} (${detectedPlant.scientificName})। मुख्य घटक: ${detectedPlant.activeConstituents.join(', ')}। पारंपरिक उपयोग: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
       } else if (currentLang === 'gu') {
         narration = primaryCond
-          ? `${detectedPlant.commonName}નો મુખ્ય ઉપયોગ ${primaryCond.conditionName} માટે થાય છે. આના જેવી સરકારી જન ઔષધિ દવા છે: ${primaryCond.officialGeneric.medicineName} (કિંમત ${primaryCond.officialGeneric.pmbjpPriceINR})। ઘરગથ્થુ ઉપચાર: ${primaryCond.verifiedHomeRemedy.kitchenItem}।`
-          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। મુખ્ય ઘટકો: ${detectedPlant.activeConstituents.join(', ')}। પરંપરાગત ઉપયોગ: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
+          ? `${localizedName}નો મુખ્ય ઉપયોગ ${primaryCond.conditionName} માટે થાય છે. આના જેવી સરકારી જન ઔષધિ દવા છે: ${primaryCond.officialGeneric.medicineName} (કિંમત ${primaryCond.officialGeneric.pmbjpPriceINR})।`
+          : `${localizedName} (${detectedPlant.scientificName})। મુખ્ય ઘટકો: ${detectedPlant.activeConstituents.join(', ')}। પરંપરાગત ઉપયોગ: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
       } else if (currentLang === 'pa') {
         narration = primaryCond
-          ? `${detectedPlant.commonName} ਦਾ ਮੁੱਖ ਉਪਯੋਗ ${primaryCond.conditionName} ਲਈ ਹੁੰਦਾ ਹੈ। ਇਸਦੇ ਸਮਾਨ ਜਨ ਔਸ਼ਧੀ ਦਵਾਈ: ${primaryCond.officialGeneric.medicineName}।`
-          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। ਮੁੱਖ ਘਟਕ: ${detectedPlant.activeConstituents.join(', ')}।`;
+          ? `${localizedName} ਦਾ ਮੁੱਖ ਉਪਯੋਗ ${primaryCond.conditionName} ਲਈ ਹੁੰਦਾ ਹੈ। ਇਸਦੇ ਸਮਾਨ ਜਨ ਔਸ਼ਧੀ ਦਵਾਈ: ${primaryCond.officialGeneric.medicineName}।`
+          : `${localizedName} (${detectedPlant.scientificName})। ਮੁੱਖ ਘਟਕ: ${detectedPlant.activeConstituents.join(', ')}।`;
       } else {
         narration = primaryCond
-          ? `${detectedPlant.commonName} is traditionally indicated for ${primaryCond.conditionName}. Its Jan Aushadhi generic equivalent is ${primaryCond.officialGeneric.medicineName} (${primaryCond.officialGeneric.pmbjpPriceINR}). Kitchen remedy: ${primaryCond.verifiedHomeRemedy.kitchenItem}.`
-          : `${detectedPlant.commonName} (${detectedPlant.scientificName}). Active compounds: ${detectedPlant.activeConstituents.join(', ')}. Traditional uses: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}.`;
+          ? `${localizedName} is indicated for ${primaryCond.conditionName}. Its Jan Aushadhi generic equivalent is ${primaryCond.officialGeneric.medicineName} (${primaryCond.officialGeneric.pmbjpPriceINR}).`
+          : `${localizedName} (${detectedPlant.scientificName}). Active compounds: ${detectedPlant.activeConstituents.join(', ')}. Primary indications: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}.`;
       }
 
       return {
         type: 'herb_vice_versa',
         queryText: rawQuery,
         detectedPlant,
-        detectedHerbName: detectedPlant.commonName,
+        detectedPlants: [detectedPlant],
+        detectedHerbName: localizedName,
         conditionRecord: primaryCond || undefined,
         viceVersaConditions: matchingConditions.map(c => NationalClinicalKnowledgeEngine.getLocalizedRecord(c, currentLang)),
         viceVersaGenericMedicine,
@@ -239,7 +363,9 @@ export class QueryResolverService {
       };
     }
 
-    // Step D: Fallback for unlisted symptom
+    // ========================================================
+    // CASE 6: FALLBACK FOR UNLISTED QUERY
+    // ========================================================
     const fallbackCondition = NationalClinicalKnowledgeEngine.getLocalizedRecord(NATIONAL_CLINICAL_RECORDS[0], currentLang);
     return {
       type: 'symptom_3tier',
@@ -269,12 +395,15 @@ export class QueryResolverService {
     // 2. Identify Plant
     let plant = this.extractBotanicalSpecies(botanicalOrRemedyName);
     if (!plant) {
-      // Map common kitchen remedy ingredients to botanical species
       const lower = botanicalOrRemedyName.toLowerCase();
       if (lower.includes('turmeric') || lower.includes('haldi') || lower.includes('curcuma') || lower.includes('હળદર')) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Curcuma longa') || null;
+      } else if (lower.includes('triphala') || lower.includes('trifala') || lower.includes('ત્રિફળા') || lower.includes('त्रिफला')) {
+        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Triphala')) || null;
+      } else if (lower.includes('shilajit') || lower.includes('salajeet') || lower.includes('શિલાજીત') || lower.includes('शिलाजीत')) {
+        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Shilajit')) || null;
       } else if (lower.includes('tulsi') || lower.includes('ocimum') || lower.includes('तुलसी') || lower.includes('તુલસી')) {
-        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Ocimum tenuiflorum') || null;
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Ocimum sanctum') || null;
       } else if (lower.includes('ginger') || lower.includes('adrak') || lower.includes('zingiber') || lower.includes('આદુ')) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Zingiber officinale') || null;
       } else if (lower.includes('shallaki') || lower.includes('boswellia') || lower.includes('guggul')) {
@@ -308,7 +437,7 @@ export class QueryResolverService {
       isClinicianConfirmed: true,
     });
 
-    const plantDisplayName = plant ? plant.commonName : botanicalOrRemedyName;
+    const plantDisplayName = plant ? getLocalizedBotanicalName(plant, currentLang) : botanicalOrRemedyName;
     const narration = this.buildClashNarration(plantDisplayName, drug.brandOrGenericName, safetyResult, currentLang);
 
     return {
