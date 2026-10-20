@@ -673,7 +673,7 @@ export const RealWorldQueryModal: React.FC<RealWorldQueryModalProps> = ({
           {/* ========================================================
               CASE 3: BOTANICAL PROFILE RESULT
              ======================================================== */}
-          {result && result.type === 'botanical_profile' && result.detectedPlant && (
+          {result && (result.type === 'herb_vice_versa' as any) && result.detectedPlant && (
             <div className="space-y-4">
               <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">

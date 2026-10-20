@@ -28,6 +28,10 @@ export interface VoiceStreamChunk {
 }
 
 export class VoiceEngineService {
+  private static _isSpeaking = false;
+  private static _listeners: ((speaking: boolean) => void)[] = [];
+  private static _activeAudio: HTMLAudioElement | null = null;
+
   private static readonly BCP47_MAP: Record<string, string> = {
     gu: 'gu-IN',
     hi: 'hi-IN',
@@ -42,6 +46,48 @@ export class VoiceEngineService {
     as: 'as-IN',
     en: 'en-IN',
   };
+
+  public static isSpeaking(): boolean {
+    return this._isSpeaking;
+  }
+
+  public static addSpeechListener(cb: (speaking: boolean) => void): () => void {
+    this._listeners.push(cb);
+    return () => {
+      this._listeners = this._listeners.filter(l => l !== cb);
+    };
+  }
+
+  private static notify(speaking: boolean) {
+    this._isSpeaking = speaking;
+    this._listeners.forEach(l => {
+      try { l(speaking); } catch (e) {}
+    });
+  }
+
+  /**
+   * Immediately halts any active speech output
+   */
+  public static async stopSpeech(): Promise<void> {
+    this.notify(false);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await TextToSpeech.stop();
+      } catch (e) {}
+    }
+    if (this._activeAudio) {
+      try {
+        this._activeAudio.pause();
+        this._activeAudio.currentTime = 0;
+      } catch (e) {}
+      this._activeAudio = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+  }
 
   /**
    * Transcribe spoken audio using AI4Bharat Indic-Transcribe API if available,
@@ -118,12 +164,14 @@ export class VoiceEngineService {
     const clean = text.replace(/[\*\#\_]/g, '').trim();
     if (!clean) return;
 
+    await this.stopSpeech();
+    this.notify(true);
+
     const bcp = this.BCP47_MAP[language] || 'gu-IN';
 
     // First attempt: Native Android Text-To-Speech (Fastest on device, zero internet latency)
     if (Capacitor.isNativePlatform()) {
       try {
-        await TextToSpeech.stop();
         if (onChunkStart) onChunkStart(clean);
         await TextToSpeech.speak({
           text: clean,
@@ -133,6 +181,7 @@ export class VoiceEngineService {
           volume: 1.0,
           category: 'ambient',
         });
+        this.notify(false);
         return;
       } catch (nativeErr) {
         console.warn('[VoiceEngine] Native Android TTS failed, falling back to Web / Cloud TTS:', nativeErr);
@@ -151,6 +200,15 @@ export class VoiceEngineService {
         const audioBlob = await res.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
+        this._activeAudio = audio;
+        audio.onended = () => {
+          this._activeAudio = null;
+          this.notify(false);
+        };
+        audio.onerror = () => {
+          this._activeAudio = null;
+          this.notify(false);
+        };
         if (onChunkStart) onChunkStart(clean);
         await audio.play();
         return;
@@ -162,10 +220,15 @@ export class VoiceEngineService {
         const utterance = new SpeechSynthesisUtterance(clean);
         utterance.lang = bcp;
         utterance.rate = 0.92;
+        utterance.onend = () => this.notify(false);
+        utterance.onerror = () => this.notify(false);
         if (onChunkStart) onChunkStart(clean);
         window.speechSynthesis.speak(utterance);
+        return;
       }
     }
+
+    this.notify(false);
   }
 
   /**

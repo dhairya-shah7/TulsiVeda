@@ -8,7 +8,7 @@ import {
 } from './nationalClinicalKnowledge';
 
 export interface UnifiedQueryResponse {
-  type: 'symptom_3tier' | 'direct_safety_check' | 'botanical_profile' | 'unrecognized';
+  type: 'symptom_3tier' | 'direct_safety_check' | 'herb_vice_versa' | 'unrecognized';
   queryText: string;
   conditionRecord?: ClinicalConditionRecord;
   detectedPlant?: BotanicalSpecies;
@@ -18,6 +18,13 @@ export interface UnifiedQueryResponse {
   safetyAnalysis?: SafetyAnalysisResult;
   localizedNarrationText: string;
   suggestedPrescriptionCheckHerb?: string;
+  viceVersaConditions?: ClinicalConditionRecord[];
+  viceVersaGenericMedicine?: {
+    medicineName: string;
+    genericSalt: string;
+    price: string;
+    conditionName: string;
+  };
 }
 
 export class QueryResolverService {
@@ -167,19 +174,66 @@ export class QueryResolverService {
       };
     }
 
-    // Step C: Botanical Lookup (Single Herb mentioned)
+    // Step C: Botanical Vice-Versa Lookup (Single Herb mentioned -> Find conditions & Generics!)
     if (detectedPlant) {
-      const narration = currentLang === 'hi'
-        ? `${detectedPlant.commonName} (${detectedPlant.scientificName})। मुख्य घटक: ${detectedPlant.activeConstituents.join(', ')}। पारंपरिक उपयोग: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`
-        : currentLang === 'gu'
-        ? `${detectedPlant.commonName} (${detectedPlant.scientificName})। મુખ્ય ઘટકો: ${detectedPlant.activeConstituents.join(', ')}। પરંપરાગત ઉપયોગ: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`
-        : `${detectedPlant.commonName} (${detectedPlant.scientificName}). Active compounds: ${detectedPlant.activeConstituents.join(', ')}. Traditional uses: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}.`;
+      const plantSciLower = detectedPlant.scientificName.toLowerCase();
+      const plantCommonLower = detectedPlant.commonName.toLowerCase();
+
+      // Find conditions in National Clinical Knowledge that match this botanical
+      const matchingConditions = NATIONAL_CLINICAL_RECORDS.filter(rec => {
+        const ayushSci = rec.ayushClassicalFormulation.scientificBotanical.toLowerCase();
+        const ayushForm = rec.ayushClassicalFormulation.formulationName.toLowerCase();
+        const kitchenItem = rec.verifiedHomeRemedy.kitchenItem.toLowerCase();
+        const kitchenPrep = rec.verifiedHomeRemedy.preparationMethod.toLowerCase();
+
+        return ayushSci.includes(plantSciLower) || 
+               ayushForm.includes(plantCommonLower) ||
+               kitchenItem.includes(plantCommonLower) ||
+               kitchenPrep.includes(plantCommonLower) ||
+               detectedPlant.traditionalUses.some(use => rec.typicalSymptoms.some(s => s.toLowerCase().includes(use.toLowerCase())));
+      });
+
+      const primaryCond = matchingConditions.length > 0 
+        ? NationalClinicalKnowledgeEngine.getLocalizedRecord(matchingConditions[0], currentLang)
+        : null;
+
+      let viceVersaGenericMedicine = undefined;
+      if (primaryCond) {
+        viceVersaGenericMedicine = {
+          medicineName: primaryCond.officialGeneric.medicineName,
+          genericSalt: primaryCond.officialGeneric.genericSalt,
+          price: primaryCond.officialGeneric.pmbjpPriceINR,
+          conditionName: primaryCond.conditionName,
+        };
+      }
+
+      let narration = '';
+      if (currentLang === 'hi') {
+        narration = primaryCond
+          ? `${detectedPlant.commonName} का मुख्य उपयोग ${primaryCond.conditionName} के लिए होता है। इसके समान सरकारी जन औषधि दवा है: ${primaryCond.officialGeneric.medicineName} (मूल्य ${primaryCond.officialGeneric.pmbjpPriceINR})। घरेलू विधि: ${primaryCond.verifiedHomeRemedy.kitchenItem}।`
+          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। मुख्य घटक: ${detectedPlant.activeConstituents.join(', ')}। पारंपरिक उपयोग: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
+      } else if (currentLang === 'gu') {
+        narration = primaryCond
+          ? `${detectedPlant.commonName}નો મુખ્ય ઉપયોગ ${primaryCond.conditionName} માટે થાય છે. આના જેવી સરકારી જન ઔષધિ દવા છે: ${primaryCond.officialGeneric.medicineName} (કિંમત ${primaryCond.officialGeneric.pmbjpPriceINR})। ઘરગથ્થુ ઉપચાર: ${primaryCond.verifiedHomeRemedy.kitchenItem}।`
+          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। મુખ્ય ઘટકો: ${detectedPlant.activeConstituents.join(', ')}। પરંપરાગત ઉપયોગ: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}।`;
+      } else if (currentLang === 'pa') {
+        narration = primaryCond
+          ? `${detectedPlant.commonName} ਦਾ ਮੁੱਖ ਉਪਯੋਗ ${primaryCond.conditionName} ਲਈ ਹੁੰਦਾ ਹੈ। ਇਸਦੇ ਸਮਾਨ ਜਨ ਔਸ਼ਧੀ ਦਵਾਈ: ${primaryCond.officialGeneric.medicineName}।`
+          : `${detectedPlant.commonName} (${detectedPlant.scientificName})। ਮੁੱਖ ਘਟਕ: ${detectedPlant.activeConstituents.join(', ')}।`;
+      } else {
+        narration = primaryCond
+          ? `${detectedPlant.commonName} is traditionally indicated for ${primaryCond.conditionName}. Its Jan Aushadhi generic equivalent is ${primaryCond.officialGeneric.medicineName} (${primaryCond.officialGeneric.pmbjpPriceINR}). Kitchen remedy: ${primaryCond.verifiedHomeRemedy.kitchenItem}.`
+          : `${detectedPlant.commonName} (${detectedPlant.scientificName}). Active compounds: ${detectedPlant.activeConstituents.join(', ')}. Traditional uses: ${detectedPlant.traditionalUses.slice(0, 3).join(', ')}.`;
+      }
 
       return {
-        type: 'botanical_profile',
+        type: 'herb_vice_versa',
         queryText: rawQuery,
         detectedPlant,
         detectedHerbName: detectedPlant.commonName,
+        conditionRecord: primaryCond || undefined,
+        viceVersaConditions: matchingConditions.map(c => NationalClinicalKnowledgeEngine.getLocalizedRecord(c, currentLang)),
+        viceVersaGenericMedicine,
         localizedNarrationText: narration,
         suggestedPrescriptionCheckHerb: detectedPlant.scientificName,
       };

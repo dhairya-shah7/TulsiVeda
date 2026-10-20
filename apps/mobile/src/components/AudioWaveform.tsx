@@ -330,15 +330,23 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     drawSimulatedWaveforms();
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
+    let nativeMatches: string[] = [];
     if (Capacitor.isNativePlatform()) {
       try {
         if (capListenerRef.current) {
-          capListenerRef.current.remove();
+          await capListenerRef.current.remove();
           capListenerRef.current = null;
         }
-        CapSpeechRecognition.stop().catch((e) => console.warn('[Native Speech] Stop error:', e));
-      } catch (e) {}
+        const stopRes = await CapSpeechRecognition.stop() as any;
+        if (stopRes?.matches && stopRes.matches.length > 0) {
+          nativeMatches = stopRes.matches;
+          liveTranscriptRef.current = stopRes.matches[0];
+          setLiveTranscript(stopRes.matches[0]);
+        }
+      } catch (e) {
+        console.warn('[Native Speech] Stop error:', e);
+      }
     }
 
     if (recognitionRef.current) {
@@ -350,7 +358,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
     } else {
-      const finalTranscript = liveTranscriptRef.current.trim();
+      const finalTranscript = (nativeMatches[0] || liveTranscriptRef.current || '').trim();
       liveTranscriptRef.current = finalTranscript;
       setLiveTranscript(finalTranscript);
       setErrorMsg(null);
