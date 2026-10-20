@@ -22,6 +22,8 @@ import {
 import { StorageService, StoredRecord } from '../services/storageService.ts';
 import { AudioNarrator } from '../components/AudioNarrator.tsx';
 import { t, useCurrentLanguage } from '../services/localizationService.ts';
+import { StoryboardQueryCard } from '../components/StoryboardQueryCard.tsx';
+import { RealWorldQueryModal } from '../components/RealWorldQueryModal.tsx';
 
 interface DashboardScreenProps {
   onStartRemedy: () => void;
@@ -61,6 +63,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [inspectRecord, setInspectRecord] = useState<StoredRecord | null>(null);
+  const [queryModalOpen, setQueryModalOpen] = useState(false);
+  const [queryModalMode, setQueryModalMode] = useState<'voice' | 'text' | 'image' | 'plant'>('voice');
 
   const loadData = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
@@ -184,11 +188,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       </div>
 
       {/* ========================================================
-          ROLE 1: CITIZEN VIEW - CLEAN, TOUCH-FRIENDLY ACTION CARDS
+          ROLE 1: CITIZEN VIEW - STORYBOARD MULTIMODAL QUERY & ACTION CARDS
          ======================================================== */}
       {isCitizen && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
+          {/* Step 1: Real-World Multimodal Query Hub (Official Storyboard) */}
+          <StoryboardQueryCard
+            onOpenVoice={() => { setQueryModalMode('voice'); setQueryModalOpen(true); }}
+            onOpenText={() => { setQueryModalMode('text'); setQueryModalOpen(true); }}
+            onOpenImage={() => { setQueryModalMode('image'); setQueryModalOpen(true); }}
+            onOpenPlantSelection={() => { setQueryModalMode('plant'); setQueryModalOpen(true); }}
+          />
+
+          <div className="flex items-center justify-between px-1 pt-1">
             <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
               <span>{t('step_guide_heading')}</span>
             </h2>
@@ -585,6 +597,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </div>
         </div>
       )}
+      {/* Real-World Multimodal Query Modal (Storyboard Flow) */}
+      <RealWorldQueryModal
+        isOpen={queryModalOpen}
+        initialMode={queryModalMode}
+        onClose={() => setQueryModalOpen(false)}
+        onSelectHerb={(_herbName, scientificName) => {
+          setQueryModalOpen(false);
+          onStartRemedy();
+        }}
+      />
     </div>
   );
 };
