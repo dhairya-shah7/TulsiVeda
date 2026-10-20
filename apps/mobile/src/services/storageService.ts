@@ -246,4 +246,45 @@ export class StorageService {
       stats: localStats,
     };
   }
+
+  /**
+   * Syncs un-uploaded offline records to the backend sync queue
+   */
+  static async syncOfflineRecordsToServer(): Promise<number> {
+    const records = this.getLocalRecords();
+    const unSynced = records.filter(r => !r.id.startsWith('server_') && r.status !== 'completed');
+    if (unSynced.length === 0) return 0;
+
+    try {
+      const payload = {
+        items: unSynced.map(r => ({
+          clientRecordId: r.id,
+          patientName: r.patient_name || 'Village Citizen',
+          remedyNameLocal: r.remedy_name_local,
+          scientificName: r.confirmed_species,
+          usedForCondition: r.used_for_condition,
+          confirmedMedicine: r.confirmed_medicine,
+          placeRegion: r.place_region || 'Rural Health Post',
+          recordedAt: r.created_at,
+          syncTimestamp: new Date().toISOString(),
+          reporterRole: r.submitted_by_role || 'citizen',
+        })),
+        deviceId: 'tulsiveda-field-client',
+      };
+
+      const res = await fetch('/api/sync/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        return result.count || unSynced.length;
+      }
+    } catch (err) {
+      console.warn('[StorageService] Offline sync queue deferred until network reconnects:', err);
+    }
+    return 0;
+  }
 }
