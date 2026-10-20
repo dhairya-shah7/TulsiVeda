@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { LocalizationService, SupportedLanguage } from '../services/localizationService.ts';
 
 export interface AudioNarratorProps {
@@ -10,10 +12,76 @@ export interface AudioNarratorProps {
   langCode?: SupportedLanguage;
 }
 
+const BCP47_LANGUAGE_MAP: Record<string, string> = {
+  gu: 'gu-IN',
+  hi: 'hi-IN',
+  pa: 'pa-IN',
+  mr: 'mr-IN',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  kn: 'kn-IN',
+  ml: 'ml-IN',
+  bn: 'bn-IN',
+  or: 'or-IN',
+  as: 'as-IN',
+  en: 'en-IN',
+};
+
 /**
- * Finds the best matching TTS voice for a given BCP-47 tag or language code.
- * Ensures that Android / iOS WebViews do not fall back to English when an Indian voice is available.
+ * Native + Web TalkBack Player.
+ * Speaks the text in the exact language selected by the user.
+ * Prioritizes native Android TextToSpeech service for 100% natural Indic voices.
  */
+export const playNativeTTS = async (text: string, langCode?: SupportedLanguage) => {
+  const clean = text.replace(/[\*\#\_]/g, '').trim();
+  if (!clean) return;
+
+  const activeLang = langCode || LocalizationService.getCurrentLanguage();
+  const bcp = BCP47_LANGUAGE_MAP[activeLang] || LocalizationService.getBcp47() || 'gu-IN';
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await TextToSpeech.stop();
+      await TextToSpeech.speak({
+        text: clean,
+        lang: bcp,
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient',
+      });
+      return;
+    } catch (err) {
+      console.warn('[Native TTS Error, falling back to Web Speech]:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = bcp;
+    utterance.rate = 0.92;
+    utterance.pitch = 1.0;
+
+    const matchedVoice = findMatchingVoice(bcp, activeLang);
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+    window.speechSynthesis.speak(utterance);
+  }
+};
+
+export const stopTTS = async () => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await TextToSpeech.stop();
+    } catch (e) {}
+  }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+};
+
 export const findMatchingVoice = (bcpTag: string, langCode: string): SpeechSynthesisVoice | null => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
@@ -22,21 +90,18 @@ export const findMatchingVoice = (bcpTag: string, langCode: string): SpeechSynth
   const targetBcp = bcpTag.toLowerCase().replace('_', '-');
   const targetPrefix = langCode.toLowerCase();
 
-  // 1. Exact BCP-47 tag match (e.g. "gu-in", "hi-in", "pa-in")
   let matched = voices.find(v => {
     const l = v.lang.toLowerCase().replace('_', '-');
     return l === targetBcp;
   });
   if (matched) return matched;
 
-  // 2. Language prefix match (e.g. "gu", "pa", "hi", "mr", "ta", "te", etc.)
   matched = voices.find(v => {
     const l = v.lang.toLowerCase().replace('_', '-');
     return l.startsWith(targetPrefix + '-') || l === targetPrefix;
   });
   if (matched) return matched;
 
-  // 3. Voice Name search (e.g. Google ગુજરાતી, Google हिन्दी, etc.)
   const langNameMap: Record<string, string[]> = {
     hi: ['hindi', 'हिन्दी'],
     gu: ['gujarati', 'ગુજરાતી'],
@@ -47,7 +112,7 @@ export const findMatchingVoice = (bcpTag: string, langCode: string): SpeechSynth
     kn: ['kannada', 'ಕನ್ನಡ'],
     ml: ['malayalam', 'മലയാളം'],
     bn: ['bengali', 'বাংলা'],
-    or: ['odia', 'oriyya', 'ଓଡ଼ିଆ'],
+    or: ['odia', 'oriyya', 'ଓડ଼ିଆ'],
     as: ['assamese', 'অসমীয়া'],
     en: ['indian english', 'india', 'en-in'],
   };
@@ -61,7 +126,6 @@ export const findMatchingVoice = (bcpTag: string, langCode: string): SpeechSynth
     if (matched) return matched;
   }
 
-  // 4. Secondary fallback for Indic languages: Hindi voice can pronounce Indic phonemes
   if (targetPrefix !== 'en') {
     const hindiVoice = voices.find(v => {
       const l = v.lang.toLowerCase().replace('_', '-');
@@ -70,29 +134,7 @@ export const findMatchingVoice = (bcpTag: string, langCode: string): SpeechSynth
     if (hindiVoice) return hindiVoice;
   }
 
-  // 5. Default system voice
   return voices.find(v => v.default) || voices[0] || null;
-};
-
-export const playNativeTTS = (text: string, langCode?: SupportedLanguage) => {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-
-  const clean = text.replace(/[\*\#\_]/g, '');
-  const utterance = new SpeechSynthesisUtterance(clean);
-  const activeLang = langCode || LocalizationService.getCurrentLanguage();
-  const bcp = langCode ? `${langCode}-IN` : LocalizationService.getBcp47();
-  
-  utterance.lang = bcp;
-  utterance.rate = 0.92;
-  utterance.pitch = 1.0;
-
-  const matchedVoice = findMatchingVoice(bcp, activeLang);
-  if (matchedVoice) {
-    utterance.voice = matchedVoice;
-  }
-
-  window.speechSynthesis.speak(utterance);
 };
 
 export const AudioNarrator: React.FC<AudioNarratorProps> = ({
@@ -105,7 +147,6 @@ export const AudioNarrator: React.FC<AudioNarratorProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const content = textToNarrate || textToSpeak || '';
 
-  // Pre-load voices on component mount for instant response
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
@@ -119,39 +160,59 @@ export const AudioNarrator: React.FC<AudioNarratorProps> = ({
     }
   }, []);
 
-  const speak = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      alert('Text-to-Speech is not supported on this device.');
-      return;
-    }
-
+  const speak = async () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      await stopTTS();
       setIsSpeaking(false);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    const cleanText = content.replace(/[\*\#\_]/g, '').trim();
+    if (!cleanText) return;
 
-    const cleanText = content.replace(/[\*\#\_]/g, '');
-    const utterance = new SpeechSynthesisUtterance(cleanText);
     const activeLang = langCode || LocalizationService.getCurrentLanguage();
-    const bcp = langCode ? `${langCode}-IN` : LocalizationService.getBcp47();
+    const bcp = BCP47_LANGUAGE_MAP[activeLang] || LocalizationService.getBcp47() || 'gu-IN';
 
-    utterance.lang = bcp;
-    utterance.rate = 0.92;
-    utterance.pitch = 1.0;
+    setIsSpeaking(true);
 
-    const matchedVoice = findMatchingVoice(bcp, activeLang);
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await TextToSpeech.stop();
+        await TextToSpeech.speak({
+          text: cleanText,
+          lang: bcp,
+          rate: 0.95,
+          pitch: 1.0,
+          volume: 1.0,
+          category: 'ambient',
+        });
+        setIsSpeaking(false);
+        return;
+      } catch (err) {
+        console.warn('[Native TTS Speak Error]:', err);
+      }
     }
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = bcp;
+      utterance.rate = 0.92;
+      utterance.pitch = 1.0;
 
-    window.speechSynthesis.speak(utterance);
+      const matchedVoice = findMatchingVoice(bcp, activeLang);
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      window.speechSynthesis.speak(utterance);
+    } else {
+      setIsSpeaking(false);
+    }
   };
 
   return (
