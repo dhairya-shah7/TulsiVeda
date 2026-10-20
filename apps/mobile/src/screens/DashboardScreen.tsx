@@ -21,8 +21,9 @@ import {
   ChevronRight,
   UserCheck
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { SpeechRecognition as CapSpeechRecognition } from '@capacitor-community/speech-recognition';
 import { StorageService, StoredRecord } from '../services/storageService.ts';
-import { AudioWaveform } from '../components/AudioWaveform.tsx';
 import { t, useCurrentLanguage, LocalizationService } from '../services/localizationService.ts';
 import { QueryResolverService, UnifiedQueryResponse } from '../services/queryResolverService.ts';
 import { VoiceEngineService } from '../services/voiceEngineService.ts';
@@ -72,7 +73,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [queryInput, setQueryInput] = useState('');
   const [queryLoading, setQueryLoading] = useState(false);
   const [activeResult, setActiveResult] = useState<UnifiedQueryResponse | null>(null);
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechStatusText, setSpeechStatusText] = useState<string | null>(null);
 
   // In-card Prescription Cross-Check State
   const [rxInput, setRxInput] = useState('');
@@ -88,6 +90,137 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   // Audio Speech Control State
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const BCP47_LANGUAGE_TAGS: Record<string, string> = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    gu: 'gu-IN',
+    pa: 'pa-IN',
+    mr: 'mr-IN',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    bn: 'bn-IN',
+    or: 'or-IN',
+    as: 'as-IN',
+  };
+
+  const startVoiceCapture = async () => {
+    if (isListening) {
+      setIsListening(false);
+      setSpeechStatusText(null);
+      if (Capacitor.isNativePlatform()) {
+        try { await CapSpeechRecognition.stop(); } catch (e) {}
+      }
+      return;
+    }
+
+    const bcp = BCP47_LANGUAGE_TAGS[lang] || 'en-IN';
+    setIsListening(true);
+    setSpeechStatusText(
+      lang === 'hi' ? 'सुन रहे हैं... बोलिए' : lang === 'gu' ? 'સાંભળી રહ્યા છીએ... બોલો' : 'Listening... Speak now'
+    );
+
+    // 1. Android Native Execution
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await CapSpeechRecognition.checkPermissions();
+        if (perm.speechRecognition !== 'granted') {
+          const req = await CapSpeechRecognition.requestPermissions();
+          if (req.speechRecognition !== 'granted') {
+            setIsListening(false);
+            setSpeechStatusText(null);
+            alert('Microphone permission is required.');
+            return;
+          }
+        }
+
+        const avail = await CapSpeechRecognition.available();
+        if (!avail.available) {
+          setIsListening(false);
+          setSpeechStatusText(null);
+          alert('Voice recognition service is not available on this device.');
+          return;
+        }
+
+        // Popup: true triggers Google's native speech dialog on Android (supports all Indian languages & English)
+        const res = await CapSpeechRecognition.start({
+          language: bcp,
+          maxResults: 5,
+          prompt: lang === 'hi' ? 'अपनी बीमारी या दवा बोलें...' : lang === 'gu' ? 'તમારી બીમારી કે દવા બોલો...' : 'Speak symptom or medicine...',
+          popup: true,
+          partialResults: false,
+        });
+
+        setIsListening(false);
+        setSpeechStatusText(null);
+        if (res?.matches && res.matches.length > 0) {
+          const spoken = res.matches[0].trim();
+          if (spoken) {
+            setQueryInput(spoken);
+            await handleExecuteQuery(spoken);
+          }
+        }
+        return;
+      } catch (err: any) {
+        console.warn('[Native Speech Recognition Error]:', err);
+        setIsListening(false);
+        setSpeechStatusText(null);
+      }
+    }
+
+    // 2. Web Browser Fallback (Chrome / Edge / Safari Web Speech API)
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRec) {
+      try {
+        const rec = new SpeechRec();
+        rec.lang = bcp;
+        rec.continuous = false;
+        rec.interimResults = false;
+
+        rec.onstart = () => {
+          setIsListening(true);
+        };
+
+        rec.onresult = async (event: any) => {
+          setIsListening(false);
+          setSpeechStatusText(null);
+          let spoken = '';
+          for (let i = 0; i < event.results.length; i++) {
+            spoken += event.results[i][0].transcript;
+          }
+          spoken = spoken.trim();
+          if (spoken) {
+            setQueryInput(spoken);
+            await handleExecuteQuery(spoken);
+          }
+        };
+
+        rec.onerror = (e: any) => {
+          console.warn('[Web Speech Error]:', e);
+          setIsListening(false);
+          setSpeechStatusText(null);
+        };
+
+        rec.onend = () => {
+          setIsListening(false);
+          setSpeechStatusText(null);
+        };
+
+        rec.start();
+        return;
+      } catch (webErr) {
+        console.warn('[Web Speech API Failed]:', webErr);
+        setIsListening(false);
+        setSpeechStatusText(null);
+      }
+    } else {
+      setIsListening(false);
+      setSpeechStatusText(null);
+      alert('Speech recognition is not available in this browser. Please type below.');
+    }
+  };
 
   useEffect(() => {
     const unsub = VoiceEngineService.addSpeechListener((speaking) => {
@@ -314,38 +447,32 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 </p>
               </div>
 
-              {/* Big Central Tactile Mic Button */}
-              <div className="flex justify-center pt-1">
+              {/* EXACTLY ONE CENTRAL TACTILE MIC BUTTON */}
+              <div className="flex flex-col items-center justify-center pt-1">
                 <button
-                  onClick={() => setIsVoiceActive(!isVoiceActive)}
+                  type="button"
+                  onClick={startVoiceCapture}
                   className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl active:scale-95 ${
-                    isVoiceActive 
+                    isListening 
                       ? 'bg-red-600 text-white ring-4 ring-red-400/50 animate-pulse' 
                       : 'bg-white text-emerald-900 hover:bg-emerald-50 shadow-emerald-950/40'
                   }`}
                   aria-label="Microphone"
                 >
-                  <Mic className={`w-9 h-9 stroke-[2.3] ${isVoiceActive ? 'text-white' : 'text-emerald-800'}`} />
+                  <Mic className={`w-9 h-9 stroke-[2.3] ${isListening ? 'text-white' : 'text-emerald-800'}`} />
                 </button>
-              </div>
 
-              {/* Embedded Voice Waveform & Live Transcription */}
-              {isVoiceActive && (
-                <div className="p-3 bg-black/30 backdrop-blur-md rounded-2xl border border-white/10 animate-fade-in">
-                  <AudioWaveform
-                    language={lang}
-                    isProcessing={queryLoading}
-                    onRecordingComplete={async (blob: Blob, liveTranscript?: string) => {
-                      setIsVoiceActive(false);
-                      const textToRun = (liveTranscript || '').trim();
-                      if (textToRun) {
-                        setQueryInput(textToRun);
-                        await handleExecuteQuery(textToRun);
-                      }
-                    }}
-                  />
-                </div>
-              )}
+                <p className="text-xs font-bold mt-2.5 text-emerald-100">
+                  {isListening ? (
+                    <span className="text-red-300 flex items-center gap-1.5 animate-pulse font-extrabold">
+                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                      {speechStatusText || 'Listening... Speak now'}
+                    </span>
+                  ) : (
+                    lang === 'hi' ? 'बोलने के लिए माइक दबाएं' : lang === 'gu' ? 'બોલવા માટે માઇક દબાવો' : 'Tap mic to speak'
+                  )}
+                </p>
+              </div>
 
               {/* Clean Text Search Bar */}
               <div className="relative pt-1">
@@ -664,13 +791,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               )}
 
               {/* ----------------------------------------------------
-                  SEAMLESS IN-CARD PRESCRIPTION CROSS-CHECK DRAWER
+                  SEAMLESS IN-CARD PRESCRIPTION CROSS-CHECK DRAWER (WHITE THEME)
                  ---------------------------------------------------- */}
               {activeResult.type !== 'direct_safety_check' && (
-                <div className="p-4 rounded-3xl bg-slate-900 text-white space-y-2.5 shadow-md">
+                <div className="p-4 rounded-3xl bg-white text-slate-900 space-y-3 border-2 border-slate-200/90 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-                    <h4 className="font-extrabold text-xs text-slate-100">
+                    <ShieldAlert className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <h4 className="font-extrabold text-xs text-slate-900">
                       {lang === 'hi' 
                         ? 'क्या आप कोई नियमित गोली (बीपी, शुगर, खून पतला) लेते हैं?' 
                         : lang === 'gu' 
@@ -685,12 +812,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       value={rxInput}
                       onChange={(e) => setRxInput(e.target.value)}
                       placeholder="e.g. Warfarin, Amlodipine, Metformin, Aspirin"
-                      className="flex-1 px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold placeholder-slate-500 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     <button
                       onClick={() => handleCheckPrescription()}
                       disabled={!rxInput.trim() || rxChecking}
-                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold text-xs shrink-0 shadow-xs transition-all"
+                      className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white font-extrabold text-xs shrink-0 shadow-xs active:scale-95 transition-all"
                     >
                       {rxChecking ? '...' : (lang === 'hi' ? 'जांचें' : lang === 'gu' ? 'ચકાસો' : 'Check')}
                     </button>
@@ -705,7 +832,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                           setRxInput(m);
                           handleCheckPrescription(m);
                         }}
-                        className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 border border-slate-700"
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 border border-slate-200 transition-colors"
                       >
                         + {m}
                       </button>
@@ -714,29 +841,29 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
                   {/* Dynamic Clash Result Box */}
                   {rxClashResult && (
-                    <div className={`mt-2.5 p-3 rounded-2xl border text-xs space-y-1.5 ${
+                    <div className={`mt-2.5 p-3.5 rounded-2xl border text-xs space-y-1.5 ${
                       rxClashResult.safetyResult?.confidence === 'High' && rxClashResult.safetyResult?.evidenceLevel === 'established'
-                        ? 'bg-rose-950/90 border-rose-500 text-rose-100'
+                        ? 'bg-rose-50 border-rose-300 text-rose-950'
                         : rxClashResult.safetyResult?.hasInteraction
-                        ? 'bg-amber-950/90 border-amber-500 text-amber-100'
-                        : 'bg-emerald-950/90 border-emerald-500 text-emerald-100'
+                        ? 'bg-amber-50 border-amber-300 text-amber-950'
+                        : 'bg-emerald-50 border-emerald-300 text-emerald-950'
                     }`}>
                       <span className="font-black block text-xs">
                         {rxClashResult.safetyResult?.alertHeadline || 'Prescription Cross-Check Result'}
                       </span>
-                      <p className="text-[11px] leading-relaxed opacity-90">
+                      <p className="text-[11px] leading-relaxed font-semibold">
                         {rxClashResult.localizedNarrationText}
                       </p>
 
                       {/* Doctor Report Button inside drawer */}
                       {rxClashResult.safetyResult?.hasInteraction && (
-                        <div className="pt-1">
+                        <div className="pt-1.5">
                           {clashSent ? (
-                            <span className="text-[10px] font-bold text-emerald-300">✓ Sent to Doctor</span>
+                            <span className="text-[10px] font-bold text-emerald-700">✓ Sent to Doctor</span>
                           ) : (
                             <button
                               onClick={handleSendClashToDoctor}
-                              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px]"
+                              className="px-3.5 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-black text-[10px] shadow-xs active:scale-95 transition-all"
                             >
                               Send Clash Report to Doctor
                             </button>
