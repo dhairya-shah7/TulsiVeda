@@ -1420,8 +1420,7 @@ export const NATIONAL_CLINICAL_RECORDS: ClinicalConditionRecord[] = [
       maxWaitHoursBeforeHospital: 6,
       recommendedLabTest: 'Throat Swab Culture, Rapid Strep Test & Complete Blood Count (CBC)'
     }
-  }
-,
+  },
   {
     "id": "CLIN_33",
     "conditionName": "Peptic Ulcer Disease & Epigastric Burning",
