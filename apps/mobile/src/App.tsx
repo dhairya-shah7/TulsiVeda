@@ -14,6 +14,8 @@ import { UserProfileModal } from './components/UserProfileModal.tsx';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal.tsx';
 import { NotificationModal } from './components/NotificationModal.tsx';
 import { IvrHotlineModal } from './components/IvrHotlineModal.tsx';
+import { EmergencySosModal } from './components/EmergencySosModal.tsx';
+import { EmergencyCase } from './services/emergencyTriageService.ts';
 import { StorageService, StoredRecord } from './services/storageService.ts';
 import { SafetyEngine } from './services/safetyEngine.ts';
 import { BioKineticEngine } from './services/bioKineticEngine.ts';
@@ -35,6 +37,8 @@ export const App: React.FC = () => {
   const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isIvrOpen, setIsIvrOpen] = useState(false);
+  const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
+  const [activeEmergencyCase, setActiveEmergencyCase] = useState<EmergencyCase | null>(null);
 
   // User state
   const [userRole, setUserRole] = useState<'citizen' | 'asha' | 'doctor'>(() => {
@@ -222,6 +226,10 @@ export const App: React.FC = () => {
         onOpenLanguagePicker={() => setIsLanguagePickerOpen(true)}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenIvr={() => setIsIvrOpen(true)}
+        onOpenEmergency={() => {
+          setActiveEmergencyCase(null);
+          setIsEmergencyOpen(true);
+        }}
       />
 
       {/* Floating Alert Banner */}
@@ -243,6 +251,14 @@ export const App: React.FC = () => {
             onOpenKnowledge={() => setCurrentScreen('knowledge')}
             onOpenAlternatives={() => setCurrentScreen('alternatives')}
             onOpenIvr={() => setIsIvrOpen(true)}
+            onOpenEmergency={() => {
+              setActiveEmergencyCase(null);
+              setIsEmergencyOpen(true);
+            }}
+            onTriggerEmergency={(emCase) => {
+              setActiveEmergencyCase(emCase);
+              setIsEmergencyOpen(true);
+            }}
             onSelectRecord={handleSelectRecord}
             currentMode={envMode}
             currentRole={userRole}
@@ -352,6 +368,15 @@ export const App: React.FC = () => {
       <IvrHotlineModal
         isOpen={isIvrOpen}
         onClose={() => setIsIvrOpen(false)}
+      />
+
+      <EmergencySosModal
+        isOpen={isEmergencyOpen}
+        onClose={() => {
+          setIsEmergencyOpen(false);
+          setActiveEmergencyCase(null);
+        }}
+        emergencyCase={activeEmergencyCase}
       />
     </div>
   );

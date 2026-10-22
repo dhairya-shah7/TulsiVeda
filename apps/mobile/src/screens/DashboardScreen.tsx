@@ -36,6 +36,8 @@ interface DashboardScreenProps {
   onOpenKnowledge: () => void;
   onOpenAlternatives: () => void;
   onOpenIvr: () => void;
+  onOpenEmergency?: () => void;
+  onTriggerEmergency?: (emergencyCase: any) => void;
   onSelectRecord?: (record: StoredRecord) => void;
   currentMode: 'village' | 'city';
   currentRole: 'citizen' | 'asha' | 'doctor';
@@ -315,6 +317,430 @@ const UI_TEXT: Record<string, {
     synergyTitle: 'ਆਯੁਰਵੇਦਿਕ ਸਹਿਯੋਗ',
     precautionTitle: 'ਡਾਕਟਰੀ ਸਾਵਧਾਨੀ',
   },
+  mr: {
+    villageMode: '🌾 ग्रामीण आरोग्य मोड',
+    citizenHealth: '🏙️ नागरिक आरोग्य',
+    stopVoice: 'आवाज थांबवा',
+    heroTitle: 'तुमचा आजार किंवा घरगुती उपचाराबद्दल विचारा',
+    heroSub: 'माइक दाबून बोला किंवा खाली टाईप करा:',
+    listening: 'ऐकत आहे... बोला',
+    tapMicToSpeak: 'बोलण्यासाठी माइक दाबा',
+    searchPlaceholder: 'उदा: गुडघेदुखी, तुळस, सर्दी खोकला, शिलाजीत...',
+    loading: 'वैद्यकीय नोंदी शोधत आहोत...',
+    yourQuery: 'तुमचा प्रश्न',
+    listen: 'ऐका',
+    pause: 'थांबवा',
+    diagnosedCondition: 'निदान झालेला आजार',
+    tier1Badge: 'टियर १ • अधिकृत सरकारी जेनेरिक',
+    tier1Sub: 'पीएमबीजेपी केंद्र',
+    genericSalt: 'जेनेरिक सॉल्ट',
+    subsidizedPrice: 'शासकीय सवलत दर',
+    schedule: 'डोस वेळ',
+    tier2Badge: 'टियर २ • अधिकृत आयुष मोनोग्राफ',
+    tier2Sub: 'एपीआय फार्माकोपिया',
+    botanical: 'वनस्पती स्रोत',
+    activeCompound: 'सक्रिय घटक',
+    dosageMedium: 'मात्रा व अनुपान',
+    tier3Badge: 'टियर ३ • सुरक्षित घरगुती प्रथमोपचार',
+    tier3Sub: 'स्वयंपाकघर उपाय',
+    preparation: 'बनवण्याची पद्धत',
+    mode: 'सेवन पद्धत',
+    caution: 'सावधगिरी',
+    hospitalWarning: 'तातडीने दवाखान्यात जा जर:',
+    herbDiscoveryBadge: '🌿 औषधी माहिती',
+    multiHerbBadge: '🌿 बहु-औषधी वनस्पती योग',
+    govtGenericEquiv: '💊 सरकारी जन औषधी समतुल्य औषध:',
+    indication: 'उपचार',
+    govtPrice: 'शासकीय किंमत',
+    usedFor: 'मुख्य उपयोग',
+    activeCompounds: 'सक्रिय घटक',
+    metabolicPathway: 'चयापचय मार्ग',
+    clashDetected: '⚠️ औषध आणि वनस्पतीमध्ये संभाव्य धोका',
+    safeToTake: '✓ दोन्ही एकत्र घेणे सुरक्षित आहे',
+    confidence: 'विश्वसनीयता',
+    evidence: 'वैद्यकीय पुरावा',
+    caseSentToClinician: '✓ केस डॉक्टर / आशा कार्यकर्तीकडे पाठवली',
+    sendClashToClinician: 'केस डॉक्टर / आशा कार्यकर्तीकडे पाठवा',
+    rxBoxTitle: 'तुम्ही कोणती नियमित गोळी घेता का?',
+    rxBoxPlaceholder: 'उदा: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'तपासा',
+    sentToDoctor: '✓ डॉक्टरांना पाठवले',
+    sendClashToDoctor: 'डॉक्टरांना अहवाल पाठवा',
+    recordFullIntake: 'सविस्तर नोंद करण्यासाठी येथे क्लिक करा',
+    synergyTitle: 'आयुर्वेदिक समन्वय',
+    precautionTitle: 'वैद्यकीय खबरदारी',
+  },
+  ta: {
+    villageMode: '🌾 கிராமப்புற சுகாதார பயன்முறை',
+    citizenHealth: '🏙️ குடிமக்கள் சுகாதாரம்',
+    stopVoice: 'குரலை நிறுத்து',
+    heroTitle: 'நோய் அல்லது மூலிகை மருந்து பற்றி கேளுங்கள்',
+    heroSub: 'மைக் அழுத்தி பேசவும் அல்லது கீழே தட்டச்சு செய்யவும்:',
+    listening: 'கேட்கிறது... பேசுங்கள்',
+    tapMicToSpeak: 'பேச மைக் தட்டவும்',
+    searchPlaceholder: 'எ.கா: மூட்டு வலி, துளசி, சளி, நிலவேம்பு...',
+    loading: 'மருத்துவ ஆவணங்களில் தேடுகிறது...',
+    yourQuery: 'உங்கள் கேள்வி',
+    listen: 'கேளுங்கள்',
+    pause: 'நிறுத்து',
+    diagnosedCondition: 'கண்டறியப்பட்ட நிலை',
+    tier1Badge: 'அடுக்கு 1 • மக்கள் மருந்தக ஜெனரிக்',
+    tier1Sub: 'பிஎம்பிஜேபி மையம்',
+    genericSalt: 'ஜெனரிக் உப்பு',
+    subsidizedPrice: 'அரசு மானிய விலை',
+    schedule: 'மருந்து அளவு',
+    tier2Badge: 'அடுக்கு 2 • அதிகாரப்பூர்வ ஆயுஷ் மூலிகை',
+    tier2Sub: 'ஏபிஐ பார்மகோபியா',
+    botanical: 'தாவரவியல் பெயர்',
+    activeCompound: 'செயலில் உள்ள கூறு',
+    dosageMedium: 'அளவு & உட்கொள்ளும் முறை',
+    tier3Badge: 'அடுக்கு 3 • வீட்டு முதலுதவி',
+    tier3Sub: 'பாட்டி வைத்தியம்',
+    preparation: 'செய்முறை',
+    mode: 'பயன்படுத்தும் முறை',
+    caution: 'எச்சரிக்கை',
+    hospitalWarning: 'உடனடியாக மருத்துவமனைக்கு செல்லவும்:',
+    herbDiscoveryBadge: '🌿 மூலிகை விளக்கம்',
+    multiHerbBadge: '🌿 கூட்டு மூலிகை கலவை',
+    govtGenericEquiv: '💊 அரசு மக்கள் மருந்தக மருந்து:',
+    indication: 'குணப்படுத்தும் நோய்',
+    govtPrice: 'அரசு விலை',
+    usedFor: 'முக்கிய பயன்கள்',
+    activeCompounds: 'செயலில் உள்ள கூறுகள்',
+    metabolicPathway: 'வளர்சிதை மாற்ற பாதை',
+    clashDetected: '⚠️ மருந்து - மூலிகை முரண்பாடு',
+    safeToTake: '✓ இரண்டும் ஒன்றாக எடுப்பது பாதுகாப்பானது',
+    confidence: 'நம்பகத்தன்மை',
+    evidence: 'ஆதாரம்',
+    caseSentToClinician: '✓ மருத்துவரிடம் வழக்கு அனுப்பப்பட்டது',
+    sendClashToClinician: 'மருத்துவர் பார்வைக்கு அனுப்பு',
+    rxBoxTitle: 'தொடர்ந்து ஏதேனும் மாத்திரை சாப்பிடுகிறீர்களா?',
+    rxBoxPlaceholder: 'எ.கா: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'சரிபார்',
+    sentToDoctor: '✓ மருத்துவருக்கு அனுப்பப்பட்டது',
+    sendClashToDoctor: 'மருத்துவருக்கு அறிக்கை அனுப்பு',
+    recordFullIntake: 'முழு விவரம் பதிவு செய்ய கிளிக் செய்யவும்',
+    synergyTitle: 'ஆயுர்வேத கூட்டுத்திறன்',
+    precautionTitle: 'மருத்துவ முன்னெச்சரிக்கை',
+  },
+  te: {
+    villageMode: '🌾 గ్రామీణ ఆరోగ్య సహాయం',
+    citizenHealth: '🏙️ పౌర ఆరోగ్యం',
+    stopVoice: 'వాయిస్ ఆపు',
+    heroTitle: 'మీ వ్యాధి లేదా ఆయుర్వేద ఔషధం గురించి అడగండి',
+    heroSub: 'మైక్ నొక్కి మాట్లాడండి లేదా టైప్ చేయండి:',
+    listening: 'వింటున్నాము... మాట్లాడండి',
+    tapMicToSpeak: 'మాట్లాడటానికి మైక్ నొక్కండి',
+    searchPlaceholder: 'ఉదా: మోకాళ్ళ నొప్పులు, తులసి, జ్వరం, తిప్పతీగ...',
+    loading: 'వైద్య రికార్డులను పరిశీలిస్తున్నాము...',
+    yourQuery: 'మీ ప్రశ్న',
+    listen: 'వినండి',
+    pause: 'ఆపండి',
+    diagnosedCondition: 'గుర్తించబడిన వ్యాధి',
+    tier1Badge: 'టైర్ 1 • ప్రభుత్వ జన ఔషధి',
+    tier1Sub: 'పీఎంబీజేపీ కేంద్రం',
+    genericSalt: 'జెనెరిక్ సాల్ట్',
+    subsidizedPrice: 'ప్రభుత్వ రాయితీ ధర',
+    schedule: 'మోతాదు సమయం',
+    tier2Badge: 'టైర్ 2 • ప్రామాణిక ఆయుష్ చికిత్స',
+    tier2Sub: 'ఏపీఐ ఫార్మకోపియా',
+    botanical: 'వృక్షశాస్త్ర నామం',
+    activeCompound: 'క్రియాశీల సమ్మేళనం',
+    dosageMedium: 'మోతాదు & అనుపానం',
+    tier3Badge: 'టైర్ 3 • సురక్షిత ఇంటి చిట్కా',
+    tier3Sub: 'ఇంటి వైద్యం',
+    preparation: 'తయారీ విధానం',
+    mode: 'వాడే విధానం',
+    caution: 'జాగ్రత్త',
+    hospitalWarning: 'వెంటనే ఆసుపత్రికి వెళ్ళండి:',
+    herbDiscoveryBadge: '🌿 మూలికా వివరాలు',
+    multiHerbBadge: '🌿 బహుళ మూలికా సమ్మేళనం',
+    govtGenericEquiv: '💊 ప్రభుత్వ జన ఔషధి సమతుల్య ఔషధం:',
+    indication: 'చికిత్స',
+    govtPrice: 'ప్రభుత్వ ధర',
+    usedFor: 'ప్రధాన ఉపయోగాలు',
+    activeCompounds: 'క్రియాశీల అంశాలు',
+    metabolicPathway: 'మెటబాలిక్ మార్గం',
+    clashDetected: '⚠️ ఔషధం మరియు మూలిక మధ్య ప్రమాదం',
+    safeToTake: '✓ రెండూ కలిపి తీసుకోవడం సురక్షితం',
+    confidence: 'విశ్వసనీయత',
+    evidence: 'వైద్య ఆధారాలు',
+    caseSentToClinician: '✓ వైద్యుడికి నివేదిక పంపబడింది',
+    sendClashToClinician: 'వైద్యుడి సమీక్షకు పంపండి',
+    rxBoxTitle: 'మీరు రోజూ ఏదైనా మందులు వేసుకుంటున్నారా?',
+    rxBoxPlaceholder: 'ఉదా: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'తనిఖీ చేయి',
+    sentToDoctor: '✓ డాక్టర్‌కు పంపబడింది',
+    sendClashToDoctor: 'డాక్టర్‌కు నివేదిక పంపు',
+    recordFullIntake: 'పూర్తి వివరాలు నమోదు చేయడానికి ఇక్కడ క్లిక్ చేయండి',
+    synergyTitle: 'ఆయుర్వేద సమన్వయం',
+    precautionTitle: 'వైద్య జాగ్రత్త',
+  },
+  kn: {
+    villageMode: '🌾 ಗ್ರಾಮೀಣ ಆರೋಗ್ಯ ಮೋಡ್',
+    citizenHealth: '🏙️ ನಾಗರಿಕ ಆರೋಗ್ಯ',
+    stopVoice: 'ಧ್ವನಿ ನಿಲ್ಲಿಸಿ',
+    heroTitle: 'ನಿಮ್ಮ ಕಾಯಿಲೆ ಅಥವಾ ಮನೆಮದ್ದಿನ ಬಗ್ಗೆ ಕೇಳಿ',
+    heroSub: 'ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ ಅಥವಾ ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ:',
+    listening: 'ಕೇಳಿಸಿಕೊಳ್ಳುತ್ತಿದ್ದೇವೆ... ಮಾತನಾಡಿ',
+    tapMicToSpeak: 'ಮಾತನಾಡಲು ಮೈಕ್ ಒತ್ತಿ',
+    searchPlaceholder: 'ಉದಾ: ಕೀಲು ನೋವು, ತುಳಸಿ, ಕೆಮ್ಮು, ಅಮೃತಬಳ್ಳಿ...',
+    loading: 'ವೈದ್ಯಕೀಯ ದಾಖಲೆಗಳಲ್ಲಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ...',
+    yourQuery: 'ನಿಮ್ಮ ಪ್ರಶ್ನೆ',
+    listen: 'ಕೇಳಿ',
+    pause: 'ವಿರಾಮ',
+    diagnosedCondition: 'ಗುರುತಿಸಲಾದ ಕಾಯಿಲೆ',
+    tier1Badge: 'ಶ್ರೇಣಿ 1 • ಜನೌಷಧಿ ಜೆನೆರಿಕ್',
+    tier1Sub: 'ಪಿಎಂಬಿಜೆಪಿ ಕೇಂದ್ರ',
+    genericSalt: 'ಜೆನೆರಿಕ್ ಸಾಲ್ಟ್',
+    subsidizedPrice: 'ಸರ್ಕಾರಿ ಸಬ್ಸಿಡಿ ದರ',
+    schedule: 'ಸೇವನೆಯ ಸಮಯ',
+    tier2Badge: 'ಶ್ರೇಣಿ 2 • ಅಧಿಕೃತ ಆಯುಷ್ ಸೂತ್ರೀಕರಣ',
+    tier2Sub: 'ಎಪಿಐ ಫಾರ್ಮಾಕೋಪಿಯಾ',
+    botanical: 'ಸಸ್ಯಶಾಸ್ತ್ರೀಯ ಹೆಸರು',
+    activeCompound: 'ಸಕ್ರಿಯ ಸಂಯುಕ್ತ',
+    dosageMedium: 'ಪ್ರಮಾಣ ಮತ್ತು ಅನುಪಾನ',
+    tier3Badge: 'ಶ್ರೇಣಿ 3 • ಸುರಕ್ಷಿತ ಮನೆಮದ್ದು',
+    tier3Sub: 'ಅಡುಗೆಮನೆ ಮದ್ದು',
+    preparation: 'ಸಿದ್ಧಪಡಿಸುವ ವಿಧಾನ',
+    mode: 'ಬಳಸುವ ವಿಧಾನ',
+    caution: 'ಎಚ್ಚರಿಕೆ',
+    hospitalWarning: 'ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಿ:',
+    herbDiscoveryBadge: '🌿 ಗಿಡಮೂಲಿಕೆ ವಿವರ',
+    multiHerbBadge: '🌿 ಬಹು ಗಿಡಮೂಲಿಕೆ ಸಂಯೋಜನೆ',
+    govtGenericEquiv: '💊 ಸರ್ಕಾರಿ ಜನೌಷಧಿ ಸಮಾನ ಔಷಧಿ:',
+    indication: 'ಚಿಕಿತ್ಸೆ',
+    govtPrice: 'ಸರ್ಕಾರಿ ಬೆಲೆ',
+    usedFor: 'ಮುಖ್ಯ ಉಪಯೋಗಗಳು',
+    activeCompounds: 'ಸಕ್ರಿಯ ಘಟಕಗಳು',
+    metabolicPathway: 'ಜೀವಕ್ರಿಯೆಯ ಮಾರ್ಗ',
+    clashDetected: '⚠️ ಔಷಧ ಮತ್ತು ಗಿಡಮೂಲಿಕೆ ನಡುವೆ ಅಪಾಯ',
+    safeToTake: '✓ ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ತೆಗೆದುಕೊಳ್ಳುವುದು ಸುರಕ್ಷಿತ',
+    confidence: 'ವಿಶ್ವಾಸಾರ್ಹತೆ',
+    evidence: 'ವೈದ್ಯಕೀಯ ಪುರಾವೆ',
+    caseSentToClinician: '✓ ವೈದ್ಯರಿಗೆ ಕಳುಹಿಸಲಾಗಿದೆ',
+    sendClashToClinician: 'ವೈದ್ಯರ ಪರಿಶೀಲನೆಗೆ ಕಳುಹಿಸಿ',
+    rxBoxTitle: 'ನೀವು ನಿಯಮಿತವಾಗಿ ಯಾವುದೇ ಮಾತ್ರೆ ತೆಗೆದುಕೊಳ್ಳುತ್ತಿದ್ದೀರಾ?',
+    rxBoxPlaceholder: 'ಉದಾ: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'ಪರಿಶೀಲಿಸಿ',
+    sentToDoctor: '✓ ವೈದ್ಯರಿಗೆ ಕಳುಹಿಸಲಾಗಿದೆ',
+    sendClashToDoctor: 'ವೈದ್ಯರಿಗೆ ವರದಿ ಕಳುಹಿಸಿ',
+    recordFullIntake: 'ಸಂಪೂರ್ಣ ಮಾಹಿತಿ ದಾಖಲಿಸಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ',
+    synergyTitle: 'ಆಯುರ್ವೇದ ಸಮ್ಮಿಶ್ರಣ',
+    precautionTitle: 'ವೈದ್ಯಕೀಯ ಮುನ್ನೆಚ್ಚರಿಕೆ',
+  },
+  ml: {
+    villageMode: '🌾 ഗ്രാമീണ ആരോഗ്യ സേവനം',
+    citizenHealth: '🏙️ പൗര ആരോഗ്യം',
+    stopVoice: 'ശബ്ദം നിർത്തുക',
+    heroTitle: 'രോഗലക്ഷണങ്ങളോ നാട്ടുവൈദ്യമോ ചോദിക്കുക',
+    heroSub: 'മൈക്ക് അമർത്തി സംസാരിക്കുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക:',
+    listening: 'കേൾക്കുന്നു... സംസാരിക്കൂ',
+    tapMicToSpeak: 'സംസാരിക്കാൻ മൈക്ക് അമർത്തുക',
+    searchPlaceholder: 'ഉദാ: മുട്ടുവേദന, തുളസി, ചുമ, ചിറ്റമൃത്...',
+    loading: 'രേഖകൾ പരിശോധിക്കുന്നു...',
+    yourQuery: 'നിങ്ങളുടെ ചോദ്യം',
+    listen: 'കേൾക്കുക',
+    pause: 'നിർത്തുക',
+    diagnosedCondition: 'കണ്ടെത്തിയ രോഗാവസ്ഥ',
+    tier1Badge: 'ടയർ 1 • ജൻ ഔഷധി ജനറിക്',
+    tier1Sub: 'പിഎംബിജെപി കേന്ദ്രം',
+    genericSalt: 'ജനറിക് സാൾട്ട്',
+    subsidizedPrice: 'സർക്കാർ സബ്‌സിഡി നിരക്ക്',
+    schedule: 'കഴിക്കേണ്ട സമയം',
+    tier2Badge: 'ടയർ 2 • ആയുഷ് ഫാർമക്കോപ്പിയ',
+    tier2Sub: 'എപിഐ ഫാർമക്കോപ്പിയ',
+    botanical: 'സസ്യനാമം',
+    activeCompound: 'പ്രധാന ഘടകം',
+    dosageMedium: 'അളവും കഴിക്കേണ്ട രീതിയും',
+    tier3Badge: 'ടയർ 3 • വീട്ടുവൈദ്യം',
+    tier3Sub: 'സുരക്ഷിത പ്രഥമശുശ്രൂഷ',
+    preparation: 'തയ്യാറാക്കുന്ന വിധം',
+    mode: 'ഉപയോഗിക്കേണ്ട വിധം',
+    caution: 'മുന്നറിയിപ്പ്',
+    hospitalWarning: 'ഉടൻ ആശുപത്രിയിൽ പോകുക:',
+    herbDiscoveryBadge: '🌿 ഔഷധ വിവരങ്ങൾ',
+    multiHerbBadge: '🌿 സംയുക്ത ഔഷധ യോഗം',
+    govtGenericEquiv: '💊 സർക്കാർ ജൻ ഔഷധി മരുന്ന്:',
+    indication: 'ചികിത്സ',
+    govtPrice: 'സർക്കാർ വില',
+    usedFor: 'പ്രധാന ഉപയോഗങ്ങൾ',
+    activeCompounds: 'പ്രധാന ഘടകങ്ങൾ',
+    metabolicPathway: 'ഉപാപചയ വഴി',
+    clashDetected: '⚠️ മരുന്നും ഔഷധവും തമ്മിലുള്ള പ്രതിപ്രവർത്തനം',
+    safeToTake: '✓ രണ്ടും ഒരുമിച്ച് കഴിക്കുന്നത് സുരക്ഷിതമാണ്',
+    confidence: 'വിശ്വാസ്യത',
+    evidence: 'തെളിവ്',
+    caseSentToClinician: '✓ ഡോക്ടർക്ക് അയച്ചു',
+    sendClashToClinician: 'ഡോക്ടറുടെ പരിശോധനയ്ക്ക് അയക്കുക',
+    rxBoxTitle: 'സ്ഥിരമായി എന്തെങ്കിലും മരുന്ന് കഴിക്കുന്നുണ്ടോ?',
+    rxBoxPlaceholder: 'ഉദാ: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'പരിശോധിക്കുക',
+    sentToDoctor: '✓ ഡോക്ടർക്ക് അയച്ചു',
+    sendClashToDoctor: 'ഡോക്ടർക്ക് റിപ്പോർട്ട് അയക്കുക',
+    recordFullIntake: 'പൂർണ്ണ വിവരങ്ങൾ രേഖപ്പെടുത്താൻ ക്ലിക്ക് ചെയ്യുക',
+    synergyTitle: 'ആയുർവേദ സംയോജനം',
+    precautionTitle: 'വൈദ്യശാസ്ത്ര ജാഗ്രത',
+  },
+  bn: {
+    villageMode: '🌾 গ্রামীণ স্বাস্থ্য সেবা',
+    citizenHealth: '🏙️ নাগরিক স্বাস্থ্য',
+    stopVoice: 'ভয়েস বন্ধ করুন',
+    heroTitle: 'আপনার রোগ বা ঘরোয়া দাওয়াই সম্পর্কে জানুন',
+    heroSub: 'মাইক চেপে কথা বলুন বা নিচে লিখুন:',
+    listening: 'শুনছি... বলুন',
+    tapMicToSpeak: 'কথা বলতে মাইকে চাপ দিন',
+    searchPlaceholder: 'উদা: হাঁটুর ব্যথা, তুলসী, কাশি, গুলঞ্চ...',
+    loading: 'চিকিৎসা নথি অনুসন্ধান করা হচ্ছে...',
+    yourQuery: 'আপনার প্রশ্ন',
+    listen: 'শুনুন',
+    pause: 'থামান',
+    diagnosedCondition: 'শনাক্তকৃত রোগ',
+    tier1Badge: 'টিয়ার ১ • জন ঔষধি জেনেরিক',
+    tier1Sub: 'পিএমবিজেপি কেন্দ্র',
+    genericSalt: 'জেনেরিক সল্ট',
+    subsidizedPrice: 'সরকারি ভর্তুকি মূল্য',
+    schedule: 'সেবন বিধি',
+    tier2Badge: 'টিয়ার ২ • আয়ুশ ভেষজ প্রতিকার',
+    tier2Sub: 'এপিআই ফার্মাকোপিয়া',
+    botanical: 'ভেষজ নাম',
+    activeCompound: 'সক্রিয় উপাদান',
+    dosageMedium: 'মাত্রা ও অনুপান',
+    tier3Badge: 'টিয়ার ৩ • নিরাপদ ঘরোয়া চিকিৎসা',
+    tier3Sub: 'রান্নাঘরের টোটকা',
+    preparation: 'প্রস্তুত প্রণালী',
+    mode: 'ব্যবহার বিধি',
+    caution: 'সতর্কতা',
+    hospitalWarning: 'অবিলম্বে হাসপাতালে যান যদি:',
+    herbDiscoveryBadge: '🌿 ভেষজ বিবরণ',
+    multiHerbBadge: '🌿 বহুমুখী ভেষজ সংমিশ্রণ',
+    govtGenericEquiv: '💊 সরকারি জন ঔষধি সমতুল্য ওষুধ:',
+    indication: 'চিকিৎসা',
+    govtPrice: 'সরকারি মূল্য',
+    usedFor: 'প্রধান ব্যবহার',
+    activeCompounds: 'সক্রিয় উপাদান',
+    metabolicPathway: 'মেটাবলিক পাথওয়ে',
+    clashDetected: '⚠️ ওষুধ ও ভেষজের মধ্যে সম্ভাব্য সংঘাত',
+    safeToTake: '✓ দুটি একসাথে নেওয়া নিরাপদ',
+    confidence: 'নির্ভরযোগ্যতা',
+    evidence: 'প্রমাণ',
+    caseSentToClinician: '✓ ডাক্তারের কাছে পাঠানো হয়েছে',
+    sendClashToClinician: 'ডাক্তারের পর্যালোচনার জন্য পাঠান',
+    rxBoxTitle: 'নিয়মিত কোনো ওষুধ খাচ্ছেন কি?',
+    rxBoxPlaceholder: 'উদা: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'যাচাই করুন',
+    sentToDoctor: '✓ ডাক্তারকে পাঠানো হয়েছে',
+    sendClashToDoctor: 'ডাক্তারকে রিপোর্ট পাঠান',
+    recordFullIntake: 'সম্পূর্ণ কেস ফর্ম পূরণের জন্য এখানে ক্লিক করুন',
+    synergyTitle: 'আয়ুর্বেদিক সমন্বয়',
+    precautionTitle: 'চিকিৎসা সতর্কতা',
+  },
+  or: {
+    villageMode: '🌾 ଗ୍ରାମୀଣ ସ୍ୱାସ୍ଥ୍ୟ ସେବା',
+    citizenHealth: '🏙️ ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ',
+    stopVoice: 'ସ୍ୱର ବନ୍ଦ କରନ୍ତୁ',
+    heroTitle: 'ରୋଗ କିମ୍ବା ଘରୋଇ ଉପଚାର ବିଷୟରେ ପଚାରନ୍ତୁ',
+    heroSub: 'ମାଇକ୍ ଦବାଇ କୁହନ୍ତୁ କିମ୍ବା ଲେଖନ୍ତୁ:',
+    listening: 'ଶୁଣୁଛୁ... କୁହନ୍ତୁ',
+    tapMicToSpeak: 'କୁହିବା ପାଇଁ ମାଇକ୍ ଦବାନ୍ତୁ',
+    searchPlaceholder: 'ଯଥା: ଆଣ୍ଠୁ ଗଣ୍ଠି ବାତ, ତୁଳସୀ, କାଶ, ଗୁଳୁଚି...',
+    loading: 'ଚିକିତ୍ସା ତଥ୍ୟ ଖୋଜା ଚାଲିଛି...',
+    yourQuery: 'ଆପଣଙ୍କ ପ୍ରଶ୍ନ',
+    listen: 'ଶୁଣନ୍ତୁ',
+    pause: 'ଅଟକାନ୍ତୁ',
+    diagnosedCondition: 'ଚିହ୍ନଟ ରୋଗ',
+    tier1Badge: 'ଟିୟର ୧ • ଜନ ଔଷଧି ଜେନେରିକ୍',
+    tier1Sub: 'ପିଏମ୍‌ବିଜେପି କେନ୍ଦ୍ର',
+    genericSalt: 'ଜେନେରିକ୍ ସଲ୍ଟ',
+    subsidizedPrice: 'ସରକାରୀ ରିହାତି ମୂଲ୍ୟ',
+    schedule: 'ସେବନ ସମୟ',
+    tier2Badge: 'ଟିୟର ୨ • ଆୟୁଷ ଔଷଧୀୟ ବିଧି',
+    tier2Sub: 'ଏପିଆଇ ଫାର୍ମାକୋପିଆ',
+    botanical: 'ଉଦ୍ଭିଦ ନାମ',
+    activeCompound: 'ସକ୍ରିୟ ଉପାଦାନ',
+    dosageMedium: 'ମାତ୍ରା ଓ ଅନୁପାନ',
+    tier3Badge: 'ଟିୟର ୩ • ସୁରକ୍ଷିତ ଘରୋଇ ଉପଚାର',
+    tier3Sub: 'ରୋଷେଇ ଘର ଚିକିତ୍ସା',
+    preparation: 'ପ୍ରସ୍ତୁତି ପ୍ରଣାଳୀ',
+    mode: 'ବ୍ୟବହାର ବିଧି',
+    caution: 'ଚେତାବନୀ',
+    hospitalWarning: 'ତୁରନ୍ତ ଡାକ୍ତରଖାନା ଯାଆନ୍ତୁ ଯଦି:',
+    herbDiscoveryBadge: '🌿 ବନୌଷଧି ବିବରଣୀ',
+    multiHerbBadge: '🌿 ମିଶ୍ରିତ ବନୌଷଧି ଯୋଗ',
+    govtGenericEquiv: '💊 ସରକାରୀ ଜନ ଔଷଧି ଔଷଧ:',
+    indication: 'ଚିକିତ୍ସା',
+    govtPrice: 'ସରକାରୀ ମୂଲ୍ୟ',
+    usedFor: 'ପ୍ରମୁଖ ବ୍ୟବହାର',
+    activeCompounds: 'ସକ୍ରିୟ ଉପାଦାନ',
+    metabolicPathway: 'ଜୈବିକ ମାର୍ଗ',
+    clashDetected: '⚠️ ଔଷଧ ଓ ଚେରମୂଳି ମଧ୍ୟରେ ବିବାଦ',
+    safeToTake: '✓ ଉଭୟ ଏକାଠି ନେବା ସୁରକ୍ଷିତ',
+    confidence: 'ବିଶ୍ୱାସନୀୟତା',
+    evidence: 'ଡାକ୍ତରୀ ପ୍ରମାଣ',
+    caseSentToClinician: '✓ ଡାକ୍ତରଙ୍କୁ ପଠାଗଲା',
+    sendClashToClinician: 'ଡାକ୍ତରଙ୍କ ସମୀକ୍ଷା ପାଇଁ ପଠାନ୍ତୁ',
+    rxBoxTitle: 'ଆପଣ ନିୟମିତ କୌଣସି ଔଷଧ ଖାଉଛନ୍ତି କି?',
+    rxBoxPlaceholder: 'ଯଥା: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'ଯାଞ୍ଚ କରନ୍ତୁ',
+    sentToDoctor: '✓ ଡାକ୍ତରଙ୍କୁ ପଠାଗଲା',
+    sendClashToDoctor: 'ଡାକ୍ତରଙ୍କୁ ରିପୋର୍ଟ ପଠାନ୍ତୁ',
+    recordFullIntake: 'ସମ୍ପୂର୍ଣ୍ଣ ବିବରଣୀ ଲେଖିବା ପାଇଁ ଏଠାରେ କ୍ଲିକ୍ କରନ୍ତୁ',
+    synergyTitle: 'ଆୟୁର୍ବେଦିକ ସହଯୋଗ',
+    precautionTitle: 'ଡାକ୍ତରୀ ସତର୍କତା',
+  },
+  as: {
+    villageMode: '🌾 গ্ৰাম্য স্বাস্থ্য সেৱা',
+    citizenHealth: '🏙️ নাগৰিক স্বাস্থ্য',
+    stopVoice: 'কণ্ঠস্বৰ বন্ধ কৰক',
+    heroTitle: 'আপোনাৰ ৰোগ বা ঘৰুৱা নিদানৰ বিষয়ে সোধক',
+    heroSub: 'মাইক টিপি কওক বা তলত লিখক:',
+    listening: 'শুনি আছো... কওক',
+    tapMicToSpeak: 'ক’বলৈ মাইকত টিপক',
+    searchPlaceholder: 'যেনে: আঁঠুৰ বিষ, তুলসী, চৰ্দী-কাহ...',
+    loading: 'চিকিৎসা নথি সন্ধান কৰা হৈছে...',
+    yourQuery: 'আপোনাৰ প্ৰশ্ন',
+    listen: 'শুনক',
+    pause: 'ৰখাৱক',
+    diagnosedCondition: 'শনাক্ত কৰা ৰোগ',
+    tier1Badge: 'টিয়াৰ ১ • জন ঔষধি জেনেৰিক',
+    tier1Sub: 'পিএমবিজিপি কেন্দ্ৰ',
+    genericSalt: 'জেনেৰিক ছল্ট',
+    subsidizedPrice: 'চৰকাৰী ৰেহাই মূল্য',
+    schedule: 'খোৱাৰ সময়',
+    tier2Badge: 'টিয়াৰ ২ • আয়ুষ বনৌষধি নিদান',
+    tier2Sub: 'এপিআই ফাৰ্মাকোপিয়া',
+    botanical: 'উদ্ভিদৰ নাম',
+    activeCompound: 'সক্ৰিয় উপাদান',
+    dosageMedium: 'মাত্ৰা আৰু নিয়ম',
+    tier3Badge: 'টিয়াৰ ৩ • সুৰক্ষিত ঘৰুৱা চিকিৎসা',
+    tier3Sub: 'ৰান্ধনিঘৰৰ নিদান',
+    preparation: 'প্ৰস্তুত প্ৰণালী',
+    mode: 'ব্যৱহাৰৰ নিয়ম',
+    caution: 'সতৰ্কবাণী',
+    hospitalWarning: 'তৎক্ষণাৎ চিকিৎসালয়লৈ যাওক যদি:',
+    herbDiscoveryBadge: '🌿 বনৌষধি বিৱৰণ',
+    multiHerbBadge: '🌿 মিশ্ৰিত বনৌষধি যোগ',
+    govtGenericEquiv: '💊 চৰকাৰী জন ঔষধি ঔষধ:',
+    indication: 'চিকিৎসা',
+    govtPrice: 'চৰকাৰী মূল্য',
+    usedFor: 'প্ৰধান ব্যৱহাৰ',
+    activeCompounds: 'সক্ৰিয় উপাদান',
+    metabolicPathway: 'মেটাবলিক পথ',
+    clashDetected: '⚠️ ঔষধ আৰু বনৌষধিৰ মাজত সম্ভাব্য বিপদ',
+    safeToTake: '✓ দুয়োটা একেলগে খোৱা সুৰক্ষিত',
+    confidence: 'বিশ্বাসযোগ্যতা',
+    evidence: 'চিকিৎসাজনিত প্ৰমাণ',
+    caseSentToClinician: '✓ চিকিৎসকৰ ওচৰলৈ প্ৰেৰণ কৰা হ’ল',
+    sendClashToClinician: 'চিকিৎসকৰ নিৰীক্ষণৰ বাবে প্ৰেৰণ কৰক',
+    rxBoxTitle: 'আপুনি নিয়মিত কোনো ঔষধ খাই আছে নেকি?',
+    rxBoxPlaceholder: 'যেনে: Warfarin, Amlodipine, Metformin, Aspirin',
+    checkBtn: 'পৰীক্ষা কৰক',
+    sentToDoctor: '✓ চিকিৎসকক প্ৰেৰণ কৰা হ’ল',
+    sendClashToDoctor: 'চিকিৎসকক প্ৰতিবেদন প্ৰেৰণ কৰক',
+    recordFullIntake: 'সম্পূৰ্ণ কেছ নথিভুক্ত কৰিবলৈ ইয়াত ক্লিক কৰক',
+    synergyTitle: 'আয়ুৰ্বেদিক সমন্বয়',
+    precautionTitle: 'চিকিৎসা সতৰ্কতা',
+  },
 };
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
@@ -323,6 +749,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onOpenKnowledge,
   onOpenAlternatives,
   onOpenIvr,
+  onOpenEmergency,
+  onTriggerEmergency,
   onSelectRecord,
   currentMode,
   currentRole = 'citizen',
@@ -561,6 +989,18 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
     try {
       const response = await QueryResolverService.resolveQuery(q, lang);
+
+      // Handle Immediate Life-Threatening Emergency Red-Flags
+      if (response.type === 'emergency_red_flag') {
+        if (onTriggerEmergency) {
+          onTriggerEmergency(response.emergencyCase);
+        }
+        if (response.localizedNarrationText) {
+          VoiceEngineService.speakInLanguage(response.localizedNarrationText, lang as any);
+        }
+        return;
+      }
+
       setActiveResult(response);
 
       // ONLY auto-play TalkBack speech if current mode is village!
@@ -832,9 +1272,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   
                   {/* Identified Disease Title */}
                   <div className="px-1">
-                    <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">
-                      {ui.diagnosedCondition}
-                    </span>
+                    {activeResult.isDynamicResearch ? (
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full bg-violet-700 text-white text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 shadow-xs">
+                          <Sparkles className="w-3 h-3 text-yellow-300" />
+                          {lang === 'hi' ? '🌐 लाइव शोध व AI विश्लेषण' : lang === 'gu' ? '🌐 લાઈવ સંશોધન (AI)' : lang === 'pa' ? '🌐 ਲਾਈਵ ਖੋਜ (AI)' : '🌐 Dynamic Medical Research'}
+                        </span>
+                        {activeResult.researchCitation && (
+                          <span className="text-[10px] font-bold text-violet-800 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200 truncate max-w-[240px]">
+                            {activeResult.researchCitation}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">
+                        {ui.diagnosedCondition}
+                      </span>
+                    )}
                     <h3 className="text-base font-black text-slate-900">
                       {activeResult.conditionRecord.conditionName}
                     </h3>
@@ -843,9 +1297,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   {/* 3-Tier Tabs Switcher */}
                   <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/70 rounded-2xl">
                     {[
-                      { id: 'tier1', label: 'Tier 1', sub: 'Jan Aushadhi', icon: Pill },
-                      { id: 'tier2', label: 'Tier 2', sub: 'AYUSH', icon: Leaf },
-                      { id: 'tier3', label: 'Tier 3', sub: 'Kitchen', icon: HomeIcon },
+                      { id: 'tier1', label: ui.tier1Badge.split('•')[0] || 'Tier 1', sub: ui.tier1Sub, icon: Pill },
+                      { id: 'tier2', label: ui.tier2Badge.split('•')[0] || 'Tier 2', sub: ui.tier2Sub, icon: Leaf },
+                      { id: 'tier3', label: ui.tier3Badge.split('•')[0] || 'Tier 3', sub: ui.tier3Sub, icon: HomeIcon },
                     ].map(tab => {
                       const Icon = tab.icon;
                       const active = activeTierTab === tab.id;
@@ -872,19 +1326,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     <div className="p-4 rounded-3xl bg-blue-50/90 border-2 border-blue-400 shadow-xs space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-2.5 py-0.5 rounded-full bg-blue-700 text-white text-[10px] font-black uppercase tracking-wider">
-                          Tier 1 • Official Govt Generic
+                          {ui.tier1Badge}
                         </span>
                         <span className="text-[10px] font-black text-blue-900 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300">
-                          PMBJP Kendra
+                          {ui.tier1Sub}
                         </span>
                       </div>
                       <h4 className="text-base font-black text-blue-950">
                         {activeResult.conditionRecord.officialGeneric.medicineName}
                       </h4>
                       <div className="text-xs font-semibold text-blue-900/90 space-y-1">
-                        <p>• <strong>Generic Salt:</strong> {activeResult.conditionRecord.officialGeneric.genericSalt}</p>
-                        <p>• <strong>Govt Subsidized Price:</strong> {activeResult.conditionRecord.officialGeneric.pmbjpPriceINR}</p>
-                        <p>• <strong>Schedule:</strong> {activeResult.conditionRecord.officialGeneric.standardDosageSchedule}</p>
+                        <p>• <strong>{ui.genericSalt}:</strong> {activeResult.conditionRecord.officialGeneric.genericSalt}</p>
+                        <p>• <strong>{ui.subsidizedPrice}:</strong> {activeResult.conditionRecord.officialGeneric.pmbjpPriceINR}</p>
+                        <p>• <strong>{ui.schedule}:</strong> {activeResult.conditionRecord.officialGeneric.standardDosageSchedule}</p>
                       </div>
                     </div>
                   )}
@@ -894,19 +1348,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     <div className="p-4 rounded-3xl bg-emerald-50/90 border-2 border-emerald-400 shadow-xs space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-2.5 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider">
-                          Tier 2 • Official AYUSH Monograph
+                          {ui.tier2Badge}
                         </span>
                         <span className="text-[10px] font-black text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                          API Pharmacopoeia
+                          {ui.tier2Sub}
                         </span>
                       </div>
                       <h4 className="text-base font-black text-emerald-950">
                         {activeResult.conditionRecord.ayushClassicalFormulation.formulationName}
                       </h4>
                       <div className="text-xs font-semibold text-emerald-900/90 space-y-1">
-                        <p>• <strong>Botanical:</strong> <em>{activeResult.conditionRecord.ayushClassicalFormulation.scientificBotanical}</em></p>
-                        <p>• <strong>Active Compound:</strong> {activeResult.conditionRecord.ayushClassicalFormulation.activePhytochemical}</p>
-                        <p>• <strong>Dosage & Anupana:</strong> {activeResult.conditionRecord.ayushClassicalFormulation.ayushDosage} with {activeResult.conditionRecord.ayushClassicalFormulation.anupanaDietaryMedium}</p>
+                        <p>• <strong>{ui.botanical}:</strong> <em>{activeResult.conditionRecord.ayushClassicalFormulation.scientificBotanical}</em></p>
+                        <p>• <strong>{ui.activeCompound}:</strong> {activeResult.conditionRecord.ayushClassicalFormulation.activePhytochemical}</p>
+                        <p>• <strong>{ui.dosageMedium}:</strong> {activeResult.conditionRecord.ayushClassicalFormulation.ayushDosage} with {activeResult.conditionRecord.ayushClassicalFormulation.anupanaDietaryMedium}</p>
                       </div>
                     </div>
                   )}
@@ -916,19 +1370,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     <div className="p-4 rounded-3xl bg-amber-50/90 border-2 border-amber-400 shadow-xs space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-2.5 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider">
-                          Tier 3 • Verified Kitchen First Aid
+                          {ui.tier3Badge}
                         </span>
                         <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                          Safe Home Recipe
+                          {ui.tier3Sub}
                         </span>
                       </div>
                       <h4 className="text-base font-black text-amber-950">
                         {activeResult.conditionRecord.verifiedHomeRemedy.kitchenItem}
                       </h4>
                       <div className="text-xs font-semibold text-amber-950/90 space-y-1">
-                        <p>• <strong>Preparation:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.preparationMethod}</p>
-                        <p>• <strong>Mode:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.modeOfAdministration}</p>
-                        <p className="text-red-700 font-bold">• <strong>Caution:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.contraindicationWarning}</p>
+                        <p>• <strong>{ui.preparation}:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.preparationMethod}</p>
+                        <p>• <strong>{ui.mode}:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.modeOfAdministration}</p>
+                        <p className="text-red-700 font-bold">• <strong>{ui.caution}:</strong> {activeResult.conditionRecord.verifiedHomeRemedy.contraindicationWarning}</p>
                       </div>
                     </div>
                   )}
@@ -936,7 +1390,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   {/* Hospital Warning */}
                   <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span>Seek immediate clinic care if: <strong>{activeResult.conditionRecord.escalationProtocol.dangerSigns[0]}</strong>.</span>
+                    <span>{ui.hospitalWarning} <strong>{activeResult.conditionRecord.escalationProtocol.dangerSigns[0]}</strong>.</span>
                   </div>
                 </div>
               )}
@@ -1097,9 +1551,77 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               )}
 
               {/* ----------------------------------------------------
+                  BRANCH 4: UNRECOGNIZED / UNLISTED CLINICAL QUERY
+                 ---------------------------------------------------- */}
+              {activeResult.type === 'unrecognized' && (
+                <div className="p-5 rounded-3xl bg-amber-50/90 border-2 border-amber-300 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-700 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Protocol Not in National Ledger
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                      Safety Abstention Active
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-black text-amber-950 leading-snug">
+                    No Verified Clinical Protocol Found for "{activeResult.queryText}"
+                  </h3>
+
+                  <p className="text-xs font-medium text-amber-900/90 leading-relaxed">
+                    {activeResult.localizedNarrationText}
+                  </p>
+
+                  <div className="p-3 bg-white/80 rounded-2xl border border-amber-200/80 space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-800 block">
+                      Common Verified National Health Protocols:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {[
+                        { label: 'Back Pain (कमर दर्द)', query: 'back pain' },
+                        { label: 'Dengue (डेंगू)', query: 'dengue' },
+                        { label: 'Fever (बुखार)', query: 'fever' },
+                        { label: 'Diabetes (शुगर)', query: 'diabetes' },
+                        { label: 'High BP (रक्तचाप)', query: 'high bp' },
+                        { label: 'Acidity (गैस/जलन)', query: 'acidity' },
+                        { label: 'Cough & Cold (खांसी)', query: 'cough' },
+                        { label: 'Asthma (दमा)', query: 'asthma' },
+                        { label: 'Kidney Stone (पथरी)', query: 'kidney stone' },
+                        { label: 'Migraine (सिरदर्द)', query: 'migraine' },
+                        { label: 'Diarrhea (दस्त)', query: 'diarrhea' },
+                        { label: 'UTI (पेशाब जलन)', query: 'uti' },
+                      ].map((item, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setQueryInput(item.query);
+                            handleExecuteQuery(item.query);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 text-slate-700 text-[11px] font-bold border border-slate-200 transition"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex gap-2">
+                    <button
+                      onClick={onStartRemedy}
+                      className="flex-1 py-2.5 px-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition"
+                    >
+                      <Leaf className="w-3.5 h-3.5" />
+                      <span>Log as Community Remedy Intake</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ----------------------------------------------------
                   SEAMLESS IN-CARD PRESCRIPTION CROSS-CHECK DRAWER (WHITE THEME)
                  ---------------------------------------------------- */}
-              {activeResult.type !== 'direct_safety_check' && (
+              {activeResult.type !== 'direct_safety_check' && activeResult.type !== 'unrecognized' && (
                 <div className="p-4 rounded-3xl bg-white text-slate-900 space-y-3 border-2 border-slate-200/90 shadow-sm">
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="w-4 h-4 text-emerald-700 shrink-0" />

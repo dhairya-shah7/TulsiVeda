@@ -9,6 +9,7 @@ interface HeaderProps {
   onOpenProfile: () => void;
   onOpenNotifications: () => void;
   onOpenIvr: () => void;
+  onOpenEmergency?: () => void;
   onOpenLanguagePicker?: () => void;
   unreadAlertsCount?: number;
 }
@@ -20,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
   onOpenNotifications,
   onOpenIvr,
+  onOpenEmergency,
   onOpenLanguagePicker,
   unreadAlertsCount = 0
 }) => {
@@ -57,8 +59,22 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      {/* Right side: Hotline button, Language trigger, Alerts, Profile */}
-      <div className="flex items-center gap-2">
+      {/* Right side: Emergency SOS, Hotline button, Language trigger, Alerts, Profile */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Persistent Emergency SOS 108 button */}
+        {onOpenEmergency && (
+          <button
+            onClick={onOpenEmergency}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-black shadow-sm shadow-red-500/20 transition-all border border-red-500"
+            title="108 National Emergency Ambulance & Poison Helpline"
+          >
+            <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
+            <span className="tracking-tight">
+              {currentLang === 'hi' ? '🚨 108 आपात' : currentLang === 'gu' ? '🚨 108 આપાત' : currentLang === 'pa' ? '🚨 108 ਐਮਰਜੈਂਸੀ' : '🚨 108 SOS'}
+            </span>
+          </button>
+        )}
+
         {/* Nokia / Feature Phone Hotline Simulator button */}
         <button
           onClick={onOpenIvr}

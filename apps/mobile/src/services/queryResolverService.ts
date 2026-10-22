@@ -6,10 +6,16 @@ import {
   ClinicalConditionRecord, 
   NationalClinicalKnowledgeEngine 
 } from './nationalClinicalKnowledge';
+import { EmergencyTriageService, EmergencyCase } from './emergencyTriageService';
+import { DynamicResearchService } from './dynamicResearchService';
 
 export interface UnifiedQueryResponse {
-  type: 'symptom_3tier' | 'direct_safety_check' | 'herb_vice_versa' | 'multi_herb_combination' | 'unrecognized';
+  type: 'symptom_3tier' | 'direct_safety_check' | 'herb_vice_versa' | 'multi_herb_combination' | 'emergency_red_flag' | 'unrecognized';
   queryText: string;
+  isEmergency?: boolean;
+  emergencyCase?: EmergencyCase;
+  isDynamicResearch?: boolean;
+  researchCitation?: string;
   conditionRecord?: ClinicalConditionRecord;
   detectedPlant?: BotanicalSpecies;
   detectedPlants?: BotanicalSpecies[];
@@ -162,6 +168,21 @@ export class QueryResolverService {
 
     const detectedPlants = this.extractAllBotanicalSpecies(query);
     const detectedDrug = this.extractDrugEntity(query);
+
+    // ========================================================
+    // CASE 0: EMERGENCY RED-FLAG & TRIAGE DETECTION (108 SOS)
+    // ========================================================
+    const emergencyCase = EmergencyTriageService.evaluateEmergency(rawQuery);
+    if (emergencyCase) {
+      const localizedAlert = emergencyCase.voiceAlertText[currentLang] || emergencyCase.voiceAlertText['en'];
+      return {
+        type: 'emergency_red_flag',
+        queryText: rawQuery,
+        isEmergency: true,
+        emergencyCase,
+        localizedNarrationText: localizedAlert,
+      };
+    }
 
     // ========================================================
     // CASE 1: MULTIPLE BOTANICALS + PRESCRIPTION DRUG CLASH
@@ -364,15 +385,70 @@ export class QueryResolverService {
     }
 
     // ========================================================
-    // CASE 6: FALLBACK FOR UNLISTED QUERY
+    // CASE 5B: SINGLE PHARMACEUTICAL DRUG QUERY (e.g. "Paracetamol", "Amlodipine")
     // ========================================================
-    const fallbackCondition = NationalClinicalKnowledgeEngine.getLocalizedRecord(NATIONAL_CLINICAL_RECORDS[0], currentLang);
+    if (detectedDrug && detectedPlants.length === 0) {
+      const genericLower = detectedDrug.genericName.toLowerCase();
+      const brandLower = detectedDrug.brandOrGenericName.toLowerCase();
+      const drugMatchingCondition = NATIONAL_CLINICAL_RECORDS.find(rec => {
+        const medName = rec.officialGeneric.medicineName.toLowerCase();
+        const salt = rec.officialGeneric.genericSalt.toLowerCase();
+        return medName.includes(genericLower) || salt.includes(genericLower) ||
+               medName.includes(brandLower) || salt.includes(brandLower);
+      });
+
+      if (drugMatchingCondition) {
+        const localizedCondition = NationalClinicalKnowledgeEngine.getLocalizedRecord(drugMatchingCondition, currentLang);
+        const narration = this.buildConditionNarration(localizedCondition, currentLang);
+        return {
+          type: 'symptom_3tier',
+          queryText: rawQuery,
+          conditionRecord: localizedCondition,
+          detectedDrugName: detectedDrug.brandOrGenericName,
+          detectedDrugGeneric: detectedDrug.genericName,
+          localizedNarrationText: narration,
+          suggestedPrescriptionCheckHerb: localizedCondition.ayushClassicalFormulation.scientificBotanical,
+        };
+      }
+    }
+
+    // ========================================================
+    // CASE 6: OUT-OF-DATABASE QUERY -> DYNAMIC MEDICAL RESEARCH FALLBACK
+    // ========================================================
+    try {
+      const dynamicResearch = await DynamicResearchService.researchAndSynthesize(rawQuery, currentLang);
+      if (dynamicResearch && dynamicResearch.record) {
+        const localizedCondition = NationalClinicalKnowledgeEngine.getLocalizedRecord(dynamicResearch.record, currentLang);
+        const narration = this.buildConditionNarration(localizedCondition, currentLang);
+        return {
+          type: 'symptom_3tier',
+          queryText: rawQuery,
+          conditionRecord: localizedCondition,
+          localizedNarrationText: narration,
+          suggestedPrescriptionCheckHerb: localizedCondition.ayushClassicalFormulation.scientificBotanical,
+          isDynamicResearch: true,
+          researchCitation: dynamicResearch.sourceCitation,
+        };
+      }
+    } catch (dynErr) {
+      console.warn('[QueryResolver] Dynamic research fallback error:', dynErr);
+    }
+
+    let unrecognizedNarration = '';
+    if (currentLang.startsWith('hi')) {
+      unrecognizedNarration = `हम "${rawQuery}" के लिए कोई सत्यापित सरकारी प्राथमिक स्वास्थ्य प्रोटोकॉल नहीं ढूंढ पाए। कृपया गलत दवा या अप्रमाणित घरेलू उपचार से बचने के लिए निकटतम प्राथमिक स्वास्थ्य केंद्र (PHC) के डॉक्टर से संपर्क करें।`;
+    } else if (currentLang.startsWith('gu')) {
+      unrecognizedNarration = `અમે "${rawQuery}" માટે કોઈ ચકાસાયેલ રાષ્ટ્રીય સારવાર માર્ગદર્શિકા શોધી શક્યા નથી. કૃપા કરીને યોગ્ય તપાસ માટે નજીકના પ્રાથમિક આરોગ્ય કેન્દ્ર (PHC) અથવા ડૉક્ટરનો સંપર્ક કરો.`;
+    } else if (currentLang.startsWith('pa')) {
+      unrecognizedNarration = `ਤੁਹਾਡੇ ਵੱਲੋਂ ਖੋਜੇ ਗਏ ਸ਼ਬਦ "${rawQuery}" ਲਈ ਕੋਈ ਪ੍ਰਮਾਣਿਤ ਸਰਕਾਰੀ ਕਲੀਨਿਕਲ ਪ੍ਰੋਟੋਕੋਲ ਨਹੀਂ ਮਿਲਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਨੇੜਲੇ ਸਰਕਾਰੀ ਹਸਪਤਾਲ ਜਾਂ ਡਾਕਟਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।`;
+    } else {
+      unrecognizedNarration = `No verified national clinical protocol found matching "${rawQuery}". To prevent clinical misguidance, please consult an ASHA worker or Medical Officer at your nearest Primary Health Centre (PHC).`;
+    }
+
     return {
-      type: 'symptom_3tier',
+      type: 'unrecognized',
       queryText: rawQuery,
-      conditionRecord: fallbackCondition,
-      localizedNarrationText: NationalClinicalKnowledgeEngine.generateOfflineNluResponse(rawQuery, currentLang),
-      suggestedPrescriptionCheckHerb: fallbackCondition.ayushClassicalFormulation.scientificBotanical,
+      localizedNarrationText: unrecognizedNarration,
     };
   }
 
@@ -452,14 +528,39 @@ export class QueryResolverService {
    * Build high-fidelity localized audio narration for symptom queries
    */
   private static buildConditionNarration(cond: ClinicalConditionRecord, lang: string): string {
-    if (lang === 'hi') {
+    const l = (lang || 'en').toLowerCase();
+    if (l.startsWith('hi')) {
       return `पहचाना गया विकार: ${cond.conditionName}। टियर 1 जन औषधि दवा है: ${cond.officialGeneric.medicineName}, सरकारी मूल्य ${cond.officialGeneric.pmbjpPriceINR}। टियर 2 आयुष उपचार है: ${cond.ayushClassicalFormulation.formulationName}। टियर 3 सुरक्षित घरेलू उपचार: ${cond.verifiedHomeRemedy.kitchenItem}। चेतावनी: यदि ${cond.escalationProtocol.dangerSigns[0]} हो, तो तुरंत अस्पताल जाएं।`;
     }
-    if (lang === 'gu') {
+    if (l.startsWith('gu')) {
       return `ઓળખાયેલ રોગ: ${cond.conditionName}। ટિયર 1 જન ઔષધિ દવા છે: ${cond.officialGeneric.medicineName}, સરકારી કિંમત ${cond.officialGeneric.pmbjpPriceINR}। ટિયર 2 આયુષ ઔષધિ: ${cond.ayushClassicalFormulation.formulationName}। ટિયર 3 ઘરગથ્થુ ઉપચાર: ${cond.verifiedHomeRemedy.kitchenItem}। ચેતવણી: જો ${cond.escalationProtocol.dangerSigns[0]} જણાય તો તરત જ દવાખાને જવું.`;
     }
-    if (lang === 'pa') {
+    if (l.startsWith('pa')) {
       return `ਪਛਾਣਿਆ ਗਿਆ ਵਿਕਾਰ: ${cond.conditionName}। ਜਨ ਔਸ਼ਧੀ ਦਵਾਈ: ${cond.officialGeneric.medicineName}, ਸਰਕਾਰੀ ਮੁੱਲ ${cond.officialGeneric.pmbjpPriceINR}। ਆਯੁਸ਼ ਨੁਸਖਾ: ${cond.ayushClassicalFormulation.formulationName}। ਘਰੇਲੂ ਉਪਚਾਰ: ${cond.verifiedHomeRemedy.kitchenItem}। ਜੇਕਰ ${cond.escalationProtocol.dangerSigns[0]} ਦਿਖੇ ਤਾਂ ਤੁਰੰਤ ਹਸਪਤਾਲ ਜਾਓ।`;
+    }
+    if (l.startsWith('mr')) {
+      return `निदान झालेला आजार: ${cond.conditionName}। टियर १ जन औषधी: ${cond.officialGeneric.medicineName}, शासकीय किंमत ${cond.officialGeneric.pmbjpPriceINR}। टियर २ आयुष उपाय: ${cond.ayushClassicalFormulation.formulationName}। टियर ३ सुरक्षित घरगुती उपाय: ${cond.verifiedHomeRemedy.kitchenItem}। इशारा: जर ${cond.escalationProtocol.dangerSigns[0]} आढळल्यास ताबडतोब रुग्णालयात जा.`;
+    }
+    if (l.startsWith('ta')) {
+      return `கண்டறியப்பட்ட நிலை: ${cond.conditionName}। அடுக்கு 1 மக்கள் மருந்தக மருந்து: ${cond.officialGeneric.medicineName}, அரசு விலை ${cond.officialGeneric.pmbjpPriceINR}। அடுக்கு 2 ஆயுஷ் மூலிகை: ${cond.ayushClassicalFormulation.formulationName}। அடுக்கு 3 வீட்டு வைத்தியம்: ${cond.verifiedHomeRemedy.kitchenItem}। எச்சரிக்கை: ${cond.escalationProtocol.dangerSigns[0]} இருந்தால் உடனே மருத்துவமனைக்கு செல்லவும்.`;
+    }
+    if (l.startsWith('te')) {
+      return `గుర్తించబడిన వ్యాధి: ${cond.conditionName}। టైర్ 1 జన ఔషధి: ${cond.officialGeneric.medicineName}, ప్రభుత్వ ధర ${cond.officialGeneric.pmbjpPriceINR}। టైర్ 2 ఆయుష్ చికిత్స: ${cond.ayushClassicalFormulation.formulationName}। టైర్ 3 సురక్షిత ఇంటి చిట్కా: ${cond.verifiedHomeRemedy.kitchenItem}। హెచ్చరిక: ${cond.escalationProtocol.dangerSigns[0]} కనిపిస్తే వెంటనే ఆసుపత్రికి వెళ్లండి.`;
+    }
+    if (l.startsWith('kn')) {
+      return `ಗುರುತಿಸಲಾದ ಸ್ಥಿತಿ: ${cond.conditionName}। ಶ್ರೇಣಿ 1 ಜನೌಷಧಿ: ${cond.officialGeneric.medicineName}, ಸರ್ಕಾರಿ ಬೆಲೆ ${cond.officialGeneric.pmbjpPriceINR}। ಶ್ರೇಣಿ 2 ಆಯುಷ್ ಸೂತ್ರೀಕರಣ: ${cond.ayushClassicalFormulation.formulationName}। ಶ್ರೇಣಿ 3 ಮನೆಮದ್ದು: ${cond.verifiedHomeRemedy.kitchenItem}। ಎಚ್ಚರಿಕೆ: ${cond.escalationProtocol.dangerSigns[0]} ಕಂಡುಬಂದರೆ ಕೂಡಲೇ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಿ.`;
+    }
+    if (l.startsWith('ml')) {
+      return `തിരിച്ചറിഞ്ഞ അവസ്ഥ: ${cond.conditionName}। ടയർ 1 ജനൗഷധി മരുന്ന്: ${cond.officialGeneric.medicineName}, സർക്കാർ വില ${cond.officialGeneric.pmbjpPriceINR}। ടയർ 2 ആയുഷ് ചികിത്സ: ${cond.ayushClassicalFormulation.formulationName}। ടയർ 3 സുരക്ഷിത വീട്ടുവൈദ്യം: ${cond.verifiedHomeRemedy.kitchenItem}। മുന്നറിയിപ്പ്: ${cond.escalationProtocol.dangerSigns[0]} ഉണ്ടെങ്കിൽ ഉടൻ ആശുപത്രിയിൽ പോകുക.`;
+    }
+    if (l.startsWith('bn')) {
+      return `শনাক্তকৃত অবস্থা: ${cond.conditionName}। টিয়ার ১ জন ঔষধি: ${cond.officialGeneric.medicineName}, সরকারি মূল্য ${cond.officialGeneric.pmbjpPriceINR}। টিয়ার ২ আয়ুশ প্রতিকার: ${cond.ayushClassicalFormulation.formulationName}। টিয়ার ৩ নিরাপদ ঘরোয়া দাওয়াই: ${cond.verifiedHomeRemedy.kitchenItem}। সতর্কতা: যদি ${cond.escalationProtocol.dangerSigns[0]} দেখা দেয় তবে অবিলম্বে হাসপাতালে যান।`;
+    }
+    if (l.startsWith('or')) {
+      return `ଚିହ୍ନଟ ହୋଇଥିବା ରୋଗ: ${cond.conditionName}। ଟିୟର ୧ ଜନ ଔଷଧି: ${cond.officialGeneric.medicineName}, ସରକାରୀ ମୂଲ୍ୟ ${cond.officialGeneric.pmbjpPriceINR}। ଟିୟର ୨ ଆୟୁଷ ଚିକିତ୍ସା: ${cond.ayushClassicalFormulation.formulationName}। ଟିୟର ୩ ସୁରକ୍ଷିତ ଘରୋଇ ଉପଚାର: ${cond.verifiedHomeRemedy.kitchenItem}। ଚେତାବନୀ: ଯଦି ${cond.escalationProtocol.dangerSigns[0]} ଦେଖାଯାଏ ତୁରନ୍ତ ଡାକ୍ତରଖାନା ଯାଆନ୍ତୁ।`;
+    }
+    if (l.startsWith('as')) {
+      return `শনাক্ত কৰা অৱস্থা: ${cond.conditionName}। টিয়াৰ ১ জন ঔষধি: ${cond.officialGeneric.medicineName}, চৰকাৰী মূল্য ${cond.officialGeneric.pmbjpPriceINR}। টিয়াৰ ২ আয়ুষ নিদান: ${cond.ayushClassicalFormulation.formulationName}। টিয়াৰ ৩ সুৰক্ষিত ঘৰুৱা নিদান: ${cond.verifiedHomeRemedy.kitchenItem}। সতৰ্কবাণী: যদি ${cond.escalationProtocol.dangerSigns[0]} দেখা দিয়ে, তৎক্ষণাৎ চিকিৎসালয়লৈ যাওক।`;
     }
     return `Identified condition: ${cond.conditionName}. Tier 1 Jan Aushadhi generic: ${cond.officialGeneric.medicineName} at ${cond.officialGeneric.pmbjpPriceINR}. Tier 2 AYUSH formulation: ${cond.ayushClassicalFormulation.formulationName}. Tier 3 Safe kitchen remedy: ${cond.verifiedHomeRemedy.kitchenItem}. Alert: Seek medical care if ${cond.escalationProtocol.dangerSigns[0]}.`;
   }

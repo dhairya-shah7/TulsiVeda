@@ -2228,7 +2228,20 @@ export class LocalizationService {
     if (extTable && extTable[snakeKey]) return extTable[snakeKey];
     if (table[snakeKey]) return table[snakeKey];
 
-    // 3. Fallback to English
+    // 3. Priority fallback for NON-ENGLISH languages: Fallback to Hindi / Indic FIRST
+    if (lang !== 'en') {
+      const extHi = EXTENDED_TRANSLATIONS.hi || {};
+      if (extHi[key]) return extHi[key];
+      if (extHi[camelKey]) return extHi[camelKey];
+      if (extHi[snakeKey]) return extHi[snakeKey];
+
+      const hiTable = TRANSLATIONS.hi || {};
+      if (hiTable[key]) return hiTable[key];
+      if (hiTable[camelKey]) return hiTable[camelKey];
+      if (hiTable[snakeKey]) return hiTable[snakeKey];
+    }
+
+    // 4. Fallback to English ONLY if selected language is English or as ultimate fallback
     const extEn = EXTENDED_TRANSLATIONS.en || {};
     if (extEn[key]) return extEn[key];
     if (extEn[camelKey]) return extEn[camelKey];
@@ -2238,17 +2251,6 @@ export class LocalizationService {
     if (enTable[key]) return enTable[key];
     if (enTable[camelKey]) return enTable[camelKey];
     if (enTable[snakeKey]) return enTable[snakeKey];
-
-    // 4. Fallback to Hindi
-    const extHi = EXTENDED_TRANSLATIONS.hi || {};
-    if (extHi[key]) return extHi[key];
-    if (extHi[camelKey]) return extHi[camelKey];
-    if (extHi[snakeKey]) return extHi[snakeKey];
-
-    const hiTable = TRANSLATIONS.hi || {};
-    if (hiTable[key]) return hiTable[key];
-    if (hiTable[camelKey]) return hiTable[camelKey];
-    if (hiTable[snakeKey]) return hiTable[snakeKey];
 
     // 5. Friendly human-readable fallback (never raw underscores)
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());

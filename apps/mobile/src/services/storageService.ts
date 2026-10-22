@@ -287,4 +287,33 @@ export class StorageService {
     }
     return 0;
   }
+
+  /**
+   * Dynamic Clinical Research Records Cache
+   */
+  static getDynamicClinicalRecords(): any[] {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      const raw = localStorage.getItem('tulsiveda_dynamic_clinical_records');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  static saveDynamicClinicalRecord(record: any): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const list = this.getDynamicClinicalRecords();
+      const existingIdx = list.findIndex((c: any) => c.id === record.id || c.conditionName === record.conditionName);
+      if (existingIdx >= 0) {
+        list[existingIdx] = record;
+      } else {
+        list.unshift(record);
+      }
+      localStorage.setItem('tulsiveda_dynamic_clinical_records', JSON.stringify(list.slice(0, 50)));
+    } catch (e) {
+      console.warn('[StorageService] Failed to cache dynamic record:', e);
+    }
+  }
 }
