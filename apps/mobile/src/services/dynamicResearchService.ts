@@ -76,10 +76,10 @@ export class DynamicResearchService {
 
     const conditionRecord: ClinicalConditionRecord = {
       id: synthesizedId,
-      conditionName: `${capitalizedName} (Evidence-Synthesized Protocol)`,
-      hindiName: `${cleanQuery} (प्रमाण-सत्यापित राष्ट्रीय प्रोटोकॉल)`,
-      gujaratiName: `${cleanQuery} (ચકાસાયેલ રાષ્ટ્રીય સારવાર માર્ગદર્શિકા)`,
-      punjabiName: `${cleanQuery} (ਸਰਕਾਰੀ ਪ੍ਰਮਾਣਿਤ ਕਲੀਨਿਕਲ ਪ੍ਰੋਟੋਕੋਲ)`,
+      conditionName: capitalizedName,
+      hindiName: cleanQuery,
+      gujaratiName: cleanQuery,
+      punjabiName: cleanQuery,
       bodySystem: inferredSystem,
       typicalSymptoms: [
         `Primary manifestation of ${cleanQuery}`,

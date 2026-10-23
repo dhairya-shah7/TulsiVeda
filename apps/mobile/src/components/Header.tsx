@@ -49,10 +49,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="font-heading font-extrabold text-base tracking-tight text-slate-900 leading-tight">
-                TulsiVeda <span className="text-emerald-700">AI</span>
+                {currentLang === 'hi' ? 'तुलसीवेद' : currentLang === 'gu' ? 'તુલસીવેદ' : currentLang === 'pa' ? 'ਤੁਲਸੀਵੇਦ' : currentLang === 'ta' ? 'துளசிவேத்' : currentLang === 'te' ? 'తులసివేద్' : currentLang === 'bn' ? 'তুলসীবেদ' : currentLang === 'mr' ? 'तुळशीवेद' : 'TulsiVeda'} <span className="text-emerald-700">{currentLang === 'hi' || currentLang === 'mr' ? 'एआई' : currentLang === 'gu' ? 'એઆઈ' : currentLang === 'pa' ? 'ਏਆਈ' : currentLang === 'ta' ? 'ஏஐ' : currentLang === 'te' ? 'ఏఐ' : currentLang === 'bn' ? 'এআই' : 'AI'}</span>
               </span>
               <span className="text-[10px] text-slate-400 font-semibold tracking-wide">
-                Bharat Health Engine
+                {currentLang === 'hi' ? 'स्वास्थ्य सारथी' : currentLang === 'gu' ? 'આરોગ્ય માર્ગદર્શક' : currentLang === 'pa' ? 'ਸਿਹਤ ਸਲਾਹਕਾਰ' : currentLang === 'ta' ? 'மருத்துவ வழிகாட்டி' : currentLang === 'te' ? 'ఆరోగ్య మార్గదర్శి' : currentLang === 'bn' ? 'স্বাস্থ্য নির্দেশিকা' : currentLang === 'mr' ? 'आरोग्य मित्र' : 'Health Advisory'}
               </span>
             </div>
           </div>
@@ -66,23 +66,25 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenEmergency}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-black shadow-sm shadow-red-500/20 transition-all border border-red-500"
-            title="108 National Emergency Ambulance & Poison Helpline"
+            title="108"
           >
             <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
             <span className="tracking-tight">
-              {currentLang === 'hi' ? '🚨 108 आपात' : currentLang === 'gu' ? '🚨 108 આપાત' : currentLang === 'pa' ? '🚨 108 ਐਮਰਜੈਂਸੀ' : '🚨 108 SOS'}
+              {currentLang === 'hi' ? '🚨 १०८ आपातकाल' : currentLang === 'gu' ? '🚨 ૧૦૮ ઇમરજન્સી' : currentLang === 'pa' ? '🚨 ੧੦੮ ਐਮਰਜੈਂਸੀ' : currentLang === 'ta' ? '🚨 108 அவசரம்' : currentLang === 'te' ? '🚨 108 అత్యవసరం' : currentLang === 'bn' ? '🚨 ১০৮ জরুরি' : currentLang === 'mr' ? '🚨 १०८ आपत्कालीन' : '🚨 108 SOS'}
             </span>
           </button>
         )}
 
-        {/* Nokia / Feature Phone Hotline Simulator button */}
+        {/* Helpline simulator button */}
         <button
           onClick={onOpenIvr}
           className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 text-xs font-bold active:scale-95 transition-all shadow-2xs"
-          title="1800-TULSIVEDA Voice Hotline for Keypad/Rural Users"
+          title="Helpline"
         >
           <PhoneCall className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-          <span className="hidden sm:inline">1800 IVR</span>
+          <span className="hidden sm:inline">
+            {currentLang === 'hi' ? 'हेल्पलाइन' : currentLang === 'gu' ? 'હેલ્પલાઇન' : currentLang === 'pa' ? 'ਹੈਲਪਲਾਈਨ' : currentLang === 'ta' ? 'உதவி எண்' : currentLang === 'te' ? 'హెల్ప్‌లైన్' : currentLang === 'bn' ? 'হেল্পলাইন' : currentLang === 'mr' ? 'हेल्पलाइन' : 'Hotline'}
+          </span>
         </button>
 
         {/* 1-Tap Language selector chip */}

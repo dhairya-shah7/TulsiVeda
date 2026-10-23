@@ -562,7 +562,7 @@ export class QueryResolverService {
     if (l.startsWith('as')) {
       return `শনাক্ত কৰা অৱস্থা: ${cond.conditionName}। টিয়াৰ ১ জন ঔষধি: ${cond.officialGeneric.medicineName}, চৰকাৰী মূল্য ${cond.officialGeneric.pmbjpPriceINR}। টিয়াৰ ২ আয়ুষ নিদান: ${cond.ayushClassicalFormulation.formulationName}। টিয়াৰ ৩ সুৰক্ষিত ঘৰুৱা নিদান: ${cond.verifiedHomeRemedy.kitchenItem}। সতৰ্কবাণী: যদি ${cond.escalationProtocol.dangerSigns[0]} দেখা দিয়ে, তৎক্ষণাৎ চিকিৎসালয়লৈ যাওক।`;
     }
-    return `Identified condition: ${cond.conditionName}. Tier 1 Jan Aushadhi generic: ${cond.officialGeneric.medicineName} at ${cond.officialGeneric.pmbjpPriceINR}. Tier 2 AYUSH formulation: ${cond.ayushClassicalFormulation.formulationName}. Tier 3 Safe kitchen remedy: ${cond.verifiedHomeRemedy.kitchenItem}. Alert: Seek medical care if ${cond.escalationProtocol.dangerSigns[0]}.`;
+    return `Identified condition: ${cond.conditionName}. Government generic medicine: ${cond.officialGeneric.medicineName} at ${cond.officialGeneric.pmbjpPriceINR}. Herbal & Ayurvedic care: ${cond.ayushClassicalFormulation.formulationName}. Safe home remedy: ${cond.verifiedHomeRemedy.kitchenItem}. Alert: Seek medical care if ${cond.escalationProtocol.dangerSigns[0]}.`;
   }
 
   /**
