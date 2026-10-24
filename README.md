@@ -67,6 +67,27 @@ This platform satisfies all open-source & open-weight LLM mandates with **BioMis
 
 ---
 
+## 🎬 Video Demonstration & Presentation (1080p Full HD)
+
+A high-definition product demonstration video detailing the complete humanized healthcare narrative and live working prototype:
+
+* **Video File:** [`TulsiVeda_AI_Prototype_Demo.mp4`](./TulsiVeda_AI_Prototype_Demo.mp4) (also in [`docs/TulsiVeda_AI_Prototype_Demo.mp4`](./docs/TulsiVeda_AI_Prototype_Demo.mp4))
+* **Style:** Light-theme studio presentation with zero robotic AI voiceover (silent presentation motion graphics with synchronized typography overlays).
+* **Narrative Arc:**
+  1. **The Dilemma (0:00 - 0:08):** Young patient holding allopathic tablets and looking cautiously at home herbal kadha without guidance on invisible liver enzyme clashes.
+  2. **Core Value Pillars (0:08 - 0:15):** 4-pillar bento overview (Authentic AYUSH, Jan Aushadhi generic pricing, CYP450 clash detection, 1-tap 108 SOS).
+  3. **Live Working Prototype (0:15 - 0:50):** 
+     - 12 Scheduled Indian languages selection (single-language localized Hindi).
+     - Colloquial symptom search (`घुटनों में दर्द`).
+     - Triaged 3 clean cards (💊 Jan Aushadhi generic tablet ₹2.50, 🌿 AYUSH herbal formulation, 🚨 Hospital danger red flags).
+     - Daily medicine CYP450 clash test (`Warfarin` bleeding risk detection & clinician review escalation).
+     - High-contrast persistent 108 Emergency SOS triage modal with instant dialers and first-aid instructions.
+  4. **ASHA Worker Field Impact (0:50 - 0:58):** Frontline community health worker documenting remedies on ₹6,000 phone in a rural clinic with an elder.
+  5. **PHC Doctor Governance (0:58 - 1:06):** Medical officer reviewing adverse reaction reports on a digital tablet with ABHA compliance.
+  6. **National Scalability (1:06 - 1:14):** 102+ clinical conditions, 12 languages, and 100% offline edge execution.
+
+---
+
 ## 📱 Quick Install & Test (Android APK)
 
 For immediate testing on an Android device or emulator without running the local build chain:
