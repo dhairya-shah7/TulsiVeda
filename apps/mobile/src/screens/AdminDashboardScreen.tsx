@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   BarChart3, ShieldAlert, Users, TrendingUp, AlertTriangle, 
-  CheckCircle2, Plus, RefreshCw, Upload, Eye, Check, X, FileText 
+  CheckCircle2, Plus, RefreshCw, Upload, Eye, Check, X, FileText, ArrowLeft 
 } from 'lucide-react';
 import { AudioNarrator } from '../components/AudioNarrator';
 import { t, useCurrentLanguage } from '../services/localizationService';
@@ -33,12 +33,22 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
   return (
     <div className="p-4 space-y-4 max-w-md mx-auto pb-24 bg-slate-50 min-h-screen">
       {/* Light-themed Admin Header */}
-      {/* Light-themed Admin Header */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm relative">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            {t('admin_portal_title')}
-          </h1>
+          <div className="flex items-center gap-2">
+            {onBackToApp && (
+              <button 
+                onClick={onBackToApp}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95"
+                title="Back to Dashboard"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
+            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
+              {t('admin_portal_title')}
+            </h1>
+          </div>
           <AudioNarrator 
             textToNarrate={`राष्ट्रीय स्वास्थ्य नियंत्रण केंद्र। वास्तविक समय रोग निगरानी, औषधि सुरक्षा सतर्कता तथा ज्ञानकोष प्रबंधन।`}
             label={t('listen')}
@@ -139,7 +149,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                 {
                   pair: 'Ashwagandha + Warfarin',
                   reportedBy: 'Civil Hospital Pune',
-                  risk: 'CYP2C9 clearance inhibition $\\to$ elevated INR & bleeding risk',
+                  risk: 'CYP2C9 clearance inhibition → elevated INR & hemorrhage risk',
                   time: '12m ago',
                   status: 'Auto-Flagged'
                 },
@@ -153,7 +163,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                 {
                   pair: 'Karela (Bitter Gourd) + Glimepiride',
                   reportedBy: 'Ahmedabad Urban PHC',
-                  risk: 'Additive hypoglycemic shock risk ($\text{Glu} < 60\,\text{mg/dL}$)',
+                  risk: 'Additive hypoglycemic shock risk (Capillary Glucose < 60 mg/dL)',
                   time: '3h ago',
                   status: 'Notified'
                 }

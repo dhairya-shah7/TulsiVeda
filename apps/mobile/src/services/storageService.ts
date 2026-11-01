@@ -3,6 +3,9 @@ export interface StoredRecord {
   remedy_name_local: string;
   used_for_condition: string;
   prepared_by?: string;
+  referred_by_asha?: string;
+  escalated_to_doctor?: boolean;
+  asha_notes?: string;
   place_region?: string;
   language?: string;
   status: 'draft' | 'extracted' | 'identified' | 'reviewed' | 'completed' | 'pending_review';
@@ -18,7 +21,7 @@ export interface StoredRecord {
   extracted_details?: any;
   confidence?: string;
   patient_name?: string;
-  submitted_by_role?: 'citizen' | 'asha' | 'doctor';
+  submitted_by_role?: 'citizen' | 'asha' | 'doctor' | 'admin';
   reviewed_by_role?: 'asha' | 'doctor';
 }
 
@@ -32,56 +35,113 @@ export interface DashboardStats {
 const STORAGE_KEY = 'tulsiveda_recent_records_v2';
 const OLD_STORAGE_KEY = 'tulsiveda_recent_records';
 
-const DEMO_REVIEW_REQUESTS: StoredRecord[] = [
+/**
+ * Verified cases referred and escalated strictly by ASHA field workers for doctor evaluation.
+ * In public health PHC systems, doctors only review cases screened and sent by ASHA workers.
+ */
+const DEMO_DOCTOR_REVIEW_REQUESTS: StoredRecord[] = [
   {
-    id: 'req_demo_01',
-    patient_name: 'Gurpreet Singh',
+    id: 'req_asha_ref_01',
+    patient_name: 'Gurpreet Singh (62y/M)',
     remedy_name_local: 'Tulsi Leaves Decoction (Ocimum sanctum)',
     confirmed_species: 'Ocimum sanctum',
     confirmed_medicine: 'Warfarin 5mg (Coumadin)',
     used_for_condition: 'Chest tightness & Blood Thinner',
-    prepared_by: 'Citizen Gurpreet (Self-Intake)',
-    place_region: 'Amritsar, Punjab',
-    language: 'Punjabi',
+    prepared_by: 'Sunita Didi (ASHA Worker - Sangamner PHC)',
+    referred_by_asha: 'ASHA Worker Sunita Didi',
+    place_region: 'Sangamner Village, Maharashtra',
+    language: 'Hindi',
     status: 'pending_review',
     created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
     interaction_type: 'High Clash Risk: CYP2C9 Enzyme Competitive Inhibition',
     evidence_level: 'Mechanistic',
-    submitted_by_role: 'citizen',
+    submitted_by_role: 'asha',
+    escalated_to_doctor: true,
+    asha_notes: 'Patient reports mild forearm petechiae/bruising. Taking concentrated fresh Tulsi kadha twice daily while on Warfarin. Escalated to Medical Officer for INR monitoring.',
   },
   {
-    id: 'req_demo_02',
-    patient_name: 'Pooja Devi',
+    id: 'req_asha_ref_02',
+    patient_name: 'Pooja Devi (45y/F)',
     remedy_name_local: 'Ashwagandha Churna (Withania somnifera)',
     confirmed_species: 'Withania somnifera',
     confirmed_medicine: 'Clonazepam 0.5mg',
     used_for_condition: 'Insomnia & Restlessness',
-    prepared_by: 'Citizen Pooja (Self-Intake)',
-    place_region: 'Madhubani, Bihar',
+    prepared_by: 'Kamla Devi (ASHA Worker - Madhubani Sub-Center)',
+    referred_by_asha: 'ASHA Worker Kamla Devi',
+    place_region: 'Madhubani Ward 4, Bihar',
     language: 'Hindi',
     status: 'pending_review',
     created_at: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
     interaction_type: 'Moderate Interaction: GABA receptor additive sedation',
     evidence_level: 'Clinical In Vivo',
-    submitted_by_role: 'citizen',
+    submitted_by_role: 'asha',
+    escalated_to_doctor: true,
+    asha_notes: 'Marked daytime somnolence and unsteadiness observed during field visit. Patient taking 5g Churna alongside night sedative.',
   },
   {
-    id: 'req_demo_03',
-    patient_name: 'K. Balakrishnan',
-    remedy_name_local: 'Turmeric Milk (Curcuma longa)',
-    confirmed_species: 'Curcuma longa',
-    confirmed_medicine: 'Metformin 500mg',
+    id: 'req_asha_ref_03',
+    patient_name: 'K. Balakrishnan (58y/M)',
+    remedy_name_local: 'Karela Juice (Momordica charantia)',
+    confirmed_species: 'Momordica charantia',
+    confirmed_medicine: 'Glimepiride 2mg + Metformin 500mg',
     used_for_condition: 'Type 2 Diabetes',
-    prepared_by: 'Citizen Balakrishnan',
-    place_region: 'Palakkad, Kerala',
+    prepared_by: 'Mary Joseph (ASHA Worker - Palakkad Arogyakendra)',
+    referred_by_asha: 'ASHA Worker Mary Joseph',
+    place_region: 'Palakkad Gram Panchayat, Kerala',
     language: 'Malayalam',
     status: 'pending_review',
     created_at: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
-    interaction_type: 'Synergistic: Potential hypoglycemic augmentation',
+    interaction_type: 'Synergistic: Potential hypoglycemic shock hazard',
     evidence_level: 'Systematic Review',
-    submitted_by_role: 'citizen',
+    submitted_by_role: 'asha',
+    escalated_to_doctor: true,
+    asha_notes: 'Fasting blood glucose measured at 56 mg/dL in village health post. Patient drank fresh Karela juice with morning antidiabetic.',
   }
 ];
+
+/**
+ * Community village citizen submissions awaiting ASHA field triage.
+ */
+const DEMO_ASHA_REVIEW_REQUESTS: StoredRecord[] = [
+  {
+    id: 'req_asha_triage_01',
+    patient_name: 'Ramesh Patel (54y/M)',
+    remedy_name_local: 'Ajwain & Ginger Decoction',
+    confirmed_species: 'Trachyspermum ammi',
+    confirmed_medicine: 'Aspirin 75mg',
+    used_for_condition: 'Gastric discomfort & Post-MI protection',
+    prepared_by: 'Citizen Ramesh (Self-Intake)',
+    place_region: 'Mehsana Village, Gujarat',
+    language: 'Gujarati',
+    status: 'pending_review',
+    created_at: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    interaction_type: 'Antiplatelet synergism evaluation',
+    evidence_level: 'Empirical',
+    submitted_by_role: 'citizen',
+    escalated_to_doctor: false,
+    asha_notes: 'Awaiting ASHA home visit triage.',
+  },
+  {
+    id: 'req_asha_triage_02',
+    patient_name: 'Ananya Sen (29y/F)',
+    remedy_name_local: 'Neem Leaf Decoction (Azadirachta indica)',
+    confirmed_species: 'Azadirachta indica',
+    confirmed_medicine: 'Paracetamol 650mg',
+    used_for_condition: 'Seasonal Viral Fever',
+    prepared_by: 'Citizen Ananya (Self-Intake)',
+    place_region: 'Bolpur Ward, West Bengal',
+    language: 'Bengali',
+    status: 'pending_review',
+    created_at: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
+    interaction_type: 'Hepatic load screening',
+    evidence_level: 'Pharmacopoeial',
+    submitted_by_role: 'citizen',
+    escalated_to_doctor: false,
+    asha_notes: 'Awaiting ASHA home visit triage.',
+  }
+];
+
+const DEMO_REVIEW_REQUESTS: StoredRecord[] = DEMO_DOCTOR_REVIEW_REQUESTS;
 
 export class StorageService {
   /**
@@ -109,16 +169,63 @@ export class StorageService {
   }
 
   /**
-   * Retrieves pending review requests for Doctors and ASHA workers.
-   * If user has created pending requests, returns those; otherwise provides realistic demo requests.
+   * Retrieves pending review requests tailored to the active role.
+   * STRICT CLINICAL RULE: Doctors ONLY see cases that were evaluated, prepared, or escalated by ASHA frontline workers.
+   * ASHA workers see community village intakes requiring field triage or escalation.
    */
-  static getPendingReviewRequests(): StoredRecord[] {
+  static getPendingReviewRequests(role?: 'citizen' | 'asha' | 'doctor' | 'admin'): StoredRecord[] {
     const records = this.getLocalRecords();
     const userPending = records.filter(r => r.status === 'pending_review' || (!r.decision && (r.confirmed_species || r.remedy_name_local)));
+
+    if (role === 'doctor') {
+      // DOCTOR ONLY SEES WHAT ASHA WORKERS SEND!
+      const doctorPending = userPending.filter(r => 
+        r.submitted_by_role === 'asha' || 
+        r.escalated_to_doctor === true ||
+        (r.prepared_by && /asha/i.test(r.prepared_by)) ||
+        (r.referred_by_asha && /asha/i.test(r.referred_by_asha))
+      );
+      if (doctorPending.length > 0) {
+        return doctorPending;
+      }
+      return DEMO_DOCTOR_REVIEW_REQUESTS;
+    }
+
+    if (role === 'asha') {
+      // ASHA Field Desk: Sees citizen intakes awaiting home visit triage or escalation to Medical Officer
+      if (userPending.length > 0) {
+        return userPending;
+      }
+      return DEMO_ASHA_REVIEW_REQUESTS;
+    }
+
     if (userPending.length > 0) {
       return userPending;
     }
     return DEMO_REVIEW_REQUESTS;
+  }
+
+  /**
+   * ASHA frontline action: Escalate a citizen case to the Medical Doctor.
+   * Once escalated by ASHA, it becomes visible in the Doctor's Clinical Review queue.
+   */
+  static escalateToDoctor(id: string, ashaName: string, notes?: string): StoredRecord | null {
+    const records = this.getLocalRecords();
+    const existingIndex = records.findIndex(r => r.id === id);
+    if (existingIndex >= 0) {
+      records[existingIndex] = {
+        ...records[existingIndex],
+        status: 'pending_review',
+        submitted_by_role: 'asha',
+        escalated_to_doctor: true,
+        referred_by_asha: ashaName,
+        asha_notes: notes || 'Verified by ASHA field worker. Escalated to Medical Officer for clinical review.',
+        updated_at: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      return records[existingIndex];
+    }
+    return null;
   }
 
   /**

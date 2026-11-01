@@ -49,6 +49,13 @@ export const LanguageOnboardingScreen: React.FC<LanguageOnboardingScreenProps> =
 
       {/* Header */}
       <div className="pt-6 text-center space-y-3 z-10">
+        <div className="flex justify-center mb-1">
+          <img 
+            src="/tulsi-logo.png" 
+            alt="TulsiVeda AI" 
+            className="w-16 h-16 rounded-2xl shadow-xl ring-2 ring-emerald-400/40 object-contain bg-emerald-950/20"
+          />
+        </div>
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-emerald-200 text-xs font-semibold">
           <Globe className="w-3.5 h-3.5 text-emerald-300" />
           <span>Pan-India Multilingual Portal</span>

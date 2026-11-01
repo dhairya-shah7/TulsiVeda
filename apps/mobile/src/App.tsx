@@ -9,6 +9,7 @@ import { PrescriptionScreen } from './screens/PrescriptionScreen.tsx';
 import { EvidenceDecisionScreen } from './screens/EvidenceDecisionScreen.tsx';
 import { KnowledgeBookScreen } from './screens/KnowledgeBookScreen.tsx';
 import { AlternativeMedicineScreen } from './screens/AlternativeMedicineScreen.tsx';
+import { AdminDashboardScreen } from './screens/AdminDashboardScreen.tsx';
 import { LanguageOnboardingScreen } from './screens/LanguageOnboardingScreen.tsx';
 import { UserProfileModal } from './components/UserProfileModal.tsx';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal.tsx';
@@ -20,6 +21,7 @@ import { StorageService, StoredRecord } from './services/storageService.ts';
 import { SafetyEngine } from './services/safetyEngine.ts';
 import { BioKineticEngine } from './services/bioKineticEngine.ts';
 import { useCurrentLanguage, setStoredLanguage } from './services/localizationService.ts';
+import { APP_TARGET_ROLE } from './config/appTarget.ts';
 
 export const App: React.FC = () => {
   const currentLang = useCurrentLanguage();
@@ -42,6 +44,7 @@ export const App: React.FC = () => {
 
   // User state
   const [userRole, setUserRole] = useState<'citizen' | 'asha' | 'doctor'>(() => {
+    if (APP_TARGET_ROLE) return APP_TARGET_ROLE;
     const saved = localStorage.getItem('tulsiveda_user_role');
     if (saved === 'asha' || saved === 'doctor') return saved;
     return 'citizen';
@@ -326,6 +329,12 @@ export const App: React.FC = () => {
             userRole={userRole}
           />
         )}
+
+        {currentScreen === 'admin' && (
+          <AdminDashboardScreen
+            onBackToApp={() => setCurrentScreen('home')}
+          />
+        )}
       </main>
 
       {/* Fixed Bottom Navigation */}
@@ -351,6 +360,10 @@ export const App: React.FC = () => {
         onOpenLanguagePicker={() => {
           setIsProfileOpen(false);
           setIsLanguagePickerOpen(true);
+        }}
+        onOpenAdmin={() => {
+          setIsProfileOpen(false);
+          setCurrentScreen('admin');
         }}
       />
 

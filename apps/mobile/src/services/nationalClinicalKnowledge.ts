@@ -4,6 +4,7 @@
 // 2. Central Drugs Standard Control Organisation (CDSCO) — National Essential Medicines List (NLEM)
 // 3. Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) Official Price & Formulation Catalog
 // 4. Indian Council of Medical Research (ICMR) — Standard Treatment Guidelines
+import { ClinicalLocalizationService } from './clinicalLocalizationService.ts';
 
 export interface ClinicalConditionRecord {
   id: string;
@@ -5495,6 +5496,7 @@ export const NATIONAL_CLINICAL_RECORDS: ClinicalConditionRecord[] = [
 // Morphological Stemming for Pan-India & English Clinical Queries
 function stemToken(word: string): string {
   let s = (word || '').toLowerCase().trim();
+  if (s.endsWith('ees') && s.length >= 4) return s.slice(0, -1); // knees -> knee, trees -> tree
   if (s.endsWith('ies') && s.length > 4) return s.slice(0, -3) + 'y';
   if (s.endsWith('es') && s.length > 4) return s.slice(0, -2); // rashes -> rash, itches -> itch, hives -> hiv
   if (s.endsWith('s') && !s.endsWith('ss') && s.length > 3) return s.slice(0, -1);
@@ -5506,48 +5508,76 @@ function stemToken(word: string): string {
 // Offline Deterministic Search & Natural Language Generator
 export class NationalClinicalKnowledgeEngine {
   public static getLocalizedRecord(record: ClinicalConditionRecord, lang: string): ClinicalConditionRecord {
-    const langKey = (lang || 'en').toLowerCase();
+    const langKey = (lang || 'en').toLowerCase().slice(0, 2);
     
     // Auto-detect localized condition title based on user language
-    let localizedConditionName = record.conditionName;
-    if (langKey.startsWith('hi') && record.hindiName) {
-      localizedConditionName = record.hindiName;
-    } else if (langKey.startsWith('gu') && record.gujaratiName) {
-      localizedConditionName = record.gujaratiName;
-    } else if (langKey.startsWith('pa') && record.punjabiName) {
-      localizedConditionName = record.punjabiName;
-    } else if (langKey !== 'en' && record.hindiName) {
-      // Indic fallback preference over English for non-English users
-      localizedConditionName = record.hindiName;
-    }
+    let localizedConditionName = ClinicalLocalizationService.getConditionTitle(record.id, record.conditionName, langKey);
+
+    const localizedSchedule = ClinicalLocalizationService.localizeSchedule(record.officialGeneric.standardDosageSchedule, langKey);
+    const localizedSalt = ClinicalLocalizationService.localizeGenericSalt(record.officialGeneric.genericSalt, langKey);
+    const localizedPrice = ClinicalLocalizationService.localizePrice(record.officialGeneric.pmbjpPriceINR, langKey);
+    const localizedFormulation = ClinicalLocalizationService.localizeFormulationName(record.ayushClassicalFormulation.formulationName, langKey);
+    const localizedAyushDosage = ClinicalLocalizationService.localizeAyushDosage(record.ayushClassicalFormulation.ayushDosage, langKey);
+    const localizedMedium = ClinicalLocalizationService.localizeDietaryMedium(record.ayushClassicalFormulation.anupanaDietaryMedium, langKey);
+    const localizedKitchenItem = ClinicalLocalizationService.localizeKitchenItem(record.verifiedHomeRemedy.kitchenItem, langKey);
+    const localizedPrep = ClinicalLocalizationService.localizePreparation(record.verifiedHomeRemedy.preparationMethod, langKey);
+    const localizedCaution = ClinicalLocalizationService.localizeContraindication(record.verifiedHomeRemedy.contraindicationWarning, langKey);
+    const localizedDanger = record.escalationProtocol.dangerSigns.map(d => ClinicalLocalizationService.localizeDangerSign(d, langKey));
 
     return {
       ...record,
       conditionName: localizedConditionName,
+      officialGeneric: {
+        ...record.officialGeneric,
+        genericSalt: localizedSalt,
+        pmbjpPriceINR: localizedPrice,
+        standardDosageSchedule: localizedSchedule,
+      },
       ayushClassicalFormulation: {
         ...record.ayushClassicalFormulation,
-        formulationName: record.ayushClassicalFormulation.formulationName.replace(/\(.*?\)/g, '').trim(),
+        formulationName: localizedFormulation,
+        ayushDosage: localizedAyushDosage,
+        anupanaDietaryMedium: localizedMedium,
       },
       verifiedHomeRemedy: {
         ...record.verifiedHomeRemedy,
-        kitchenItem: record.verifiedHomeRemedy.kitchenItem.replace(/\(.*?\)/g, '').trim(),
+        kitchenItem: localizedKitchenItem,
+        preparationMethod: localizedPrep,
+        contraindicationWarning: localizedCaution,
+      },
+      escalationProtocol: {
+        ...record.escalationProtocol,
+        dangerSigns: localizedDanger,
       }
     };
   }
 
   /**
-   * High-accuracy multi-token relevance search with Lemmatization & Indication Weighting
+   * High-accuracy multi-token relevance search with Concept Coverage & Specificity Weighting
    */
   public static searchBySymptomOrCondition(query: string, lang: string = 'en'): ClinicalConditionRecord[] {
     const raw = (query || '').toLowerCase().trim();
     if (!raw) return NATIONAL_CLINICAL_RECORDS.map(rec => this.getLocalizedRecord(rec, lang));
 
-    const stemmedRaw = stemToken(raw);
+    const STOP_WORDS = new Set([
+      'i', 'me', 'my', 'myself', 'we', 'our', 'you', 'your', 'have', 'has', 'had', 'do', 'does', 'did',
+      'what', 'which', 'who', 'this', 'that', 'these', 'those', 'when', 'where', 'why', 'how',
+      'a', 'an', 'the', 'and', 'but', 'if', 'or', 'of', 'at', 'by', 'for', 'with', 'about',
+      'into', 'through', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under',
+      'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now',
+      'use', 'used', 'using', 'take', 'taking', 'get', 'give', 'tell', 'suggest', 'remedy', 'medicine', 'cure', 'treatment',
+      'kya', 'hai', 'hain', 'ka', 'ki', 'ke', 'ko', 'se', 'me', 'mein', 'par', 'pe', 'aur', 'ya', 'mera', 'meri', 'mere', 'mujhe',
+      'hota', 'hoti', 'hote', 'kare', 'karein', 'le', 'lein', 'batao', 'dawa', 'ilaj', 'upay'
+    ]);
 
-    // Tokenize query words
+    const GENERIC_SYMPTOM_WORDS = new Set([
+      'pain', 'dard', 'ache', 'swelling', 'sujan', 'inflammation', 'problem', 'takleef', 'dukhaav', 'samasya'
+    ]);
+
     const clean = raw.replace(/[^\p{L}\p{N}\s]/gu, ' ');
-    const tokens = clean.split(/\s+/).filter(t => t.length > 1);
-    const stemmedTokens = tokens.map(t => stemToken(t));
+    const allTokens = clean.split(/\s+/).filter(t => t.length > 0);
+    const meaningfulTokens = allTokens.filter(t => !STOP_WORDS.has(t) && t.length > 1);
+    const stemmedTokens = meaningfulTokens.map(t => stemToken(t));
 
     const baseList = NATIONAL_CLINICAL_RECORDS.map(rec => this.getLocalizedRecord(rec, lang));
 
@@ -5565,65 +5595,67 @@ export class NationalClinicalKnowledgeEngine {
       const gName = (record.gujaratiName || '').toLowerCase();
       const pName = (record.punjabiName || '').toLowerCase();
 
-      // 1. Direct whole-query or stemmed match on condition names (High weight: 100)
-      if (cName.includes(raw) || raw.includes(cName) || cName.includes(stemmedRaw)) score += 100;
-      if (hName.includes(raw) || raw.includes(hName)) score += 100;
-      if (gName.includes(raw) || raw.includes(gName)) score += 100;
-      if (pName && (pName.includes(raw) || raw.includes(pName))) score += 100;
+      // 1. Direct whole-query match
+      if (raw.length > 3 && (cName.includes(raw) || raw.includes(cName))) score += 200;
+      if (raw.length > 3 && (hName.includes(raw) || raw.includes(hName))) score += 200;
+      if (raw.length > 3 && gName && (gName.includes(raw) || raw.includes(gName))) score += 200;
+      if (raw.length > 3 && pName && (pName.includes(raw) || raw.includes(pName))) score += 200;
 
-      // 2. Keyword exact match or stemmed match (Highest weight: 120 / 70)
+      const matchedTokenIndices = new Set<number>();
+
+      // 2. Vernacular keywords
       for (const kw of record.vernacularSymptomKeywords) {
         const kwLower = kw.toLowerCase().trim();
-        const kwStem = stemToken(kwLower);
+        const kwWords = kwLower.split(/\s+/).filter(w => !STOP_WORDS.has(w));
+        const kwStemmedWords = kwWords.map(w => stemToken(w));
 
-        if (raw === kwLower || stemmedRaw === kwLower || stemmedRaw === kwStem) {
-          score += 120;
-        } else if (raw.includes(kwLower) || kwLower.includes(raw) || kwLower.includes(stemmedRaw) || stemmedRaw.includes(kwStem)) {
-          score += 70;
-        } else {
-          // Token level match in keyword
-          for (let i = 0; i < tokens.length; i++) {
-            const tok = tokens[i];
-            const sTok = stemmedTokens[i];
-            if (kwLower.includes(tok) || kwLower.includes(sTok) || kwStem.includes(sTok)) {
-              score += 35;
-            }
+        // Exact phrase match in query (e.g. 'knee pain' in raw query)
+        if (kwLower.length > 3 && raw.includes(kwLower)) {
+          score += 350;
+        }
+
+        // Token match
+        for (let i = 0; i < meaningfulTokens.length; i++) {
+          const tok = meaningfulTokens[i];
+          const sTok = stemmedTokens[i];
+          if (kwWords.includes(tok) || kwStemmedWords.includes(tok) || kwStemmedWords.includes(sTok)) {
+            matchedTokenIndices.add(i);
+            const isGeneric = GENERIC_SYMPTOM_WORDS.has(tok) || GENERIC_SYMPTOM_WORDS.has(sTok);
+            score += isGeneric ? 15 : 60;
           }
         }
       }
 
-      // 3. Typical Symptoms match (Moderate weight: 20)
+      // 3. Condition name token match
+      for (let i = 0; i < meaningfulTokens.length; i++) {
+        const tok = meaningfulTokens[i];
+        const sTok = stemmedTokens[i];
+        if (cName.includes(tok) || cName.includes(sTok) || hName.includes(tok) || hName.includes(sTok)) {
+          matchedTokenIndices.add(i);
+          const isGeneric = GENERIC_SYMPTOM_WORDS.has(tok) || GENERIC_SYMPTOM_WORDS.has(sTok);
+          score += isGeneric ? 20 : 80;
+        }
+      }
+
+      // 4. Typical symptoms match
       for (const sym of record.typicalSymptoms) {
         const symLower = sym.toLowerCase();
-        if (symLower.includes(raw) || symLower.includes(stemmedRaw)) {
-          score += 20;
-        } else {
-          for (const sTok of stemmedTokens) {
-            if (symLower.includes(sTok)) score += 8;
+        for (let i = 0; i < meaningfulTokens.length; i++) {
+          const tok = meaningfulTokens[i];
+          const sTok = stemmedTokens[i];
+          if (symLower.includes(tok) || symLower.includes(sTok)) {
+            matchedTokenIndices.add(i);
+            score += 10;
           }
         }
       }
 
-      // 4. Danger signs match (Low weight: 5, prevents incidental fever/dengue false triggers)
-      for (const danger of record.escalationProtocol.dangerSigns) {
-        const dangerLower = danger.toLowerCase();
-        if (dangerLower.includes(raw) || dangerLower.includes(stemmedRaw)) {
-          score += 5;
-        }
-      }
-
-      // 5. Generic medicine or AYUSH formulation match (Weight: 60)
-      const medName = record.officialGeneric.medicineName.toLowerCase();
-      const saltName = record.officialGeneric.genericSalt.toLowerCase();
-      const ayushName = record.ayushClassicalFormulation.formulationName.toLowerCase();
-      const botName = record.ayushClassicalFormulation.scientificBotanical.toLowerCase();
-
-      if (medName.includes(raw) || saltName.includes(raw) || medName.includes(stemmedRaw)) score += 60;
-      if (ayushName.includes(raw) || botName.includes(raw) || ayushName.includes(stemmedRaw)) score += 60;
-
-      for (const sTok of stemmedTokens) {
-        if (medName.includes(sTok) || saltName.includes(sTok)) score += 15;
-        if (ayushName.includes(sTok) || botName.includes(sTok)) score += 15;
+      // Concept coverage bonus (matching both 'knee' AND 'pain' always beats 5 'pain' matches)
+      const coverage = meaningfulTokens.length > 0 ? (matchedTokenIndices.size / meaningfulTokens.length) : 0;
+      if (coverage >= 0.8 && matchedTokenIndices.size >= 2) {
+        score += 400;
+      } else if (coverage >= 0.5 && matchedTokenIndices.size >= 2) {
+        score += 200;
       }
 
       if (score >= 25) {

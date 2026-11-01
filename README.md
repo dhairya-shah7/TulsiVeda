@@ -1,13 +1,14 @@
 # 🌿 TulsiVeda AI: Community-Governed Herb–Drug Safety Platform
 
 > **Powered by Open-Weight LLMs (BioMistral-7B & Meta LLaMA-3), Experiential Intelligence (EI), & Bio-Kinetic Causal Engine (BKCE)**  
-> *Bridging indigenous traditional knowledge across 12 Indian languages with modern allopathic pharmacology, real-time dynamic medical research, and ASHA/Doctor clinical safety review.*
+> *Bridging indigenous traditional knowledge across 12 Indian languages with modern allopathic pharmacology, real-time dynamic medical research, 699+ authenticated botanical species, and ASHA/Doctor clinical safety review.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 [![BioMistral-7B](https://img.shields.io/badge/Open--Weight%20LLM-BioMistral--7B-blue.svg)](https://huggingface.co/BioMistral/BioMistral-7B)
 [![LLaMA-3-8B](https://img.shields.io/badge/Open--Weight%20LLM-Meta%20LLaMA--3--8B-purple.svg)](https://llama.meta.com/)
-[![Experiential Intelligence](https://img.shields.io/badge/Crowd%20Healer%20Intelligence-EI%20Bayesian%20Engine-teal.svg)](#-experiential-intelligence-ei-engine)
-[![Pan-India 12 Languages](https://img.shields.io/badge/Localization-12%20Indian%20Languages-orange.svg)](#-pan-india-localization-12-languages)
+[![Botanical Database](https://img.shields.io/badge/Botanical%20Species-699%20CCRAS%2FAPI%20Plants-forestgreen.svg)](#-botanical-database-699-species)
+[![Experiential Intelligence](https://img.shields.io/badge/Crowd%20Healer%20Intelligence-EI%20Bayesian%20Engine-teal.svg)](#3-experiential-intelligence-ei-engine)
+[![Pan-India 12 Languages](https://img.shields.io/badge/Localization-12%20Indian%20Languages-orange.svg)](#6-pan-india-localization-12-languages)
 [![Offline First](https://img.shields.io/badge/Edge%20Architecture-100%25%20Offline%20First-success.svg)](#-offline-first-edge-architecture)
 
 ---
@@ -16,7 +17,7 @@
 
 This platform satisfies all open-source & open-weight LLM mandates with **BioMistral-7B** and **Meta LLaMA-3-8B** playing core clinical roles:
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        TULSIVEDA AI ARCHITECTURE                       │
 │                                                                        │
@@ -51,86 +52,101 @@ This platform satisfies all open-source & open-weight LLM mandates with **BioMis
 │                         │ Clinical Governance & RBAC    │              │
 │                         │ • Citizen: Clean Local Advice │              │
 │                         │ • ASHA: Field Verification    │              │
-│                         │ • Doctor: Clinical Approval   │              │
+│                         │ • Doctor: Clinical Oversight  │              │
 │                         └───────────────────────────────┘              │
 └────────────────────────────────────────────────────────────────────────┘
 ```
-
-1. **Clinical Named-Entity Recognition (NER):**  
-   BioMistral-7B parses vernacular, informal spoken patient audio and transcripts into structured botanical taxonomies (scientific binomials, plant parts used, preparation mediums, dosages, and targeted clinical indications).
-2. **Dynamic Medical Research (No Static Database Limits):**  
-   Unlike static database health apps that fail on rare or uncatalogued symptoms, TulsiVeda AI dynamically synthesizes evidence-based clinical protocols on the fly using BioMistral medical heuristics, citing verified literature and auto-caching locally.
-3. **Vernacular Patient Advisory Generation:**  
-   Translates complex pharmacokinetic drug interactions (e.g., CYP3A4 / CYP2C9 competitive clearance inhibition) into plain, reassuring single-language advisories for rural citizens and illiterate patients without confusing medical jargon.
-4. **Clinical SOAP Note Synthesis:**  
-   Generates standardized **Subjective, Objective, Assessment, and Plan (SOAP)** clinical documentation for Primary Health Centre (PHC) Doctors and ASHA community health workers.
 
 ---
 
 ## 🎬 Video Demonstration & Presentation (1080p Full HD)
 
-A high-definition product demonstration video detailing the complete humanized healthcare narrative and live working prototype:
-
-* **Video File:** [`TulsiVeda_AI_Prototype_Demo.mp4`](./TulsiVeda_AI_Prototype_Demo.mp4) (also in [`docs/TulsiVeda_AI_Prototype_Demo.mp4`](./docs/TulsiVeda_AI_Prototype_Demo.mp4))
-* **Style:** Light-theme studio presentation with zero robotic AI voiceover (silent presentation motion graphics with synchronized typography overlays).
-* **Narrative Arc:**
-  1. **The Dilemma (0:00 - 0:08):** Young patient holding allopathic tablets and looking cautiously at home herbal kadha without guidance on invisible liver enzyme clashes.
-  2. **Core Value Pillars (0:08 - 0:15):** 4-pillar bento overview (Authentic AYUSH, Jan Aushadhi generic pricing, CYP450 clash detection, 1-tap 108 SOS).
-  3. **Live Working Prototype (0:15 - 0:50):** 
-     - 12 Scheduled Indian languages selection (single-language localized Hindi).
-     - Colloquial symptom search (`घुटनों में दर्द`).
-     - Triaged 3 clean cards (💊 Jan Aushadhi generic tablet ₹2.50, 🌿 AYUSH herbal formulation, 🚨 Hospital danger red flags).
-     - Daily medicine CYP450 clash test (`Warfarin` bleeding risk detection & clinician review escalation).
-     - High-contrast persistent 108 Emergency SOS triage modal with instant dialers and first-aid instructions.
-  4. **ASHA Worker Field Impact (0:50 - 0:58):** Frontline community health worker documenting remedies on ₹6,000 phone in a rural clinic with an elder.
-  5. **PHC Doctor Governance (0:58 - 1:06):** Medical officer reviewing adverse reaction reports on a digital tablet with ABHA compliance.
-  6. **National Scalability (1:06 - 1:14):** 102+ clinical conditions, 12 languages, and 100% offline edge execution.
+Our full-length clinical walk-through video covers end-to-end multi-modal workflows:
+* **High-Resolution Presentation Stage:** [`docs/TulsiVeda_AI_Prototype_Demo.mp4`](./docs/TulsiVeda_AI_Prototype_Demo.mp4)
+* **Preview Frames & Stills:** [`docs/video_assets/preview_frames/`](./docs/video_assets/preview_frames/)
+* **YouTube Official Presentation:** Hosted and linked with custom branding thumbnail [`TulsiVeda_YouTube_Thumbnail.jpg`](./TulsiVeda_YouTube_Thumbnail.jpg).
 
 ---
 
-## 📱 Quick Install & Test (Android APK)
+## 📱 Quick Install & Test (Android APK & QR Code)
 
-For immediate testing on an Android device or emulator without running the local build chain:
-* **Release APK:** [`TulsiVeda_AI_Release.apk`](./TulsiVeda_AI_Release.apk)
-* **Debug APK:** [`TulsiVeda_AI_Debug.apk`](./TulsiVeda_AI_Debug.apk)
-* Sideload via ADB:
-  ```bash
-  adb install TulsiVeda_AI_Release.apk
-  ```
+Scan the QR code below or click the direct Google Drive link to download the compiled Unified Android APK:
+
+<p align="center">
+  <img src="./TulsiVeda_APK_Download_QR.png" alt="Download TulsiVeda APK QR Code" width="220" />
+</p>
+
+* **Unified Mobile APK (Citizen + ASHA + Doctor):** [`TulsiVeda_AI.apk`](./TulsiVeda_AI.apk) (6.01 MB)
+* **Direct Google Drive Download:** [Download TulsiVeda AI APK](https://drive.google.com/file/d/10HmM4odKprmm8xoon-WVFN72AfRfz9Je/view?usp=sharing)
+* **Role-Specific Standalone Builds:**
+  * Citizen Mode: [`TulsiVeda_Citizen.apk`](./TulsiVeda_Citizen.apk)
+  * ASHA Worker Mode: [`TulsiVeda_ASHA.apk`](./TulsiVeda_ASHA.apk)
+  * Doctor / Clinical Mode: [`TulsiVeda_Doctor.apk`](./TulsiVeda_Doctor.apk)
+
+---
+
+## 🌿 Botanical Database: 699 Authenticated Species
+
+TulsiVeda features a native on-device botanical registry exceeding the 500+ plant requirement:
+* **699 Authenticated Botanical Species:** Full taxonomy covering Latin binomials, botanical families, Sanskrit names, Hindi, Gujarati, Tamil, and regional vernacular aliases.
+* **Biogeographic Coverage:** Himalayan high-altitude flora, Western Ghats endemics, Indo-Gangetic riverine species, Deccan thorn scrub, and Coastal mangroves.
+* **Pharmacopoeial Alignment:** Mapped against the Ayurvedic Pharmacopoeia of India (API), CCRAS monographs, and the Indian Council of Medical Research (ICMR) phytochemical reference standards.
+
+---
+
+## 🧬 3-Tier Dynamic BioMistral Research Architecture
+
+When users query any symptom, rare condition, or uncatalogued entity, TulsiVeda resolves through a 3-tier clinical cascade:
+
+1. **Tier 1 (Curated National Knowledge Engine):** 34 primary clinical condition records with instant sub-millisecond on-device matching, CDSCO NLEM generics, PMBJP prices, and AYUSH classical monographs.
+2. **Tier 2 (18-Domain On-Device Clinical Knowledge Graph):** Zero dummy placeholders. Covers:
+   * **Infectious & STDs / HIV-AIDS:** TLD FDC (Tenofovir + Lamivudine + Dolutegravir) / Benzathine Penicillin + Chobchini & Somraji protocol.
+   * **Neurology & Stroke Rehabilitation:** Citicoline 500mg + Atorvastatin 20mg + Aspirin 75mg + Ekangveer Ras.
+   * **Hepatology & Fatty Liver / NAFLD:** Ursodeoxycholic Acid 300mg + Arogyavardhini Vati & Punarnavarishta.
+   * **Nephrology & Renal Calculi (Kidney Stones):** Potassium Magnesium Citrate + Tamsulosin 0.4mg + Gokshuradi Guggulu & Varunadi Kwath.
+   * **Oncology Adjuvant & Palliative Support:** Ondansetron 8mg + Giloy Satva & Curcumin 95%.
+   * **Psychiatry & Mental Health:** Escitalopram 10mg + Saraswatarishta & Brahmi Vati.
+   * **Endocrinology & Thyroid:** Levothyroxine Sodium 50/100mcg + Kanchnar Guggulu.
+   * **Dermatology & Psoriasis / Eczema:** Terbinafine 250mg + Clobetasol + Khadirarishta & Mahatiktaka Ghrita.
+   * **Pulmonology & COPD / Asthma:** Salmeterol + Fluticasone Inhaler + Vasavaleha & Sitopaladi Churna.
+   * **Cardiology & Hypertension:** Telmisartan 40mg + Amlodipine 5mg + Prabhakar Vati & Arjuna Ksheerapaka.
+   * **Gastroenterology & GERD:** Pantoprazole 40mg + Kamadudha Ras & Bilwadi Churna.
+   * **Musculoskeletal & Arthritis:** Febuxostat 40mg / Glucosamine + Yograj Guggulu & Shallaki.
+   * **Hematology & Anemia:** Ferrous Ascorbate + Folic Acid + Punarnava Mandur & Dhatri Lauha.
+   * **Ophthalmology, ENT, Metabolic Diabetes, Pediatrics, and Geriatrics.**
+3. **Tier 3 (Live BioMistral-7B Medical LLM):** Live Hugging Face inference with a 3.5s timeout and automatic on-device caching.
 
 ---
 
 ## 🌟 Key Capabilities
 
 ### 1. Pure Single-Language UI (Zero English Leakage)
-* **Strict Monolingual Guarantee:** When any language (Hindi, Gujarati, Punjabi, Tamil, Telugu, Bengali, Marathi, etc.) is selected, the **entire application renders 100% in that native script**.
-* **Zero Dual-Language Clutter:** Eliminates mixed parentheses like `Back Pain (कमर दर्द)`. Instead, it dynamically displays only `कमर दर्द` in Hindi, `કમરનો દુખાવો` in Gujarati, or `Back Pain` in English.
-* **No Bureaucratic Jargon:** Removed confusing labels like `Tier 1`, `Tier 2`, `Tier 3`, `Vice-Versa Discovery`, and `Protocol Not in Ledger`.
+* Complete linguistic immersion in the selected Indian language with dynamic localization across clinical titles, dosage tables, and warning badges.
 
 ### 2. Clean 3-Card Clinical Layout
-For any symptom or condition, the user receives clean, essential guidance:
-* 💊 **Government Generic Medicine (सरकारी सस्ती दवा):** Subsidized Jan Aushadhi generic salts, prices in INR (₹), and how to take.
+* 💊 **Government Generic Medicine (सरकारी जेनेरिक दवा):** Subsidized Jan Aushadhi generic salts, prices in INR (₹), and dosage schedules.
 * 🌿 **Herbal & Ayurvedic Care (घरेलू व आयुर्वेदिक नुस्खा):** Verified classical preparation, active botanicals, and safe kitchen remedies.
 * 🚨 **When to Visit Hospital (तुरंत अस्पताल जाएं यदि):** Crucial red-flag symptoms requiring emergency intervention.
 
 ### 3. Experiential Intelligence (EI) Engine
-TulsiVeda AI incorporates a decentralized **Experiential Intelligence (EI)** system (`experientialEngine.ts`) that elevates grassroots community healthcare:
-* **Bayesian Outcome Aggregation:** Continuously computes real-world efficacy rates (e.g., 91.4% recovery rate) and average days to relief based on field reports submitted by citizens and ASHA workers.
-* **Dietary Vehicle (Anupana) Optimization:** Identifies which preparation medium (warm milk, warm water, honey, decoction) maximizes therapeutic absorption while preventing adverse gastric irritation.
-* **Folk Healer & ASHA Field Notes:** Captures oral indigenous medical wisdom and routes community-reported adverse events to the Doctor review desk before incorporation into regional guidelines.
+* **Bayesian Outcome Aggregation:** Computes real-world recovery rates and average days to relief based on field reports submitted by citizens and ASHA workers.
+* **Dietary Vehicle (Anupana) Optimization:** Identifies which preparation medium (warm milk, warm water, honey, decoction) maximizes therapeutic absorption.
+* **Folk Healer & ASHA Field Notes:** Captures oral indigenous medical wisdom and routes community-reported adverse events to Doctor clinical review.
 
 ### 4. Emergency Red-Flag Triage & 1-Tap SOS Subsystem
-* Real-time triage scans for life-threatening emergencies (heart attack symptoms, snakebites, poison ingestion, anaphylaxis).
+* Real-time triage scans for life-threatening emergencies:
+  * **Acute Brain Attack / Stroke:** BE-FAST protocol, prohibited oral fluids, and Golden Hour CT scan alert.
+  * **Cardiac Emergency:** Acute myocardial infarction recognition and immediate stabilization.
+  * **Snakebites & Poison Ingestion:** National Poison Information Centre (AIIMS) integration.
+  * **Anaphylaxis & Respiratory Arrest.**
 * High-contrast modal takeover with 1-tap dialers for:
   * **108** (National Ambulance Service)
   * **112** (All-in-One Emergency)
   * **1800-116-117** (National Poison Information Centre - AIIMS New Delhi)
-* Spoken first-aid instructions tailored to the specific emergency.
 
 ### 5. Bio-Kinetic Causal Engine (BKCE)
 * Evaluates indigenous medicinal plants against standard allopathic pharmacotherapy.
 * Models Cytochrome P450 competitive inhibition (`CYP3A4`, `CYP2C9`, `CYP2D6`, `CYP1A2`), P-glycoprotein transport clearance, and synergistic organ clearance pathways.
-* Replaces black-box speculation with verifiable causal pharmacological mechanisms.
 
 ### 6. Pan-India Localization (12 Languages)
 Full end-to-end localization across UI, voice advisories, audio narration, and botanical databases:
@@ -147,9 +163,6 @@ Full end-to-end localization across UI, voice advisories, audio narration, and b
 * 🇮🇳 **Assamese (অসমীয়া)**
 * 🌐 **Indian English**
 
-### 7. Multi-Channel IVR Helpline (1800-TULSI-VEDA)
-* Integrated IVR simulation with interactive voice prompts and keypad-based telephone navigation (`DTMF 1/2/3`) for remote rural citizens without smartphones or internet connectivity.
-
 ---
 
 ## 📂 Repository Structure
@@ -161,53 +174,38 @@ Tulsi/
 │   │   ├── src/
 │   │   │   ├── components/      # AudioWaveform, AudioNarrator, EmergencySosModal, Header
 │   │   │   ├── screens/         # Dashboard, RemedyIntake, EvidenceDecision, KnowledgeBook
-│   │   │   └── services/        # dynamicResearchService, experientialEngine, llmService, safetyEngine
-│   │   └── android/             # Native Android project with Gradle wrapper
+│   │   │   └── services/        # botanicalDatabase (699 plants), dynamicResearchService, emergencyTriageService
+│   │   └── android/             # Native Android project with high-resolution adaptive launcher icons
 │   └── admin-web/               # ASHA & Doctor governance analytics portal
-├── docs/                        # Presentation Pitch, System Architecture & Competitive Analysis
-└── TulsiVeda_AI_Release.apk     # Standalone Android APK ready for installation
+├── docs/                        # Presentation Pitch, System Architecture & Video Stills
+├── scripts/
+│   ├── build-role-apks.mjs      # Multi-target APK compiler
+│   └── build_500_plus_plants.py # 699 CCRAS/API botanical generator
+└── TulsiVeda_AI.apk             # Unified Android APK (6.01 MB)
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-* **Node.js** (v18 or v20+)
-* **Git**
-* *(Optional for native Android compilation)*: Java 17+ and Android SDK
-
-### 2. Running Mobile App in Browser Dev Mode
+### 1. Running Mobile App in Browser Dev Mode
 ```bash
-# Navigate to mobile project
 cd apps/mobile
-
-# Install dependencies
 npm install
-
-# Start Vite development server
 npm run dev
 ```
-Open `http://localhost:5173` in your browser. Use the top language selector to switch between any of the 12 Indian languages.
+Open `http://localhost:5173` in your browser.
 
-### 3. Building Native Android APK
+### 2. Building Native Android APK
 ```bash
-cd apps/mobile
+# Build unified APK
+node scripts/build-role-apks.mjs unified
 
-# Compile Vite web build
-npm run build
-
-# Sync web assets to Android
-npx cap copy android
-
-# Assemble Android APK using Gradle
-cd android
-# On Windows:
-.\gradlew.bat assembleDebug
-# On Linux/macOS:
-./gradlew assembleDebug
+# Build role-specific APKs
+node scripts/build-role-apks.mjs citizen
+node scripts/build-role-apks.mjs asha
+node scripts/build-role-apks.mjs doctor
 ```
-The output APK is copied to the repository root as [`TulsiVeda_AI.apk`](./TulsiVeda_AI.apk).
 
 ---
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, User, Stethoscope, HeartHandshake, Globe, MapPin, 
-  CheckCircle2, RefreshCw, ChevronRight, Sparkles, Check
+  CheckCircle2, RefreshCw, ChevronRight, Sparkles, Check, ShieldAlert
 } from 'lucide-react';
 import { 
   getStoredLanguage, 
@@ -11,6 +11,7 @@ import {
   SupportedLanguage 
 } from '../services/localizationService';
 import { playNativeTTS } from './AudioNarrator';
+import { IS_STANDALONE } from '../config/appTarget';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface UserProfileModalProps {
   onModeChange: (mode: 'village' | 'city') => void;
   onLanguageChange?: (lang: SupportedLanguage) => void;
   onOpenLanguagePicker?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
@@ -31,13 +33,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   currentMode,
   onModeChange,
   onLanguageChange,
-  onOpenLanguagePicker
+  onOpenLanguagePicker,
+  onOpenAdmin
 }) => {
   const [activeLang, setActiveLang] = useState<SupportedLanguage>(getStoredLanguage());
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('tulsiveda_user_name') || 'Aarav Sharma');
   const [location, setLocation] = useState<string>(() => localStorage.getItem('tulsiveda_location') || 'Pune, Maharashtra');
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [showAllLanguages, setShowAllLanguages] = useState<boolean>(false);
+  const [showDeskSwitcher, setShowDeskSwitcher] = useState<boolean>(false);
 
   useEffect(() => {
     setActiveLang(getStoredLanguage());
@@ -178,62 +182,112 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Section 2: Operating Role */}
+          {/* Section 2: Verified Professional & Health Identity (Role-Locked) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{t('operating_role_label')}</span>
+                <span>Verified Credentials & Desk</span>
               </h3>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                Tap to switch mode
+              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                ✓ ABDM Active
               </span>
             </div>
 
-            <div className="space-y-2">
-              {roles.map(role => {
-                const Icon = role.icon;
-                const isSelected = currentRole === role.id;
-                return (
-                  <div
-                    key={role.id}
-                    onClick={() => {
-                      onRoleChange(role.id as any);
-                      localStorage.setItem('tulsiveda_user_role', role.id);
-                    }}
-                    className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                      isSelected 
-                        ? `${role.activeBorder} shadow-xs scale-[1.005]` 
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                        isSelected ? role.iconBg : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-extrabold text-xs text-slate-900">{role.title}</span>
-                          <span className="text-[10px] font-semibold text-slate-400">({role.nativeLabel})</span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
-                          {role.desc}
-                        </p>
-                      </div>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-2 border ${
-                      isSelected 
-                        ? 'bg-emerald-600 border-emerald-600 text-white' 
-                        : 'border-slate-300 bg-white'
-                    }`}>
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
+            {/* Role-Specific Credential Card (Non-switchable in profile) */}
+            {currentRole === 'citizen' && (
+              <div className="p-4 rounded-2xl border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-50/90 to-teal-50/50 space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <User className="w-5 h-5" />
                   </div>
-                );
-              })}
-            </div>
+                  <div>
+                    <span className="font-extrabold text-xs text-slate-900 block">Citizen Health Profile</span>
+                    <span className="text-[10px] font-semibold text-emerald-800">ABHA ID: 91-8274-1029-4412 (Verified)</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-snug font-medium">
+                  Authorizes self & family botanical remedy safety checks. Linked directly to your local PHC and assigned ASHA field worker.
+                </p>
+              </div>
+            )}
+
+            {currentRole === 'asha' && (
+              <div className="p-4 rounded-2xl border-2 border-teal-500/60 bg-gradient-to-br from-teal-50/90 to-cyan-50/50 space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <HeartHandshake className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-xs text-slate-900 block">ASHA Sangini Field Identity</span>
+                    <span className="text-[10px] font-semibold text-teal-800">NHM Reg: ASH-MH-44029 • Sub-Center Post</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-snug font-medium">
+                  Authorized for community home visits, village symptom triage, and 1-tap clinical referral escalation to the Medical Officer.
+                </p>
+              </div>
+            )}
+
+            {currentRole === 'doctor' && (
+              <div className="p-4 rounded-2xl border-2 border-blue-500/60 bg-gradient-to-br from-blue-50/90 to-indigo-50/50 space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-700 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <Stethoscope className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-xs text-slate-900 block">Medical Officer Clinical Station</span>
+                    <span className="text-[10px] font-semibold text-blue-800">NMC Reg: NMC-IND-882194 • PHC Clinician</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-snug font-medium">
+                  Authorized for CDSCO allopathic prescription validation, pharmacopeia review, adding doctor guidance, and final clinical sign-off.
+                </p>
+              </div>
+            )}
+
+            {/* Dedicated Switch Workstation Modal Trigger (Only in Unified App) */}
+            {!IS_STANDALONE && (
+              <div className="pt-1 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Switch between Citizen, ASHA or Doctor desks?
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeskSwitcher(true);
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-emerald-700 underline transition-colors"
+                >
+                  Switch Workstation
+                </button>
+              </div>
+            )}
+
+            {/* Admin Command Center Quick Link */}
+            {onOpenAdmin && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shadow-md border border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black block text-white">National Surveillance Admin</span>
+                    <span className="text-[10px] text-slate-300">Outbreak telemetry, ADR pharmacovigilance & OTA rule dispatch</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAdmin();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-black text-xs shadow-xs transition-all shrink-0 ml-2"
+                >
+                  Enter
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Interface Display Mode */}
@@ -397,6 +451,101 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             )}
           </button>
         </div>
+        {/* Desk Switcher Overlay (For Switching Workstations) */}
+        {showDeskSwitcher && (
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">Switch Application Desk</h3>
+                  <p className="text-[11px] text-slate-500">Select active workstation role</p>
+                </div>
+                <button 
+                  onClick={() => setShowDeskSwitcher(false)}
+                  className="p-1 rounded-full hover:bg-slate-100 text-slate-500"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  {
+                    id: 'citizen',
+                    title: 'Citizen Desk',
+                    native: 'नागरिक • Patient',
+                    desc: 'Family home remedies, voice search, & BioMistral clash checks',
+                    icon: User,
+                    color: 'emerald',
+                    btnBg: 'hover:bg-emerald-50 hover:border-emerald-500'
+                  },
+                  {
+                    id: 'asha',
+                    title: 'ASHA Field Worker',
+                    native: 'आशा कार्यकर्ता • Community Post',
+                    desc: 'Dual tools: Citizen search + village intake & escalate to doctor',
+                    icon: HeartHandshake,
+                    color: 'teal',
+                    btnBg: 'hover:bg-teal-50 hover:border-teal-500'
+                  },
+                  {
+                    id: 'doctor',
+                    title: 'Medical Doctor Desk',
+                    native: 'चिकित्सक • Clinical Officer',
+                    desc: 'Review ASHA referrals, add notes, and sign-off clashes',
+                    icon: Stethoscope,
+                    color: 'blue',
+                    btnBg: 'hover:bg-blue-50 hover:border-blue-500'
+                  }
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isActive = currentRole === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onRoleChange(item.id as any);
+                        localStorage.setItem('tulsiveda_user_role', item.id);
+                        setShowDeskSwitcher(false);
+                        onClose();
+                      }}
+                      className={`w-full p-3 rounded-2xl border-2 text-left flex items-center gap-3 transition-all ${
+                        isActive 
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold' 
+                          : `border-slate-200 bg-white ${item.btnBg} text-slate-800`
+                      }`}
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        isActive ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-black">{item.title}</span>
+                          <span className="text-[10px] text-slate-400">({item.native})</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                          {item.desc}
+                        </p>
+                      </div>
+                      {isActive && <Check className="w-4 h-4 text-emerald-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDeskSwitcher(false)}
+                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

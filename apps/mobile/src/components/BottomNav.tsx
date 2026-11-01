@@ -28,7 +28,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   useCurrentLanguage(); // Reactively updates labels when language changes
   const isCitizen = userRole === 'citizen';
-  const navItems: { id: ScreenId; label: string; icon: React.ElementType; badge?: boolean }[] = [
+  const isDoctor = userRole === 'doctor';
+
+  const navItems: { id: ScreenId; label: string; icon: React.ElementType; badge?: boolean }[] = isDoctor ? [
+    { id: 'home', label: 'Consultations', icon: Home },
+    { id: 'decision', label: t('nav_safety'), icon: ShieldAlert, badge: pendingBadges?.safetyPending },
+    { id: 'knowledge', label: t('nav_knowledge'), icon: BookOpen },
+  ] : [
     { id: 'home', label: t('nav_home'), icon: Home },
     { id: 'knowledge', label: t('nav_knowledge'), icon: BookOpen },
     { id: 'intake', label: t('nav_intake'), icon: Sparkles },

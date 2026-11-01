@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TulsiVeda AI — Smooth White Studio Film</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #0f172a;
+      position: relative;
+    }
+
+    /* Continuous Animated Soft Light Background */
+    .ambient-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Scene Container */
+    .scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.985);
+      z-index: 2;
+    }
+
+    .scene.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    /* Cinematic Ken Burns Visuals */
+    .ken-burns-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transform: scale(1);
+      will-change: transform;
+    }
+
+    .light-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 45%, rgba(255, 255, 255, 0.1) 100%);
+      pointer-events: none;
+    }
+
+    /* Clean White Glass HUD (Presentation Cards) */
+    .white-glass-hud {
+      position: absolute;
+      left: 120px;
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: 820px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 36px;
+      padding: 56px 64px;
+      box-shadow: 
+        0 30px 70px -15px rgba(15, 23, 42, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.8);
+      z-index: 10;
+    }
+
+    .hud-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .hud-badge-rose {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+    }
+
+    .hud-badge-emerald {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    .hud-badge-cyan {
+      background: #ecfeff;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+    }
+
+    .hud-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.18;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+    }
+
+    .hud-desc {
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.55;
+      color: #475569;
+    }
+
+    .hud-metrics-row {
+      display: flex;
+      gap: 36px;
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1.5px solid #f1f5f9;
+    }
+
+    .hud-metric-item h3 {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .hud-metric-item p {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 6px;
+    }
+
+    /* SCENE 2: PURE WHITE PROTOTYPE STUDIO */
+    .white-studio-scene {
+      display: flex;
+      align-items: center;
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* Left Phone Mockup Column */
+    .phone-column-wrapper {
+      position: absolute;
+      left: 140px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+    }
+
+    .phone-frame-chassis {
+      width: 480px;
+      height: 980px;
+      background: #0f172a;
+      border-radius: 56px;
+      padding: 12px;
+      box-shadow: 
+        0 35px 80px -15px rgba(15, 23, 42, 0.25),
+        0 0 0 1px rgba(15, 23, 42, 0.08),
+        0 0 40px rgba(5, 150, 105, 0.12);
+      position: relative;
+    }
+
+    .phone-inner-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 46px;
+      overflow: hidden;
+      background: #f8fafc;
+      position: relative;
+    }
+
+    .phone-inner-screen iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Right Explanation Spotlight (Pure White & Emerald Design) */
+    .studio-right-column {
+      position: absolute;
+      right: 120px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      z-index: 20;
+    }
+
+    .studio-brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 24px;
+    }
+
+    .brand-lockup-light {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-badge-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.35);
+    }
+
+    .brand-title-light h1 {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #0f172a;
+      line-height: 1;
+    }
+
+    .brand-title-light h1 span {
+      color: #059669;
+    }
+
+    .brand-title-light p {
+      font-size: 15px;
+      font-weight: 700;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* Clean White Feature Spotlight Card */
+    .white-feature-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 32px;
+      padding: 48px 52px;
+      box-shadow: 
+        0 25px 60px -15px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .white-feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background: linear-gradient(180deg, #059669 0%, #0284c7 100%);
+    }
+
+    .feature-step-pill-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #047857;
+      margin-bottom: 18px;
+    }
+
+    .white-feature-card h2 {
+      font-size: 38px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .white-feature-card p {
+      font-size: 20px;
+      color: #475569;
+      line-height: 1.55;
+      font-weight: 500;
+    }
+
+    /* Live Telemetry Chips */
+    .white-telemetry-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .white-telemetry-chip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .white-telemetry-chip .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #059669;
+      box-shadow: 0 0 10px #059669;
+      animation: pulse-green 1.8s infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Smooth Charcoal Virtual Cursor */
+    .virtual-mouse-cursor {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 32px;
+      height: 32px;
+      z-index: 1000;
+      pointer-events: none;
+      transform: translate3d(960px, 540px, 0);
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      filter: drop-shadow(0 6px 14px rgba(15, 23, 42, 0.3));
+    }
+
+    .cursor-ripple-circle {
+      position: absolute;
+      top: -16px;
+      left: -16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2.5px solid #059669;
+      background: rgba(5, 150, 105, 0.25);
+      opacity: 0;
+      transform: scale(0.3);
+      pointer-events: none;
+    }
+
+    .cursor-ripple-circle.animate {
+      animation: ripple-click 0.5s ease-out forwards;
+    }
+
+    @keyframes ripple-click {
+      0% { opacity: 1; transform: scale(0.3); }
+      100% { opacity: 0; transform: scale(2.4); }
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-light {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #059669, #0284c7);
+      width: 0%;
+      z-index: 500;
+      transition: width 0.3s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div id="progress-bar" class="progress-bar-light"></div>
+
+  <!-- Soft Ambient Light Canvas -->
+  <canvas id="ambient-canvas" class="ambient-canvas" width="1920" height="1080"></canvas>
+
+  <!-- Virtual Mouse Pointer -->
+  <div id="virtual-cursor" class="virtual-mouse-cursor">
+    <div id="cursor-ripple" class="cursor-ripple-circle"></div>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.65 2.15C5.35 1.8 4.8 2.05 4.85 2.52L6.85 20.25C6.9 20.65 7.4 20.8 7.68 20.5L12.1 15.8L17.8 21.2C18.1 21.48 18.58 21.45 18.84 21.13L20.84 18.63C21.1 18.3 21.05 17.82 20.73 17.54L15.1 12.2L20.9 9.9C21.32 9.73 21.37 9.15 20.98 8.9L5.65 2.15Z" fill="#0f172a" stroke="#ffffff" stroke-width="1.8"/>
+    </svg>
+  </div>
+
+  <!-- ========================================================
+       SCENE 1: THE HUMAN HEALTHCARE DILEMMA (Confused Girl)
+       ======================================================== -->
+  <div id="scene-1" class="scene active">
+    <div id="ken-1" class="ken-burns-img" style="background-image: url('/video_assets/01_patient_dilemma.jpg');"></div>
+    <div class="light-vignette"></div>
+
+    <div class="white-glass-hud">
+      <div class="hud-badge-pill hud-badge-rose">
+        <span>⚠️</span> Unresolved Rural Dilemma
+      </div>
+      <h1 class="hud-title">
+        Allopathic Pills vs. Traditional Herbal Kadhas
+      </h1>
+      <p class="hud-desc">
+        Over 70% of Indian families drink herbal decoctions. But when taken alongside prescription pills like blood thinners, unmonitored CYP450 liver clashes trigger severe clinical toxicity.
+      </p>
+
+      <div class="hud-metrics-row">
+        <div class="hud-metric-item">
+          <h3 style="color: #be123c;">102+</h3>
+          <p>Clinical Conditions</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #0284c7;">82%</h3>
+          <p>Generic Cost Savings</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #047857;">Zero</h3>
+          <p>Vernacular Safety Tools Today</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCENE 2: LIVE PROTOTYPE WALKTHROUGH (White Studio)
+       ======================================================== -->
+  <div id="scene-2" class="scene">
+    <div class="white-studio-scene">
+      <!-- Centered Phone Device Shell -->
+      <div class="phone-column-wrapper">
+        <div class="phone-frame-chassis">
+          <div class="phone-inner-screen">
+            <iframe id="prototype-frame" src="/index.html"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Explanation Spotlight -->
+      <div class="studio-right-column">
+        <div class="studio-brand-header">
+          <div class="brand-lockup-light">
+            <img src="/video_assets/tulsi-logo.png" alt="TulsiVeda AI" class="brand-badge-icon" style="object-fit: contain; padding: 2px; background: transparent;" />
+            <div class="brand-title-light">
+              <h1>TulsiVeda <span>AI</span></h1>
+              <p>Clinical Vernacular Health Co-Pilot • UNLEASH LLM Challenge</p>
+            </div>
+          </div>
+          <div>
+            <span class="hud-badge-pill hud-badge-emerald" style="margin: 0;">100% Offline Edge AI</span>
+          </div>
+        </div>
+
+        <div class="white-feature-card">
+          <div id="hud-step-pill" class="feature-step-pill-white">
+            <span>🇮🇳</span> Step 1 • Vernacular Access
+          </div>
+          <h2 id="hud-feature-title">
+            Pure Single-Language Localization
+          </h2>
+          <p id="hud-feature-desc">
+            Patients choose from 12 Scheduled Indian languages. Zero English leakage ensures complete rural comfort and clinical clarity.
+          </p>
+
+          <div class="white-telemetry-row">
+            <div class="white-telemetry-chip">
+              <div class="pulse-dot"></div>
+              <span id="telemetry-tag-1">100% Offline Edge AI</span>
+            </div>
+            <div class="white-telemetry-chip">
+              <span id="telemetry-tag-2">6.1 MB Standalone APK</span>
+            </div>
+            <div class="white-telemetry-chip">
+              <span id="telemetry-tag-3">BioMistral-7B + BKCE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCENE 3: ASHA FRONTLINE WORKER EMPOWERMENT
+       ======================================================== -->
+  <div id="scene-3" class="scene">
+    <div id="ken-2" class="ken-burns-img" style="background-image: url('/video_assets/02_asha_clinic.jpg');"></div>
+    <div class="light-vignette"></div>
+
+    <div class="white-glass-hud">
+      <div class="hud-badge-pill hud-badge-cyan">
+        <span>🩺</span> Frontline Community Healthcare
+      </div>
+      <h1 class="hud-title">
+        Empowering 10 Lakh+ ASHA Workers in Rural India
+      </h1>
+      <p class="hud-desc">
+        ASHA workers record herbal intakes in regional dialects. TulsiVeda structures clinical safety records and flags dangerous herb-drug clashes right at the village doorstep.
+      </p>
+
+      <div class="hud-metrics-row">
+        <div class="hud-metric-item">
+          <h3 style="color: #047857;">100%</h3>
+          <p>Offline Edge Execution</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #0284c7;">₹6,000</h3>
+          <p>Runs on Low-End Phones</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #b45309;">Zero</h3>
+          <p>Cloud Server Dependency</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCENE 4: PHC DOCTOR CLINICAL VERIFICATION
+       ======================================================== -->
+  <div id="scene-4" class="scene">
+    <div id="ken-3" class="ken-burns-img" style="background-image: url('/video_assets/03_phc_doctor.jpg');"></div>
+    <div class="light-vignette"></div>
+
+    <div class="white-glass-hud">
+      <div class="hud-badge-pill hud-badge-emerald">
+        <span>👨‍⚕️</span> Clinician-in-the-Loop Governance
+      </div>
+      <h1 class="hud-title">
+        Registered Doctors in Complete Clinical Control
+      </h1>
+      <p class="hud-desc">
+        PHC Medical Officers review escalated adverse drug reaction reports on digital tablets. Experiential Intelligence (EI) continuously refines regional causal safety weights verified by registered medical doctors.
+      </p>
+
+      <div class="hud-metrics-row">
+        <div class="hud-metric-item">
+          <h3 style="color: #047857;">ABHA</h3>
+          <p>Ayushman Bharat Ready</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #0284c7;">PvPI</h3>
+          <p>National Sentinel Reporting</p>
+        </div>
+        <div class="hud-metric-item">
+          <h3 style="color: #b45309;">Bayesian</h3>
+          <p>EI Feedback Loop</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCENE 5: NATIONAL VISION & CLOSING (White Minimalist)
+       ======================================================== -->
+  <div id="scene-5" class="scene">
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; padding: 0 120px; background: #ffffff;">
+      <img src="/video_assets/tulsi-logo.png" alt="TulsiVeda AI" style="width: 88px; height: 88px; border-radius: 28px; object-fit: contain; margin-bottom: 24px; box-shadow: 0 14px 30px -5px rgba(5, 150, 105, 0.35);" />
+      <h1 style="font-size: 64px; font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin-bottom: 16px;">
+        TulsiVeda <span style="color: #059669;">AI</span>
+      </h1>
+      <p style="font-size: 24px; color: #475569; font-weight: 500; max-width: 900px; line-height: 1.5; margin-bottom: 48px;">
+        Bridging Ancient Indian Ayurvedic Wisdom & Modern Clinical Medicine for 1.4 Billion Citizens
+      </p>
+
+      <div style="display: flex; gap: 24px; margin-bottom: 56px;">
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 24px 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+          <div style="font-size: 38px; font-weight: 900; color: #059669;">102+</div>
+          <div style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 6px;">Clinical Conditions</div>
+        </div>
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 24px 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+          <div style="font-size: 38px; font-weight: 900; color: #0284c7;">12</div>
+          <div style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 6px;">Indian Languages</div>
+        </div>
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 24px 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+          <div style="font-size: 38px; font-weight: 900; color: #d97706;">108</div>
+          <div style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 6px;">Emergency Triage</div>
+        </div>
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 24px 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+          <div style="font-size: 38px; font-weight: 900; color: #be123c;">100%</div>
+          <div style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 6px;">Offline Edge AI</div>
+        </div>
+      </div>
+
+      <div style="color: #64748b; font-size: 16px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; border-top: 2px solid #f1f5f9; padding-top: 28px;">
+        UNLEASH LLM Innovation Challenge &bull; IndiaAI &bull; AICTE &bull; Meta &bull; 1M1B
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Smooth continuous ambient motion loop
+    const canvas = document.getElementById('ambient-canvas');
+    const ctx = canvas.getContext('2d');
+    let t = 0;
+    let isRunning = true;
+
+    window.stopAmbient = function() {
+      isRunning = false;
+    };
+
+    function renderAmbient() {
+      if (!isRunning) return;
+      t += 0.015;
+      ctx.clearRect(0, 0, 1920, 1080);
+
+      // Soft light pastel gradient wash on clean white
+      const g = ctx.createRadialGradient(
+        960 + Math.sin(t) * 150, 
+        540 + Math.cos(t * 0.8) * 100, 
+        50, 
+        960, 540, 950
+      );
+      g.addColorStop(0, 'rgba(5, 150, 105, 0.04)');
+      g.addColorStop(0.6, 'rgba(2, 132, 199, 0.02)');
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Continuous subtle camera dolly on photos
+      const ken1 = document.getElementById('ken-1');
+      if (ken1) ken1.style.transform = `scale(${1 + (t % 15) * 0.006}) translate3d(${Math.sin(t*0.4)*8}px, 0, 0)`;
+
+      const ken2 = document.getElementById('ken-2');
+      if (ken2) ken2.style.transform = `scale(${1 + (t % 15) * 0.006}) translate3d(${Math.sin(t*0.4)*8}px, 0, 0)`;
+
+      const ken3 = document.getElementById('ken-3');
+      if (ken3) ken3.style.transform = `scale(${1 + (t % 15) * 0.006}) translate3d(${Math.sin(t*0.4)*8}px, 0, 0)`;
+
+      requestAnimationFrame(renderAmbient);
+    }
+    requestAnimationFrame(renderAmbient);
+
+    // Stage director controls
+    window.setScene = function(sceneNum) {
+      document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+      const active = document.getElementById('scene-' + sceneNum);
+      if (active) active.classList.add('active');
+    };
+
+    window.updateSpotlightHUD = function(stepText, title, desc, tag1, tag2, tag3) {
+      if (stepText) document.getElementById('hud-step-pill').innerHTML = `<span>🇮🇳</span> ${stepText}`;
+      if (title) document.getElementById('hud-feature-title').textContent = title;
+      if (desc) document.getElementById('hud-feature-desc').textContent = desc;
+      if (tag1) document.getElementById('telemetry-tag-1').textContent = tag1;
+      if (tag2) document.getElementById('telemetry-tag-2').textContent = tag2;
+      if (tag3) document.getElementById('telemetry-tag-3').textContent = tag3;
+    };
+
+    // Virtual Cursor Controller
+    const cursor = document.getElementById('virtual-cursor');
+    const ripple = document.getElementById('cursor-ripple');
+
+    window.moveCursorTo = function(x, y) {
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
+
+    window.triggerCursorClick = function(x, y) {
+      if (x !== undefined && y !== undefined) {
+        cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+      ripple.classList.remove('animate');
+      void ripple.offsetWidth;
+      ripple.classList.add('animate');
+    };
+
+    window.setProgress = function(percent) {
+      document.getElementById('progress-bar').style.width = percent + '%';
+    };
+  </script>
+</body>
+</html>

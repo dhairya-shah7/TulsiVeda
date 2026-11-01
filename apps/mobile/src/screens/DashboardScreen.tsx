@@ -779,6 +779,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     drugEntity: { brandOrGenericName: string; genericName: string } | null;
     plantEntity: BotanicalSpecies | null;
     safetyResult: SafetyAnalysisResult | null;
+    localizedHeadline?: string;
     localizedNarrationText: string;
   } | null>(null);
   const [rxChecking, setRxChecking] = useState(false);
@@ -934,13 +935,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       const data = await StorageService.fetchDashboardData();
       setRecentRecords(data.records);
       setStats(data.stats);
-      setPendingRequests(StorageService.getPendingReviewRequests());
+      setPendingRequests(StorageService.getPendingReviewRequests(currentRole));
     } catch (err) {
       console.warn('[Dashboard] Error reading local data:', err);
       const localRecs = StorageService.getLocalRecords();
       setRecentRecords(localRecs);
       setStats(StorageService.getLocalStats());
-      setPendingRequests(StorageService.getPendingReviewRequests());
+      setPendingRequests(StorageService.getPendingReviewRequests(currentRole));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -969,6 +970,41 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [currentRole]);
+
+  const [doctorGuidanceText, setDoctorGuidanceText] = useState('');
+  const [doctorActionSuccess, setDoctorActionSuccess] = useState<string | null>(null);
+
+  const handleDoctorSignOff = (recordId: string, guidance?: string) => {
+    const textToSave = guidance || doctorGuidanceText || 'Approved with staggered administration (minimum 4-hour interval). Monitor metabolic clearance.';
+    StorageService.saveRecord({
+      id: recordId,
+      status: 'completed',
+      decision: 'Approved with Staggered Dosing',
+      decision_notes: textToSave,
+      reviewed_by_role: 'doctor',
+    });
+    setDoctorActionSuccess('✓ Clinical Sign-Off saved & transmitted to ASHA worker.');
+    setTimeout(() => setDoctorActionSuccess(null), 3500);
+    setDoctorGuidanceText('');
+    setInspectRecord(null);
+    loadData();
+  };
+
+  const handleDoctorFlagAlert = (recordId: string, alertReason?: string) => {
+    const textToSave = alertReason || doctorGuidanceText || 'Critical pharmacokinetic clash flagged by Medical Officer. Co-administration contraindicated.';
+    StorageService.saveRecord({
+      id: recordId,
+      status: 'completed',
+      decision: 'Contraindicated - High Adverse Risk',
+      decision_notes: textToSave,
+      reviewed_by_role: 'doctor',
+    });
+    setDoctorActionSuccess('⚠️ Adverse Interaction Flagged & Logged to Pharmacovigilance.');
+    setTimeout(() => setDoctorActionSuccess(null), 3500);
+    setDoctorGuidanceText('');
+    setInspectRecord(null);
+    loadData();
+  };
 
   const handleRecordClick = (rec: StoredRecord) => {
     if (onSelectRecord) {
@@ -1003,6 +1039,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
       setActiveResult(response);
 
+      // Auto-populate clash engine if query contained both remedy/symptom and prescription drug!
+      if (response.initialClashResult) {
+        setRxClashResult(response.initialClashResult);
+        if (response.detectedDrugName || response.detectedDrugGeneric) {
+          setRxInput(response.detectedDrugName || response.detectedDrugGeneric || '');
+        }
+      } else if (response.detectedDrugName || response.detectedDrugGeneric) {
+        setRxInput(response.detectedDrugName || response.detectedDrugGeneric || '');
+      }
+
       // ONLY auto-play TalkBack speech if current mode is village!
       if (currentMode === 'village' && response.localizedNarrationText) {
         VoiceEngineService.speakInLanguage(response.localizedNarrationText, lang as any);
@@ -1021,17 +1067,42 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
     setRxChecking(true);
     try {
-      const targetHerb = activeResult.suggestedPrescriptionCheckHerb || 
-                         activeResult.detectedHerbName || 
-                         (activeResult.conditionRecord?.ayushClassicalFormulation.scientificBotanical) || 
-                         'Curcuma longa';
+      // Collect candidate herbs from both home remedy (e.g. Turmeric) and classical formulation (e.g. Shallaki)
+      const candidateHerbs = [];
+      if (activeResult.suggestedPrescriptionCheckHerb) candidateHerbs.push(activeResult.suggestedPrescriptionCheckHerb);
+      if (activeResult.detectedHerbName) candidateHerbs.push(activeResult.detectedHerbName);
+      if (activeResult.detectedPlant?.scientificName) candidateHerbs.push(activeResult.detectedPlant.scientificName);
 
-      const clash = await QueryResolverService.verifyPrescriptionClash(targetHerb, medicineToTest, lang);
-      setRxClashResult(clash);
+      if (activeResult.conditionRecord) {
+        if (activeResult.conditionRecord.verifiedHomeRemedy?.kitchenItem) {
+          candidateHerbs.push(activeResult.conditionRecord.verifiedHomeRemedy.kitchenItem);
+        }
+        if (activeResult.conditionRecord.ayushClassicalFormulation?.scientificBotanical) {
+          candidateHerbs.push(activeResult.conditionRecord.ayushClassicalFormulation.scientificBotanical);
+        }
+        if (activeResult.conditionRecord.ayushClassicalFormulation?.formulationName) {
+          candidateHerbs.push(activeResult.conditionRecord.ayushClassicalFormulation.formulationName);
+        }
+      }
+
+      if (candidateHerbs.length === 0) candidateHerbs.push('Curcuma longa');
+
+      // Test candidates and prioritize the one with an established/severe clash
+      let bestClash = null;
+      for (const herb of candidateHerbs) {
+        const clash = await QueryResolverService.verifyPrescriptionClash(herb, medicineToTest, lang);
+        if (clash && clash.safetyResult && clash.safetyResult.hasInteraction) {
+          bestClash = clash;
+          break;
+        }
+        if (!bestClash) bestClash = clash;
+      }
+
+      setRxClashResult(bestClash);
 
       // In village mode, auto-play clash verdict audio
-      if (currentMode === 'village' && clash.localizedNarrationText) {
-        VoiceEngineService.speakInLanguage(clash.localizedNarrationText, lang as any);
+      if (currentMode === 'village' && bestClash?.localizedNarrationText) {
+        VoiceEngineService.speakInLanguage(bestClash.localizedNarrationText, lang as any);
       }
     } catch (err) {
       console.error('[Dashboard] Error checking prescription clash:', err);
@@ -1040,24 +1111,33 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }
   };
 
-  // Send Clash Report to Doctor / ASHA Worker
+  // Send Clash Report to ASHA Worker (if citizen) or Doctor (if ASHA worker)
   const handleSendClashToDoctor = () => {
     if (!activeResult) return;
     const remedyName = activeResult.detectedHerbName || activeResult.detectedPlant?.commonName || 'Botanical Remedy';
     const medicineName = rxClashResult?.drugEntity?.brandOrGenericName || activeResult.detectedDrugName || 'Prescription Drug';
     const condition = activeResult.conditionRecord?.conditionName || 'Herb-Drug Clash Consultation';
 
+    const isAsha = currentRole === 'asha';
+
     StorageService.saveRecord({
       id: 'clash_' + Date.now(),
+      patient_name: isAsha ? 'Village Patient (Field Visit)' : userName || 'Citizen Patient',
       remedy_name_local: remedyName,
       confirmed_species: activeResult.detectedPlant?.scientificName || remedyName,
       confirmed_medicine: medicineName,
       used_for_condition: condition,
-      prepared_by: userName || 'Citizen',
+      prepared_by: isAsha ? `${userName || 'Sunita Didi'} (ASHA Worker)` : userName || 'Citizen Patient',
+      referred_by_asha: isAsha ? `${userName || 'Sunita Didi'} (ASHA Worker)` : undefined,
       place_region: currentMode === 'village' ? 'Village Health Post' : 'Urban Community',
       language: lang,
       status: 'pending_review',
-      decision_notes: rxClashResult?.safetyResult?.alertHeadline || activeResult.safetyAnalysis?.alertHeadline || 'Severe herb-drug interaction flagged by patient.',
+      submitted_by_role: isAsha ? 'asha' : 'citizen',
+      escalated_to_doctor: isAsha,
+      asha_notes: isAsha 
+        ? `Field visit screening by ${userName || 'ASHA Worker'}. Herb-drug clash flagged for Medical Officer review.`
+        : undefined,
+      decision_notes: rxClashResult?.safetyResult?.alertHeadline || activeResult.safetyAnalysis?.alertHeadline || 'Severe herb-drug interaction flagged.',
     });
 
     setClashSent(true);
@@ -1077,22 +1157,45 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   const isCitizen = currentRole === 'citizen';
+  const isAsha = currentRole === 'asha';
+  const isDoctor = currentRole === 'doctor';
+  const canUseCitizenTools = isCitizen || isAsha;
 
   // Quick 1-tap localized prompts
   const quickPrompts = lang === 'hi' ? [
     { label: 'घुटनों में दर्द', text: 'मुझे घुटनों में दर्द है, क्या इस्तेमाल करें?' },
     { label: 'त्रिफला और हल्दी', text: 'त्रिफला और हल्दी' },
-    { label: 'शिलाजीत + बीपी दवा', text: 'क्या मैं शिलाजीत और बीपी की दवा साथ ले सकता हूँ?' },
+    { label: 'वारफारिन + हल्दी टकराव', text: 'क्या मैं हल्दी और वारफारिन साथ ले सकता हूँ?' },
     { label: 'तुलसी + खांसी', text: 'तुलसी' },
   ] : lang === 'gu' ? [
     { label: 'ગોઠણનો દુખાવો', text: 'મને ગોઠણનો દુખાવો છે, શું વાપરવું?' },
     { label: 'ત્રિફળા અને હળદર', text: 'ત્રિફળા અને હળદર' },
-    { label: 'શિલાજીત + બીપી દવા', text: 'શું હું શિલાજીત અને બીપીની દવા સાથે લઈ શકું?' },
+    { label: 'વોરફેરિન + હળદર', text: 'શું હું હળદર અને વોરફેરિન સાથે લઈ શકું?' },
     { label: 'તુલસી + ખાંસી', text: 'તુલસી' },
+  ] : lang === 'bn' ? [
+    { label: 'হাঁটুর ব্যথা', text: 'আমার হাঁটুতে ব্যথা, কী ব্যবহার করব?' },
+    { label: 'ত্রিফলা ও হলুদ', text: 'ত্রিফলা ও হলুদ' },
+    { label: 'হলুদ ও ওয়ারফারিন', text: 'হলুদ এবং ওয়ারফারিন একসাথে খাওয়া কি নিরাপদ?' },
+    { label: 'তুলসী ও সর্দি', text: 'তুলসী' },
+  ] : lang === 'mr' ? [
+    { label: 'गुडघेदुखी', text: 'मला गुडघेदुखी आहे, काय वापरावे?' },
+    { label: 'त्रिफळा व हळद', text: 'त्रिफळा आणि हळद' },
+    { label: 'हळद व वॉर्फरिन', text: 'हळद आणि वॉर्फरिन एकत्र घेऊ शकतो का?' },
+    { label: 'तुळस व खोकला', text: 'तुळस' },
+  ] : lang === 'ta' ? [
+    { label: 'மூட்டு வலி', text: 'எனக்கு மூட்டு வலி உள்ளது, என்ன செய்வது?' },
+    { label: 'மஞ்சள் + வார்பரின்', text: 'மஞ்சள் மற்றும் வார்பரின்' },
+    { label: 'துளசி வைத்தியம்', text: 'துளசி' },
+    { label: 'திரிபலா சூரணம்', text: 'திரிபலா' },
+  ] : lang === 'te' ? [
+    { label: 'మోకాలి నొప్పి', text: 'మోకాలి నొప్పికి చిట్కా' },
+    { label: 'పసుపు + వార్ఫరిన్', text: 'పసుపు మరియు వార్ఫరిన్' },
+    { label: 'తులసి కషాయం', text: 'తులసి' },
+    { label: 'త్రిఫల చూర్ణం', text: 'త్రిఫల' },
   ] : [
     { label: 'Knee Pain', text: 'I have pain in my knees what to use' },
     { label: 'Triphala + Turmeric', text: 'Triphala with turmeric' },
-    { label: 'Shilajit + BP Medicine', text: 'Can I take Shilajit with BP medicine?' },
+    { label: 'Turmeric + Warfarin', text: 'Can I take Turmeric with Warfarin?' },
     { label: 'Tulsi Remedy', text: 'Tulsi' },
   ];
 
@@ -1128,10 +1231,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         )}
       </div>
 
+      {/* Doctor Action Success Toast */}
+      {doctorActionSuccess && (
+        <div className="p-3 bg-blue-900 text-white rounded-2xl text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in">
+          <span>{doctorActionSuccess}</span>
+          <button onClick={() => setDoctorActionSuccess(null)} className="font-bold text-white/80 hover:text-white ml-2">✕</button>
+        </div>
+      )}
+
       {/* ========================================================
-          ROLE: CITIZEN VIEW - UNIFIED VOICE & QUERY HERO
+          ROLE: CITIZEN & ASHA VIEW - UNIFIED VOICE & QUERY HERO
+          ASHA can perform all citizen search & clash checks with patients
          ======================================================== */}
-      {isCitizen && (
+      {canUseCitizenTools && (
         <div className="space-y-4">
           
           {/* Main Hero Card: Tap Mic or Type */}
@@ -1276,7 +1388,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full bg-violet-700 text-white text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 shadow-xs">
                           <Sparkles className="w-3 h-3 text-yellow-300" />
-                          {lang === 'hi' ? '🌐 लाइव शोध व AI विश्लेषण' : lang === 'gu' ? '🌐 લાઈવ સંશોધન (AI)' : lang === 'pa' ? '🌐 ਲਾਈਵ ਖੋਜ (AI)' : '🌐 Dynamic Medical Research'}
+                          {lang === 'hi' ? '🌐 लाइव शोध व AI विश्लेषण' : 
+                           lang === 'gu' ? '🌐 લાઈવ સંશોધન (AI)' : 
+                           lang === 'pa' ? '🌐 ਲਾਈਵ ਖੋਜ (AI)' : 
+                           lang === 'bn' ? '🌐 রিয়েল-টাইম লাইভ গবেষণা (AI)' : 
+                           lang === 'mr' ? '🌐 थेट वैद्यकीय संशोधन (AI)' : 
+                           lang === 'ta' ? '🌐 நேரலை மருத்துவ ஆராய்ச்சி (AI)' : 
+                           lang === 'te' ? '🌐 ప్రత్యక్ష వైద్య పరిశోధన (AI)' : 
+                           '🌐 Real-Time Medical Research'}
                         </span>
                         {activeResult.researchCitation && (
                           <span className="text-[10px] font-bold text-violet-800 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200 truncate max-w-[240px]">
@@ -1626,11 +1745,18 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                  ---------------------------------------------------- */}
               {activeResult.type !== 'direct_safety_check' && activeResult.type !== 'unrecognized' && (
                 <div className="p-4 rounded-3xl bg-white text-slate-900 space-y-3 border-2 border-slate-200/90 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <h4 className="font-extrabold text-xs text-slate-900">
-                      {ui.rxBoxTitle}
-                    </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <h4 className="font-extrabold text-xs text-slate-900">
+                        {ui.rxBoxTitle}
+                      </h4>
+                    </div>
+                    {activeResult.conditionRecord?.ayushClassicalFormulation?.formulationName && (
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 truncate max-w-[150px]">
+                        🌿 {activeResult.conditionRecord.ayushClassicalFormulation.formulationName}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1650,18 +1776,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     </button>
                   </div>
 
-                  {/* 1-Tap Medicine Pills */}
+                  {/* 1-Tap Medicine Pills with localized Indic subtitles */}
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {['Warfarin', 'Amlodipine', 'Aspirin', 'Metformin'].map(m => (
+                    {[
+                      { key: 'Warfarin', label: lang === 'bn' ? '+ ওয়ারফারিন (রক্ত পাতলা)' : lang === 'hi' ? '+ वारफारिन (खून पतला)' : lang === 'gu' ? '+ વોરફેરિન (લોહી પાતળું)' : '+ Warfarin (Blood Thinner)' },
+                      { key: 'Amlodipine', label: lang === 'bn' ? '+ অ্যামলোডিপিন (প্রেশার)' : lang === 'hi' ? '+ एम्लोडिपाइन (बीपी)' : lang === 'gu' ? '+ એમ્લોડિપાઇન (બીપી)' : '+ Amlodipine (Blood Pressure)' },
+                      { key: 'Aspirin', label: lang === 'bn' ? '+ অ্যাসপিরিন' : lang === 'hi' ? '+ एस्पिरिन' : '+ Aspirin' },
+                      { key: 'Metformin', label: lang === 'bn' ? '+ মেটফর্মিন (সুগার)' : lang === 'hi' ? '+ मेटफॉर्मिन (शुगर)' : lang === 'gu' ? '+ મેટફોર્મિન (ડાયાબિટીસ)' : '+ Metformin (Diabetes)' },
+                    ].map(item => (
                       <button
-                        key={m}
+                        key={item.key}
                         onClick={() => {
-                          setRxInput(m);
-                          handleCheckPrescription(m);
+                          setRxInput(item.key);
+                          handleCheckPrescription(item.key);
                         }}
                         className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 border border-slate-200 transition-colors"
                       >
-                        + {m}
+                        {item.label}
                       </button>
                     ))}
                   </div>
@@ -1676,23 +1807,28 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         : 'bg-emerald-50 border-emerald-300 text-emerald-950'
                     }`}>
                       <span className="font-black block text-xs">
-                        {rxClashResult.safetyResult?.alertHeadline || 'Prescription Cross-Check Result'}
+                        {rxClashResult.localizedHeadline || rxClashResult.safetyResult?.alertHeadline || ui.clashDetected}
                       </span>
                       <p className="text-[11px] leading-relaxed font-semibold">
                         {rxClashResult.localizedNarrationText}
                       </p>
 
-                      {/* Doctor Report Button inside drawer */}
+                      {/* Doctor / ASHA Report Button inside drawer */}
                       {rxClashResult.safetyResult?.hasInteraction && (
                         <div className="pt-1.5">
                           {clashSent ? (
-                            <span className="text-[10px] font-bold text-emerald-700">{ui.sentToDoctor}</span>
+                            <span className="text-[10px] font-bold text-emerald-700">
+                              {isAsha ? '✓ Case escalated to Medical Officer queue' : '✓ Case sent to local ASHA Field Desk'}
+                            </span>
                           ) : (
                             <button
                               onClick={handleSendClashToDoctor}
-                              className="px-3.5 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-black text-[10px] shadow-xs active:scale-95 transition-all"
+                              className="px-3.5 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-black text-[10px] shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
                             >
-                              Send Clash Report to Doctor
+                              <Stethoscope className="w-3.5 h-3.5" />
+                              <span>
+                                {isAsha ? 'Escalate to Medical Officer' : 'Send to Local ASHA Worker'}
+                              </span>
                             </button>
                           )}
                         </div>
@@ -1719,43 +1855,188 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       )}
 
       {/* ========================================================
+          ROLE: DOCTOR WORKSTATION OVERVIEW BANNER
+         ======================================================== */}
+      {currentRole === 'doctor' && (
+        <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 text-white space-y-3 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600/30 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold">
+                <Stethoscope className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black tracking-tight text-white">Clinical Pharmacopoeia Desk</h2>
+                <span className="text-[10px] text-blue-300 font-semibold">NMC Reg: NMC-IND-882194 • MO Ayushman PHC</span>
+              </div>
+            </div>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
+              Active Duty
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800 text-center">
+            <div className="bg-slate-800/60 p-2 rounded-xl">
+              <span className="text-base font-black text-white block">{pendingRequests.length}</span>
+              <span className="text-[9.5px] text-slate-400 uppercase font-semibold">ASHA Cases</span>
+            </div>
+            <div className="bg-slate-800/60 p-2 rounded-xl">
+              <span className="text-base font-black text-rose-400 block">{pendingRequests.filter(r => /clash|risk|inhibition/i.test(r.interaction_type || '')).length}</span>
+              <span className="text-[9.5px] text-slate-400 uppercase font-semibold">CYP Clashes</span>
+            </div>
+            <div className="bg-slate-800/60 p-2 rounded-xl">
+              <span className="text-base font-black text-emerald-400 block">100%</span>
+              <span className="text-[9.5px] text-slate-400 uppercase font-semibold">ASHA Verified</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
           ROLE: ASHA / DOCTOR REVIEW DESK
+          STRICT HEALTHCARE PROTOCOL: Doctors ONLY see cases screened & sent by ASHA workers
          ======================================================== */}
       {!isCitizen && (
         <div className="space-y-4">
-          <div className="p-4 rounded-3xl bg-slate-900 text-white shadow-md">
-            <h3 className="font-extrabold text-sm flex items-center gap-2">
-              <Stethoscope className="w-4 h-4 text-emerald-400" />
-              <span>Pending Clinical Consultations ({pendingRequests.length})</span>
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Review flagged herb-drug clashes and provide prescription guidance.
+          <div className={`p-4 rounded-3xl ${currentRole === 'doctor' ? 'bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border border-blue-800/40' : 'bg-slate-900'} text-white shadow-md`}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-sm flex items-center gap-2">
+                <Stethoscope className={`w-4 h-4 ${currentRole === 'doctor' ? 'text-blue-400' : 'text-teal-400'}`} />
+                <span>
+                  {currentRole === 'doctor' 
+                    ? `ASHA Field Referrals (${pendingRequests.length})` 
+                    : `Village Field Triage (${pendingRequests.length})`}
+                </span>
+              </h3>
+              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase border ${
+                currentRole === 'doctor' 
+                  ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' 
+                  : 'bg-teal-500/20 text-teal-300 border-teal-400/40'
+              }`}>
+                {currentRole === 'doctor' ? 'Doctor Clinical Queue' : 'ASHA Community Desk'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed font-medium">
+              {currentRole === 'doctor'
+                ? 'Clinical protocol: Filtered exclusively to patient cases screened and escalated by frontline ASHA workers.'
+                : 'Frontline protocol: Screen village citizen intakes, verify botanical practices, and escalate severe drug clashes to Medical Officer.'}
             </p>
           </div>
 
           {pendingRequests.length === 0 ? (
             <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center text-xs text-slate-500">
-              No pending patient cases. All records clear!
+              {currentRole === 'doctor' 
+                ? 'No pending referrals from ASHA workers. All clinical cases cleared!' 
+                : 'No pending village intakes awaiting triage.'}
             </div>
           ) : (
-            <div className="space-y-2">
-              {pendingRequests.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => handleRecordClick(rec)}
-                  className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 cursor-pointer shadow-xs transition-all flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-xs font-black text-slate-900 block">
-                      🌿 {rec.remedy_name_local} {rec.confirmed_medicine ? `+ 💊 ${rec.confirmed_medicine}` : ''}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      Patient: {rec.prepared_by} • {rec.used_for_condition}
-                    </span>
+            <div className="space-y-2.5">
+              {pendingRequests.map((rec) => {
+                const ashaSender = rec.referred_by_asha || (rec.prepared_by && /asha/i.test(rec.prepared_by) ? rec.prepared_by : null);
+
+                return (
+                  <div
+                    key={rec.id}
+                    className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 shadow-xs transition-all space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 cursor-pointer" onClick={() => handleRecordClick(rec)}>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-xs font-black text-slate-900">
+                            {rec.patient_name || 'Patient'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-semibold">
+                            • {rec.place_region || 'Village Health Post'}
+                          </span>
+                          {currentRole === 'doctor' && ashaSender && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+                              ✓ Referred by: {ashaSender}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="text-xs font-bold text-slate-800 block">
+                          🌿 {rec.remedy_name_local} {rec.confirmed_medicine ? `+ 💊 ${rec.confirmed_medicine}` : ''}
+                        </span>
+                        
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          <strong>Indication:</strong> {rec.used_for_condition}
+                        </p>
+
+                        {rec.asha_notes && (
+                          <div className="text-[11px] text-amber-900 bg-amber-50/80 border border-amber-200/80 rounded-xl p-2 mt-1.5 font-medium">
+                            <span className="font-bold text-amber-800">ASHA Observation: </span>
+                            {rec.asha_notes}
+                          </div>
+                        )}
+                      </div>
+
+                      <ChevronRight 
+                        onClick={() => handleRecordClick(rec)}
+                        className="w-4 h-4 text-slate-400 mt-1 cursor-pointer hover:text-slate-600 shrink-0" 
+                      />
+                    </div>
+
+                    {/* ASHA Action: Escalate to Medical Doctor if not yet escalated */}
+                    {currentRole === 'asha' && !rec.escalated_to_doctor && (
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          Requires Doctor Prescription Sign-Off?
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            StorageService.escalateToDoctor(
+                              rec.id, 
+                              userName || 'Sunita Didi (ASHA Worker)',
+                              `Home visit completed by ${userName || 'ASHA Worker'}. Flagged possible herb-drug clash for Medical Officer evaluation.`
+                            );
+                            loadData();
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all"
+                        >
+                          <Stethoscope className="w-3.5 h-3.5" />
+                          <span>Escalate to Doctor</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Doctor Action: Review & Sign-Off */}
+                    {currentRole === 'doctor' && (
+                      <div className="pt-2.5 border-t border-slate-100 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-blue-800 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                            CDSCO & Pharmacopoeia Verification Desk
+                          </span>
+                          <button
+                            onClick={() => handleRecordClick(rec)}
+                            className="text-[11px] font-bold text-blue-700 hover:text-blue-900 underline"
+                          >
+                            Full Dossier →
+                          </button>
+                        </div>
+
+                        {/* Quick Doctor Guidance Buttons */}
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          <button
+                            onClick={() => handleDoctorSignOff(rec.id, 'Mandate minimum 4-hour staggered oral dosing. Monitor hepatic clearance.')}
+                            className="px-2.5 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-bold shadow-xs active:scale-95 transition-all flex items-center gap-1"
+                          >
+                            <Stethoscope className="w-3 h-3" />
+                            <span>Sign-Off (Stagger 4h)</span>
+                          </button>
+                          <button
+                            onClick={() => handleDoctorFlagAlert(rec.id, 'Severe CYP450 pharmacokinetic clash flagged by MO. Discontinue botanical during therapy.')}
+                            className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-xs active:scale-95 transition-all flex items-center gap-1"
+                          >
+                            <AlertTriangle className="w-3 h-3" />
+                            <span>Flag Critical Alert</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1766,23 +2047,86 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-slate-900">Case Audit Details</h3>
+              <h3 className="font-bold text-sm text-slate-900">{ui.evidence || 'चिकित्सा विवरण'}</h3>
               <button onClick={() => setInspectRecord(null)} className="p-1 rounded-lg hover:bg-slate-100">
                 <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
             <div className="text-xs space-y-2 text-slate-700">
+              <p><strong>Patient:</strong> {inspectRecord.patient_name || 'Patient'}</p>
               <p><strong>Remedy:</strong> {inspectRecord.remedy_name_local}</p>
               <p><strong>Condition:</strong> {inspectRecord.used_for_condition}</p>
               <p><strong>Medicine:</strong> {inspectRecord.confirmed_medicine || 'None'}</p>
               <p><strong>Status:</strong> {inspectRecord.status}</p>
               <p><strong>Region:</strong> {inspectRecord.place_region || 'India'}</p>
+              {inspectRecord.referred_by_asha && (
+                <p className="p-2 rounded-xl bg-teal-50 text-teal-900 border border-teal-200">
+                  <strong>Referred By:</strong> {inspectRecord.referred_by_asha}
+                </p>
+              )}
+              {inspectRecord.asha_notes && (
+                <p className="p-2 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">
+                  <strong>ASHA Observation:</strong> {inspectRecord.asha_notes}
+                </p>
+              )}
               {inspectRecord.decision_notes && (
                 <p className="p-2 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200">
                   <strong>Clinician Guidance:</strong> {inspectRecord.decision_notes}
                 </p>
               )}
             </div>
+
+            {/* ASHA Action: Escalate to Medical Doctor */}
+            {currentRole === 'asha' && !inspectRecord.escalated_to_doctor && (
+              <button
+                onClick={() => {
+                  StorageService.escalateToDoctor(
+                    inspectRecord.id,
+                    userName || 'Sunita Didi (ASHA Worker)',
+                    'Referred to Doctor for herb-drug interaction sign-off.'
+                  );
+                  setInspectRecord(null);
+                  loadData();
+                }}
+                className="w-full py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Stethoscope className="w-4 h-4" />
+                <span>Escalate to Medical Officer</span>
+              </button>
+            )}
+
+            {/* Doctor Action: Add Guidance Notes & Sign-Off */}
+            {currentRole === 'doctor' && (
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <label className="text-[11px] font-bold text-slate-700 block">
+                  Doctor's Clinical Notes & Guidance
+                </label>
+                <textarea
+                  rows={2}
+                  value={doctorGuidanceText}
+                  onChange={(e) => setDoctorGuidanceText(e.target.value)}
+                  placeholder="E.g. Stagger doses by 4 hours; monitor INR and liver enzymes."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleDoctorSignOff(inspectRecord.id)}
+                    className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                  >
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    <span>Sign-Off & Approve</span>
+                  </button>
+                  <button
+                    onClick={() => handleDoctorFlagAlert(inspectRecord.id)}
+                    className="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Flag Alert</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => setInspectRecord(null)}
               className="w-full py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 font-bold text-xs text-slate-800"

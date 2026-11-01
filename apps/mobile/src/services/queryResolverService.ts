@@ -1,3 +1,4 @@
+import { BioMistralDrugResolver } from './bioMistralDrugResolver.ts';
 import { BOTANICAL_DATABASE, BotanicalSpecies, getLocalizedBotanicalName } from './botanicalDatabase';
 import { DRUG_CATALOG, INDIAN_BRANDS, resolveMedicineFromText } from './pharmacopoeiaDatabase';
 import { SafetyEngine, SafetyAnalysisResult } from './safetyEngine';
@@ -23,6 +24,13 @@ export interface UnifiedQueryResponse {
   detectedDrugName?: string;
   detectedDrugGeneric?: string;
   safetyAnalysis?: SafetyAnalysisResult;
+  initialClashResult?: {
+    drugEntity: { brandOrGenericName: string; genericName: string } | null;
+    plantEntity: BotanicalSpecies | null;
+    safetyResult: SafetyAnalysisResult | null;
+    localizedNarrationText: string;
+    localizedHeadline?: string;
+  };
   localizedNarrationText: string;
   suggestedPrescriptionCheckHerb?: string;
   viceVersaConditions?: ClinicalConditionRecord[];
@@ -127,10 +135,24 @@ export class QueryResolverService {
     }
 
     // 3. Common clinical classes (BP, sugar, pain, blood thinner)
-    if (clean.includes('blood pressure') || clean.includes('बीपी') || clean.includes('બીપી') || clean.includes('ਬੀਪੀ') || clean.includes(' bp ') || clean.endsWith(' bp') || clean.startsWith('bp ')) {
+    // Direct Indic medicine name match
+    if (/(ওয়ারফারিন|वारफारिन|વોરફેરિન|வார்ஃபரின்|వార్ఫరిన్|ਖੂਨ ਪਤਲਾ|রক্ত পাতলা|खून पतला|લોહી પાતળું)/i.test(clean)) {
+      return { brandOrGenericName: 'Warfarin', genericName: 'Warfarin' };
+    }
+    if (/(অ্যাসপিরিন|एस्पिरिन|એસ્પિરિન|ஆஸ்பிரின்|ਐਸਪਰੀਨ)/i.test(clean)) {
+      return { brandOrGenericName: 'Aspirin', genericName: 'Aspirin' };
+    }
+    if (/(মেটফর্মিন|मेटफॉर्मिन|મેટફોર્મિન|மெட்ஃபோர்மின்|మెట్‌ఫార్మిన్|ਮੈਟਫਾਰਮਿਨ)/i.test(clean)) {
+      return { brandOrGenericName: 'Metformin', genericName: 'Metformin' };
+    }
+    if (/(অ্যামলোডিপিন|एम्लोडिपाइन|એમ્લોડિપાઇન|ஆம்லோடிபைன்|ఆమ్లోడిపైన్|ਐਮਲੋਡੀਪਾਈਨ)/i.test(clean)) {
+      return { brandOrGenericName: 'Amlodipine', genericName: 'Amlodipine' };
+    }
+    const hasMedWord = /(dawa|medicine|tablet|goli|pill|ki goli|ki dawa|capsule|इलाज|દવા|ગોળી|ਗੋਲੀ|ওষুধ|ট্যাবলেট|மருந்து|మందు)/i.test(clean);
+    if ((clean.includes('blood pressure') || clean.includes('बीपी') || clean.includes('બીપી') || clean.includes('ਬੀਪੀ') || clean.includes(' bp ') || clean.endsWith(' bp') || clean.startsWith('bp ')) && (hasMedWord || clean.includes('bp '))) {
       return { brandOrGenericName: 'Blood Pressure Medicine (Amlodipine/Atenolol)', genericName: 'Amlodipine' };
     }
-    if (clean.includes('sugar') || clean.includes('diabetes') || clean.includes('मधुमेह') || clean.includes('ડાયાબિટીસ') || clean.includes('ਸ਼ੂਗਰ')) {
+    if ((clean.includes('sugar') || clean.includes('diabetes') || clean.includes('मधुमेह') || clean.includes('ડાયાબિટીસ') || clean.includes('ਸ਼ੂਗਰ')) && hasMedWord) {
       return { brandOrGenericName: 'Diabetes Medicine (Metformin)', genericName: 'Metformin' };
     }
     if (clean.includes('blood thinner') || clean.includes('खून पतला') || clean.includes('લોહી પાતળું')) {
@@ -141,6 +163,12 @@ export class QueryResolverService {
     const resolved = resolveMedicineFromText(clean);
     if (resolved) {
       return { brandOrGenericName: resolved.brandName, genericName: resolved.genericName };
+    }
+
+    // 5. BioMistral-7B Real-Time Dynamic Drug & Pharmacokinetic Salt Inference
+    const synthesized = BioMistralDrugResolver.synthesizeDrugEntity(clean);
+    if (synthesized) {
+      return { brandOrGenericName: synthesized.brandName, genericName: synthesized.genericName };
     }
 
     return null;
@@ -168,6 +196,19 @@ export class QueryResolverService {
 
     const detectedPlants = this.extractAllBotanicalSpecies(query);
     const detectedDrug = this.extractDrugEntity(query);
+
+    // Compute symptom-only query (strip detected drug names & common conjunctions)
+    let symptomOnlyQuery = query;
+    if (detectedDrug) {
+      const drugLower = detectedDrug.genericName.toLowerCase();
+      const brandLower = detectedDrug.brandOrGenericName.toLowerCase();
+      symptomOnlyQuery = symptomOnlyQuery
+        .split(drugLower).join(' ')
+        .split(brandLower).join(' ')
+        .replace(/\b(and|with|aur|ke sath|ke saath|tatha|or|plus|\+|\&|ane|sathe|ate|naal|medicine|goli|tablet|dawa)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
 
     // ========================================================
     // CASE 0: EMERGENCY RED-FLAG & TRIAGE DETECTION (108 SOS)
@@ -297,19 +338,64 @@ export class QueryResolverService {
     // ========================================================
     // CASE 4: CLINICAL SYMPTOM / DISEASE -> 3-TIER TREATMENT
     // ========================================================
-    const matchedConditions = NationalClinicalKnowledgeEngine.searchBySymptomOrCondition(rawQuery, currentLang);
+    const conditionSearchQuery = (symptomOnlyQuery && symptomOnlyQuery.length > 2) ? symptomOnlyQuery : rawQuery;
+    const lowerQuery = conditionSearchQuery.toLowerCase();
+    const isEar = /ear|कान|কান|காத|చెవ|ಕಿವಿ|ചെവ|କାନ|otitis/i.test(lowerQuery);
+    const isEye = /eye|vision|आंख|આંખ|চোখ|கண்|కన్ను|കണ്ണ്/i.test(lowerQuery);
+    const isSkin = /skin|rash|itch|eczema|चर्म|खुजली|ચામડી|ખંજવાળ|চুলকানি|ঘা|தோல்|దురద/i.test(lowerQuery);
+    const isKnee = /knee|घुटने|સાંધા|હাঁটু|ગોઠણ|ముழங்கால்|మోకాలు/i.test(lowerQuery);
+    const isDental = /tooth|teeth|dental|gum|दांत|દાંત|দাঁত|பல்|పన్ను/i.test(lowerQuery);
+
+    const matchedConditions = NationalClinicalKnowledgeEngine.searchBySymptomOrCondition(conditionSearchQuery, currentLang);
+    
+    let isAnatomicalMismatch = false;
     if (matchedConditions && matchedConditions.length > 0) {
+      const top = matchedConditions[0];
+      if (isEar && top.bodySystem !== 'ENT') isAnatomicalMismatch = true;
+      if (isEye && top.bodySystem !== 'Ophthalmology') isAnatomicalMismatch = true;
+      if (isSkin && top.bodySystem !== 'Dermatological') isAnatomicalMismatch = true;
+      if (isKnee && top.bodySystem !== 'Musculoskeletal') isAnatomicalMismatch = true;
+      if (isDental && top.bodySystem !== 'Dental') isAnatomicalMismatch = true;
+    }
+
+    if (matchedConditions && matchedConditions.length > 0 && !isAnatomicalMismatch) {
       const condition = matchedConditions[0];
       const narration = this.buildConditionNarration(condition, currentLang);
       
-      const suggestedHerb = condition.ayushClassicalFormulation.scientificBotanical || 
+      let suggestedHerb = condition.ayushClassicalFormulation.scientificBotanical || 
                             condition.verifiedHomeRemedy.kitchenItem;
+      let initialClash: any = null;
+
+      // If a drug was present in the query (e.g. "Knee pain with Warfarin" or "घुटनों में दर्द और Warfarin"), auto-run clash engine!
+      if (detectedDrug) {
+        const candidateHerbs = [
+          condition.ayushClassicalFormulation?.scientificBotanical,
+          condition.verifiedHomeRemedy?.kitchenItem,
+          condition.ayushClassicalFormulation?.formulationName,
+        ].filter(Boolean) as string[];
+
+        for (const herb of candidateHerbs) {
+          const clash = await this.verifyPrescriptionClash(herb, detectedDrug.genericName, currentLang);
+          if (clash && clash.safetyResult && clash.safetyResult.hasInteraction) {
+            initialClash = clash;
+            suggestedHerb = herb;
+            break;
+          }
+          if (!initialClash) {
+            initialClash = clash;
+            suggestedHerb = herb;
+          }
+        }
+      }
 
       return {
         type: 'symptom_3tier',
         queryText: rawQuery,
         conditionRecord: condition,
-        localizedNarrationText: narration,
+        detectedDrugName: detectedDrug?.brandOrGenericName,
+        detectedDrugGeneric: detectedDrug?.genericName,
+        initialClashResult: initialClash,
+        localizedNarrationText: narration + (initialClash?.safetyResult?.hasInteraction ? ('\n\n⚠️ ' + initialClash.localizedHeadline) : ''),
         suggestedPrescriptionCheckHerb: suggestedHerb,
       };
     }
@@ -387,7 +473,7 @@ export class QueryResolverService {
     // ========================================================
     // CASE 5B: SINGLE PHARMACEUTICAL DRUG QUERY (e.g. "Paracetamol", "Amlodipine")
     // ========================================================
-    if (detectedDrug && detectedPlants.length === 0) {
+    if (detectedDrug && detectedPlants.length === 0 && (!symptomOnlyQuery || symptomOnlyQuery.length <= 2)) {
       const genericLower = detectedDrug.genericName.toLowerCase();
       const brandLower = detectedDrug.brandOrGenericName.toLowerCase();
       const drugMatchingCondition = NATIONAL_CLINICAL_RECORDS.find(rec => {
@@ -416,16 +502,47 @@ export class QueryResolverService {
     // CASE 6: OUT-OF-DATABASE QUERY -> DYNAMIC MEDICAL RESEARCH FALLBACK
     // ========================================================
     try {
-      const dynamicResearch = await DynamicResearchService.researchAndSynthesize(rawQuery, currentLang);
+      const dynSearchQuery = (symptomOnlyQuery && symptomOnlyQuery.length > 2) ? symptomOnlyQuery : rawQuery;
+      const dynamicResearch = await DynamicResearchService.researchAndSynthesize(dynSearchQuery, currentLang);
       if (dynamicResearch && dynamicResearch.record) {
         const localizedCondition = NationalClinicalKnowledgeEngine.getLocalizedRecord(dynamicResearch.record, currentLang);
         const narration = this.buildConditionNarration(localizedCondition, currentLang);
+
+        let initialClash: any = null;
+        let suggestedHerb = localizedCondition.ayushClassicalFormulation.scientificBotanical || 
+                              localizedCondition.verifiedHomeRemedy.kitchenItem;
+
+        // Auto-run clash engine for dynamically synthesized condition if drug present
+        if (detectedDrug) {
+          const dynCandidates = [
+            localizedCondition.ayushClassicalFormulation?.scientificBotanical,
+            localizedCondition.verifiedHomeRemedy?.kitchenItem,
+            localizedCondition.ayushClassicalFormulation?.formulationName,
+          ].filter(Boolean) as string[];
+
+          for (const herb of dynCandidates) {
+            const clash = await this.verifyPrescriptionClash(herb, detectedDrug.genericName, currentLang);
+            if (clash && clash.safetyResult && clash.safetyResult.hasInteraction) {
+              initialClash = clash;
+              suggestedHerb = herb;
+              break;
+            }
+            if (!initialClash) {
+              initialClash = clash;
+              suggestedHerb = herb;
+            }
+          }
+        }
+
         return {
           type: 'symptom_3tier',
           queryText: rawQuery,
           conditionRecord: localizedCondition,
-          localizedNarrationText: narration,
-          suggestedPrescriptionCheckHerb: localizedCondition.ayushClassicalFormulation.scientificBotanical,
+          detectedDrugName: detectedDrug?.brandOrGenericName,
+          detectedDrugGeneric: detectedDrug?.genericName,
+          initialClashResult: initialClash,
+          localizedNarrationText: narration + (initialClash?.safetyResult?.hasInteraction ? ('\n\n⚠️ ' + initialClash.localizedHeadline) : ''),
+          suggestedPrescriptionCheckHerb: suggestedHerb,
           isDynamicResearch: true,
           researchCitation: dynamicResearch.sourceCitation,
         };
@@ -455,6 +572,68 @@ export class QueryResolverService {
   /**
    * Cross-check prescription medicine against a recommended remedy or botanical
    */
+  
+  /**
+   * Localize pharmaceutical drug names across Indic languages
+   */
+  public static getLocalDrugName(drugName: string, lang: string): string {
+    const l = (lang || 'en').toLowerCase().slice(0, 2);
+    const dLower = (drugName || '').toLowerCase();
+
+    if (dLower.includes('warfarin')) {
+      if (l === 'bn') return 'ওয়ারফারিন (রক্ত পাতলা করার ওষুধ)';
+      if (l === 'hi') return 'वारफारिन (खून पतला करने की दवा)';
+      if (l === 'gu') return 'વોરફેરિન (લોહી પાતળું કરવાની દવા)';
+      if (l === 'mr') return 'वॉर्फरिन (रक्त पातळ करण्याचे औषध)';
+      if (l === 'ta') return 'வார்ஃபரின் (ரத்த நீர்த்துப்போகும் மருந்து)';
+      if (l === 'te') return 'వార్ఫరిన్ (రక్తం పలుచన చేసే మందు)';
+      if (l === 'pa') return 'ਵਾਰਫਰੀਨ (ਖੂਨ ਪਤਲਾ ਕਰਨ ਵਾਲੀ ਦਵਾਈ)';
+      return 'Warfarin (Blood Thinner)';
+    }
+
+    if (dLower.includes('amlodipine') || dLower.includes('atenolol') || dLower.includes('blood pressure')) {
+      if (l === 'bn') return 'অ্যামলোডিপিন (রক্তচাপ / প্রেশারের ওষুধ)';
+      if (l === 'hi') return 'एम्लोडिपाइन (ब्लड प्रेशर / बीपी की दवा)';
+      if (l === 'gu') return 'એમ્લોડિપાઇન (બ્લડ પ્રેશર / બીપીની દવા)';
+      if (l === 'mr') return 'अम्लोडिपाइन (बीपीचे औषध)';
+      if (l === 'ta') return 'ஆம்லோடிபைன் (ரத்த அழுத்த மருந்து)';
+      if (l === 'te') return 'ఆమ్లోడిపైన్ (రక్తపోటు మందు)';
+      if (l === 'pa') return 'ਐਮਲੋਡੀਪਾਈਨ (ਬੀਪੀ ਦੀ ਦਵਾਈ)';
+      return 'Amlodipine (Blood Pressure Medicine)';
+    }
+
+    if (dLower.includes('metformin') || dLower.includes('diabetes') || dLower.includes('sugar')) {
+      if (l === 'bn') return 'মেটফর্মিন (রক্তের শর্করার / সুগারের ওষুধ)';
+      if (l === 'hi') return 'मेटफॉर्मिन (मधुमेह / शुगर की दवा)';
+      if (l === 'gu') return 'મેટફોર્મિન (ડાયાબિટીસ / સુગરની દવા)';
+      if (l === 'mr') return 'मेटफॉर्मिन (मधुमेहाचे औषध)';
+      if (l === 'ta') return 'மெட்ஃபோர்மின் (சர்க்கரை நோய் மருந்து)';
+      if (l === 'te') return 'మెట్‌ఫార్మిన్ (మధుమేహం మందు)';
+      if (l === 'pa') return 'ਮੈਟਫਾਰਮਿਨ (ਸ਼ੂਗਰ ਦੀ ਦਵਾਈ)';
+      return 'Metformin (Diabetes Medicine)';
+    }
+
+    if (dLower.includes('aspirin')) {
+      if (l === 'bn') return 'অ্যাসপিরিন';
+      if (l === 'hi') return 'एस्पिरिन';
+      if (l === 'gu') return 'એસ્પિરિન';
+      if (l === 'mr') return 'अ‍ॅस्पिरिन';
+      if (l === 'ta') return 'ஆஸ்பிரின்';
+      if (l === 'te') return 'ఆస్ప్రిన్';
+      if (l === 'pa') return 'ਐਸਪਰੀਨ';
+      return 'Aspirin';
+    }
+
+    if (dLower.includes('paracetamol')) {
+      if (l === 'bn') return 'প্যারাসিটামল';
+      if (l === 'hi') return 'पैरासिटामोल';
+      if (l === 'gu') return 'પેરાસીટામોલ';
+      return 'Paracetamol';
+    }
+
+    return drugName;
+  }
+
   public static async verifyPrescriptionClash(
     botanicalOrRemedyName: string,
     prescriptionText: string,
@@ -464,39 +643,66 @@ export class QueryResolverService {
     plantEntity: BotanicalSpecies | null;
     safetyResult: SafetyAnalysisResult | null;
     localizedNarrationText: string;
+    localizedHeadline?: string;
   }> {
     // 1. Identify Drug
     const drug = this.extractDrugEntity(prescriptionText);
     
-    // 2. Identify Plant
+    // 2. Identify Plant across all 12 Indian languages & English
     let plant = this.extractBotanicalSpecies(botanicalOrRemedyName);
     if (!plant) {
-      const lower = botanicalOrRemedyName.toLowerCase();
-      if (lower.includes('turmeric') || lower.includes('haldi') || lower.includes('curcuma') || lower.includes('હળદર')) {
+      const lower = (botanicalOrRemedyName || '').toLowerCase();
+      if (/turmeric|haldi|curcuma|हल्दी|હળદર|হলুদ|হলদি|हळद|மஞ்சள்|పసుపు|ಅರಿಶಿನ|മഞ്ഞൾ|ਹਲਦੀ|হালধি|ହଳଦୀ/i.test(lower)) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Curcuma longa') || null;
-      } else if (lower.includes('triphala') || lower.includes('trifala') || lower.includes('ત્રિફળા') || lower.includes('त्रिफला')) {
-        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Triphala')) || null;
-      } else if (lower.includes('shilajit') || lower.includes('salajeet') || lower.includes('શિલાજીત') || lower.includes('शिलाजीत')) {
-        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Shilajit')) || null;
-      } else if (lower.includes('tulsi') || lower.includes('ocimum') || lower.includes('तुलसी') || lower.includes('તુલસી')) {
-        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Ocimum sanctum') || null;
-      } else if (lower.includes('ginger') || lower.includes('adrak') || lower.includes('zingiber') || lower.includes('આદુ')) {
-        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Zingiber officinale') || null;
-      } else if (lower.includes('shallaki') || lower.includes('boswellia') || lower.includes('guggul')) {
+      } else if (/shallaki|boswellia|salai|guggul|guggulu|शल्लकी|सलाई|गुग्गुल|શલ્લકી|ગૂગળ|শল্লকী|শাল্লাকি|শাল্লকি|குங்கிலியம்|గుగ్గిలం|ಗುಗ್ಗುಳ|ഗുൽഗുലു|ଗୁଗ୍ଗୁଳ/i.test(lower)) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Boswellia serrata') || null;
-      } else if (lower.includes('giloy') || lower.includes('guduchi') || lower.includes('tinospora') || lower.includes('ગળો')) {
+      } else if (/triphala|trifala|त्रिफला|ત્રિફળા|ত্রিফলা|திரிபலா|త్రిఫల|ತ್ರಿಫಲ|ത്രിഫല|ତ୍ରିଫଳା/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Triphala')) || null;
+      } else if (/shilajit|salajeet|शिलाजीत|શિલાજીત|শিলাজিৎ|சிலாஜித்|శిలాజిత్|ಶಿಲಾಜಿತ್|ശിലാജിത്|ଶିଳାଜିତ/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.commonName.includes('Shilajit')) || null;
+      } else if (/tulsi|ocimum|तुलसी|તુલસી|তুলসী|തുളസി|துளசி|తులసి|ತುಳಸಿ|ਤੁਲਸੀ|ତୁଳସୀ/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Ocimum sanctum') || null;
+      } else if (/ginger|adrak|shunthi|sonth|zingiber|अदरक|सोंठ|આદુ|સૂંઠ|আদা|শুঁঠ|இஞ்சி|சுக்கு|అల్లం|శొంఠి|ಶುಂಠಿ|ഇഞ്ചി|ଅଦା/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Zingiber officinale') || null;
+      } else if (/garlic|lahsun|allium|लहसुन|લસણ|রসুন|রশুন|பூண்டு|వెల్లుల్లి|ಬೆಳ್ಳುಳ್ಳಿ|വെളുത്തുള്ളി|ରସୁଣ|নহৰু/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Allium sativum') || null;
+      } else if (/black pepper|kali mirch|piper|mari|काली मिर्च|કાળા મરી|গোলমরিচ|মিளகு|మిరియాలు|ಕಾಳುಮೆಣಸು|കുരുമുളക്|ଗୋଲମରିଚ|জালুক/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Piper nigrum') || null;
+      } else if (/giloy|guduchi|tinospora|गिलोय|गुडुची|ગળો|ગિલોય|গুলঞ্চ|গিলয়|சீந்தில்|తిప్పతీగ|ಅಮೃತಬಳ್ಳಿ|ചിറ്റമൃത്|ଗୁଳୁଚି/i.test(lower)) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Tinospora cordifolia') || null;
-      } else if (lower.includes('ashwagandha') || lower.includes('withania') || lower.includes('અશ્વગંધા')) {
+      } else if (/ashwagandha|withania|अश्वगंधा|અશ્વગંધા|অশ্বগন্ধা|அமுக்கிரா|అశ్వగంధ|ಅಶ್ವಗಂಧ|അമുക്കുരം|ଅଶ୍ୱଗନ୍ଧା/i.test(lower)) {
         plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Withania somnifera') || null;
+      } else if (/licorice|mulethi|yashtimadhu|मुलेठी|यष्टिमधु|જેઠીમધ|যষ্টিমধু|அதிமதுரம்|அতিమధురం|ಜೇಷ್ಠಮಧು|ഇരട്ടിമധുരം|ଯଷ୍ଟିମଧୁ/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Glycyrrhiza glabra') || null;
+      } else if (/clove|laung|lavanga|syzygium|लौंग|લવિંગ|লবঙ্গ|கிராம்பு|లవంగం|ಲವಂಗ|ഗ്രാമ്പൂ|ଲବଙ୍ଗ/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Syzygium aromaticum') || null;
+      } else if (/cinnamon|dalchini|cinnamomum|दालचीनी|તજ|দারুচিনি|பட்டை|దాల్చినచెక్క|ದಾಲ್ಚಿನ್ನಿ|കറുവപ്പട്ട|ଡାଲଚିନି/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Cinnamomum verum') || null;
+      } else if (/fenugreek|methi|trigonella|मेथी|મેથી|মেথি|வெந்தயம்|మెంతులు|ಮೆಂತ್ಯ|ഉലുവ|ମେଥି/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Trigonella foenum-graecum') || null;
+      } else if (/neem|azadirachta|नीम|લીમડો|নিম|വേപ്പ്|வேம்பு|వేప|ಬೇವು|ନିମ୍ବ/i.test(lower)) {
+        plant = BOTANICAL_DATABASE.find(p => p.scientificName === 'Azadirachta indica') || null;
       }
     }
 
     if (!drug) {
-      const errMsg = currentLang === 'hi' 
-        ? 'दवा का नाम पहचान नहीं पाए। कृपया सही ब्रांड या सॉल्ट नाम लिखें (जैसे Amlodipine, Warfarin, Metformin)।'
-        : currentLang === 'gu'
-        ? 'દવાનું નામ ઓળખાયું નથી. કૃપા કરીને સાચું નામ લખો (જેમ કે Amlodipine, Warfarin, Metformin).'
-        : 'Could not recognize the prescription drug. Please enter or speak a valid medicine name (e.g., Amlodipine, Warfarin, Metformin, Aspirin).';
+      let errMsg = 'Could not recognize the prescription drug. Please enter or speak a valid medicine name (e.g., Warfarin, Amlodipine, Metformin, Aspirin).';
+      const l = (currentLang || 'en').toLowerCase().slice(0, 2);
+      if (l === 'hi') {
+        errMsg = 'दवा का नाम पहचान नहीं पाए। कृपया सही ब्रांड या सॉल्ट नाम लिखें (जैसे Amlodipine, Warfarin, Metformin, Aspirin)।';
+      } else if (l === 'gu') {
+        errMsg = 'દવાનું નામ ઓળખાયું નથી. કૃપા કરીને સાચું નામ લખો (જેમ કે Amlodipine, Warfarin, Metformin, Aspirin).';
+      } else if (l === 'bn') {
+        errMsg = 'প্রেসক্রিপশন ওষুধের নাম শনাক্ত করা যায়নি। অনুগ্রহ করে সঠিক নাম লিখুন (যেমন Warfarin, Amlodipine, Metformin, Aspirin)।';
+      } else if (l === 'mr') {
+        errMsg = 'औषधाचे नाव ओळखता आले नाही. कृपया योग्य नाव लिहा (उदा. Amlodipine, Warfarin, Metformin, Aspirin).';
+      } else if (l === 'ta') {
+        errMsg = 'மருந்தின் பெயரை அடையாளம் காண முடியவில்லை. தயவுசெய்து சரியான பெயரை உள்ளிடவும் (எ.கா. Amlodipine, Warfarin, Metformin, Aspirin).';
+      } else if (l === 'te') {
+        errMsg = 'మందు పేరు గుర్తించబడలేదు. దయచేసి సరైన పేరు రాయండి (ఉదా: Amlodipine, Warfarin, Metformin, Aspirin).';
+      } else if (l === 'pa') {
+        errMsg = 'ਦਵਾਈ ਦਾ ਨਾਮ ਨਹੀਂ ਪਛਾਣਿਆ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਸਹੀ ਨਾਮ ਲਿਖੋ (ਜਿਵੇਂ Warfarin, Amlodipine, Metformin, Aspirin)।';
+      }
 
       return {
         drugEntity: null,
@@ -506,7 +712,7 @@ export class QueryResolverService {
       };
     }
 
-    const plantScientific = plant ? plant.scientificName : botanicalOrRemedyName;
+    const plantScientific = plant ? plant.scientificName : (botanicalOrRemedyName.includes('Curcuma') ? 'Curcuma longa' : botanicalOrRemedyName);
     const safetyResult = await SafetyEngine.analyze({
       plantSpecies: plantScientific,
       drugGenericName: drug.genericName,
@@ -514,13 +720,16 @@ export class QueryResolverService {
     });
 
     const plantDisplayName = plant ? getLocalizedBotanicalName(plant, currentLang) : botanicalOrRemedyName;
-    const narration = this.buildClashNarration(plantDisplayName, drug.brandOrGenericName, safetyResult, currentLang);
+    const localizedDrugName = this.getLocalDrugName(drug.brandOrGenericName, currentLang);
+    const narration = this.buildClashNarration(plantDisplayName, localizedDrugName, safetyResult, currentLang);
+    const headline = this.buildClashHeadline(safetyResult, currentLang);
 
     return {
       drugEntity: drug,
       plantEntity: plant,
       safetyResult,
       localizedNarrationText: narration,
+      localizedHeadline: headline,
     };
   }
 
@@ -568,6 +777,125 @@ export class QueryResolverService {
   /**
    * Build high-fidelity localized audio narration for safety clashes
    */
+  /**
+   * Translate clinical adverse effects into pure vernacular terms
+   */
+  public static getLocalizedAdverseEffect(safety: SafetyAnalysisResult, lang: string): string {
+    const l = (lang || 'en').toLowerCase().slice(0, 2);
+    const text = ((safety.interactionType || '') + ' ' + (safety.alertHeadline || '')).toLowerCase();
+
+    if (text.includes('bleed') || text.includes('hemorrhage') || text.includes('inr') || text.includes('clot') || text.includes('warfarin') || text.includes('cyp2c9')) {
+      if (l === 'hi') return 'आंतरिक रक्तस्राव और खून अत्यधिक पतला होने का गंभीर खतरा';
+      if (l === 'gu') return 'આંતરિક રક્તસ્રાવ અને લોહી વધુ પડતું પાતળું થવાનું જોખમ';
+      if (l === 'bn') return 'অভ্যন্তরীণ রক্তপাত এবং রক্ত অতিরিক্ত পাতলা হওয়ার ঝুঁকি';
+      if (l === 'mr') return 'अंगातून रक्तस्त्राव आणि रक्त प्रमाणाबाहेर पातळ होण्याचा धोका';
+      if (l === 'ta') return 'உள் ரத்தப்போக்கு மற்றும் ரத்தம் அளவுக்கு அதிகமாக நீர்த்துப்போகும் அபாயம்';
+      if (l === 'te') return 'అంతర్గత రక్తస్రావం మరియు రక్తం అతిగా పలుచనయ్యే ప్రమాదం';
+      if (l === 'pa') return 'ਅੰਦਰੂਨੀ ਖੂਨ ਵਹਿਣ ਅਤੇ ਖੂਨ ਬਹੁਤ ਪਤਲਾ ਹੋਣ ਦਾ ਵੱਡਾ ਖ਼ਤਰਾ';
+      if (l === 'kn') return 'ಆಂತರಿಕ ರಕ್ತಸ್ರಾವ ಮತ್ತು ರಕ್ತ ಅತಿಯಾಗಿ ತೆಳುವಾಗುವ ಅಪಾಯ';
+      if (l === 'ml') return 'ആന്തരിക രക്തസ്രാവവും രക്തം അമിതമായി നേർക്കാനുള്ള സാധ്യതയും';
+      if (l === 'or') return 'ଅନ୍ତଃ ରକ୍ତସ୍ରାବ ଏବଂ ରକ୍ତ ଅତ୍ୟଧିକ ପତଳା ହେବାର ଆଶଙ୍କା';
+      if (l === 'as') return 'আভ্যন্তৰীণ ৰক্তক্ষৰণ আৰু তেজ অত্যাধিক পাতল হোৱাৰ আশংকা';
+      return 'Increased internal bleeding and antiplatelet hemorrhage risk';
+    }
+
+    if (text.includes('hypoglycem') || text.includes('sugar') || text.includes('glucose')) {
+      if (l === 'hi') return 'रक्त शर्करा (शुगर) अचानक बहुत कम होने का जोखिम';
+      if (l === 'gu') return 'બ્લડ સુગર અચાનક ખૂબ જ ઘટી જવાનું જોખમ';
+      if (l === 'bn') return 'রক্তে শর্করার মাত্রা বিপজ্জনকভাবে কমে যাওয়ার ঝুঁকি';
+      if (l === 'mr') return 'रक्तातील साखर अचानक खूप कमी होण्याचा धोका';
+      if (l === 'ta') return 'ரத்த சர்க்கரை அளவு ஆபத்தான அளவுக்கு குறையும் அபாயம்';
+      if (l === 'te') return 'రక్తంలో చక్కెర స్థాయిలు తీవ్రంగా పడిపోయే ప్రమాదం';
+      if (l === 'pa') return 'ਬਲੱਡ ਸ਼ੂਗਰ ਬਹੁਤ ਜ਼ਿਆਦਾ ਘੱਟ ਜਾਣ ਦਾ ਖ਼ਤਰਾ';
+      if (l === 'kn') return 'ರಕ್ತದಲ್ಲಿ ಸಕ್ಕರೆ ಅಂಶ ತೀವ್ರವಾಗಿ ಕುಸಿಯುವ ಅಪಾಯ';
+      if (l === 'ml') return 'രക്തത്തിലെ പഞ്ചസാരയുടെ അളവ് പെട്ടെന്ന് കുറയാനുള്ള സാധ്യത';
+      if (l === 'or') return 'ରକ୍ତରେ ଶର୍କରା ହଠାତ୍ ବହୁତ କମିଯିବାର ବିପଦ';
+      if (l === 'as') return 'তেজত চেনিৰ মাত্ৰা হঠাতে অতিশয় কমি যোৱাৰ সম্ভাৱনা';
+      return 'Severe drop in blood glucose (Hypoglycemia risk)';
+    }
+
+    if (text.includes('hypoten') || text.includes('blood pressure') || text.includes('bp drop')) {
+      if (l === 'hi') return 'रक्तचाप (बीपी) अचानक बहुत कम होने और चक्कर आने का जोखिम';
+      if (l === 'gu') return 'બ્લડ પ્રેશર અચાનક ઘટી જવાનું અને ચક્કર આવવાનું જોખમ';
+      if (l === 'bn') return 'রক্তচাপ অতিরিক্ত কমে যাওয়া এবং মাথা ঘোরার ঝুঁকি';
+      if (l === 'mr') return 'रक्तदाब अचानक कमी होऊन भोवळ येण्याचा धोका';
+      if (l === 'ta') return 'ரத்த அழுத்தம் திடீரென குறைந்து தலைசுற்றல் ஏற்படும் அபாயம்';
+      if (l === 'te') return 'రక్తపోటు పడిపోయి కళ్లు తిరిగే ప్రమాదం';
+      if (l === 'pa') return 'ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ ਅਚਾਨਕ ਡਿੱਗਣ ਅਤੇ ਚੱਕਰ ਆਉਣ ਦਾ ਖ਼ਤਰਾ';
+      if (l === 'kn') return 'ರಕ್ತದೊತ್ತಡ ಹಠಾತ್ ಇಳಿಕೆಯಾಗಿ ತಲೆತಿರುಗುವ ಅಪಾಯ';
+      if (l === 'ml') return 'രക്തസമ്മർദ്ദം പെട്ടെന്ന് താഴാനും തലകറക്കത്തിനും സാധ്യത';
+      if (l === 'or') return 'ରକ୍ତଚାପ ହଠାତ୍ କମିଯିବା ଏବଂ ମୁଣ୍ଡ ବୁଲାଇବା ଆଶଙ୍କା';
+      if (l === 'as') return 'ৰক্তচাপ হঠাতে কমি মূৰ ঘূৰোৱাৰ আশংকা';
+      return 'Additive blood pressure reduction and postural hypotension';
+    }
+
+    if (text.includes('sedat') || text.includes('somnolence') || text.includes('sleep') || text.includes('drows')) {
+      if (l === 'hi') return 'अत्यधिक सुस्ती, गहरी नींद और बेहोशी का जोखिम';
+      if (l === 'gu') return 'અતિશય સુસ્તી, ઘેરી ઊંઘ અને ચક્કર આવવાનું જોખમ';
+      if (l === 'bn') return 'অতিরিক্ত তন্দ্রাচ্ছন্নতা এবং অজ্ঞান হয়ে যাওয়ার ঝুঁকি';
+      if (l === 'mr') return 'अतिप्रमाणात झोप आणि सुस्ती येण्याचा धोका';
+      if (l === 'ta') return 'அதிக மயக்கம் மற்றும் அதிக தூக்க கலக்கம் ஏற்படும் அபாயம்';
+      if (l === 'te') return 'అతి నిద్ర మరియు మత్తు కలిగే ప్రమాదం';
+      if (l === 'pa') return 'ਬਹੁਤ ਜ਼ਿਆਦਾ ਸੁਸਤੀ ਅਤੇ ਨੀਂਦ ਆਉਣ ਦਾ ਖ਼ਤਰਾ';
+      if (l === 'kn') return 'ಅತಿಯಾದ ನಿದ್ರೆ ಮತ್ತು ನಿಶ್ಯಕ್ತಿಯ ಅಪಾಯ';
+      if (l === 'ml') return 'അമിതമായ ഉറക്കവും ആലസ്യവും ഉണ്ടാവാനുള്ള സാധ്യത';
+      if (l === 'or') return 'ଅତ୍ୟଧିକ ନିଦ୍ରାଳୁତା ଏବଂ ମୁଣ୍ଡ ବୁଲାଇବା ବିପଦ';
+      if (l === 'as') return 'অত্যধিক টোপনি আৰু অৱসাদৰ আশংকা';
+      return 'Excessive sedation and CNS depression risk';
+    }
+
+    if (l === 'hi') return 'यकृत (लिवर) एंजाइम पर प्रतिकूल प्रभाव और दुष्प्रभाव का जोखिम';
+    if (l === 'gu') return 'લિવર એન્ઝાઇમ પર અસર અને દવાની આડઅસર વધવાનું જોખમ';
+    if (l === 'bn') return 'লিভার এনজাইমের ওপর ক্ষতিকর প্রভাব ও ওষুধের পার্শ্বপ্রতিক্রিয়ার ঝুঁকি';
+    if (l === 'mr') return 'यकृताच्या कार्यावर परिणाम होऊन दुष्परिणाम वाढण्याचा धोका';
+    if (l === 'ta') return 'கல்லீரல் நொதிகளில் பாதிப்பு மற்றும் பக்கவிளைவுகள் அதிகரிக்கும் அபாயம்';
+    if (l === 'te') return 'కాలేయ ఎంజైమ్‌లపై ప్రతికూల प्रभावం మరియు దుష్ప్రభావాల ప్రమాదం';
+    if (l === 'pa') return 'ਲਿਵਰ ਉੱਤੇ ਮਾੜਾ ਅਸਰ ਅਤੇ ਮਾੜੇ ਪ੍ਰਭਾਵਾਂ ਦਾ ਖ਼ਤਰਾ';
+    if (l === 'kn') return 'ಯಕೃತ್ತಿನ ಕಿಣ್ವಗಳ ಮೇಲೆ ಪ್ರತಿಕೂಲ ಪರಿಣಾಮ ಮತ್ತು ಅಡ್ಡಪರಿಣಾಮಗಳ ಅಪಾಯ';
+    if (l === 'ml') return 'കരളിന്റെ പ്രവർത്തനത്തെ ബാധിക്കാനും പാർശ്വഫലങ്ങൾ കൂടാനും സാധ്യത';
+    if (l === 'or') return 'ଯକୃତ ଉପରେ ପ୍ରତିକୂଳ ପ୍ରଭାବ ଏବଂ ପାର୍ଶ୍ୱ ପ୍ରତିକ୍ରିୟା ବୃଦ୍ଧି';
+    if (l === 'as') return 'যকৃতৰ ওপৰত বিৰূপ প্ৰভাৱ আৰু পাৰ্শ্বক্ৰিয়াৰ আশংকা';
+    return 'Metabolic enzyme conflict and increased adverse reaction risk';
+  }
+
+  /**
+   * Build clean headline for clash result in user native language
+   */
+  public static buildClashHeadline(safety: SafetyAnalysisResult, lang: string): string {
+    const l = (lang || 'en').toLowerCase().slice(0, 2);
+    if (!safety.hasInteraction) {
+      if (l === 'hi') return 'दोनों साथ लेना पूरी तरह सुरक्षित है (कोई सीधा टकराव नहीं)';
+      if (l === 'gu') return 'બંને સાથે લેવું એકદમ સુરક્ષિત છે (કોઈ સીધો વિરોધાભાસ નથી)';
+      if (l === 'pa') return 'ਦੋਵੇਂ ਇਕੱਠੇ ਲੈਣਾ ਸੁਰੱਖਿਅਤ ਹੈ';
+      if (l === 'mr') return 'दोन्ही एकत्र घेणे सुरक्षित आहे';
+      if (l === 'ta') return 'இரண்டையும் ஒன்றாக உட்கொள்வது பாதுகாப்பானது';
+      if (l === 'te') return 'రెండూ కలిపి తీసుకోవడం సురక్షితం';
+      if (l === 'kn') return 'ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ತೆಗೆದುಕೊಳ್ಳುವುದು ಸಂಪೂರ್ಣ ಸುರಕ್ಷಿತ';
+      if (l === 'ml') return 'രണ്ടും ഒരുമിച്ച് കഴിക്കുന്നത് സുരക്ഷിതമാണ്';
+      if (l === 'bn') return 'উভয় একসাথে গ্রহণ করা সম্পূর্ণ নিরাপদ';
+      if (l === 'or') return 'ଦୁଇଟି ଏକାସାଙ୍ଗରେ ନେବା ସମ୍ପୂର୍ଣ୍ଣ ସୁରକ୍ଷିତ';
+      if (l === 'as') return 'দুয়োটা একেলগে লোৱা সম্পূৰ্ণ নিৰাপদ';
+      return 'Safe to Take Concurrently (No Direct Clash Detected)';
+    }
+
+    const isSevere = safety.evidenceLevel === 'established' && safety.confidence === 'High';
+    if (l === 'hi') return isSevere ? '🚨 गंभीर दवा टकराव की चेतावनी' : '⚠️ दवा पारस्परिक प्रभाव चेतावनी';
+    if (l === 'gu') return isSevere ? '🚨 ગંભીર દવા વિરોધાભાસ ચેતવણી' : '⚠️ દવાઓની આડઅસર ચેતવણી';
+    if (l === 'pa') return isSevere ? '🚨 ਗੰਭੀਰ ਦਵਾਈ ਟਕਰਾਅ ਦੀ ਚੇਤਾਵਨੀ' : '⚠️ ਦਵਾਈ ਪ੍ਰਤੀਕ੍ਰਿਆ ਚੇਤਾਵਨੀ';
+    if (l === 'mr') return isSevere ? '🚨 गंभीर औषध परस्परविरोधी इशारा' : '⚠️ औषध सावधगिरी इशारा';
+    if (l === 'ta') return isSevere ? '🚨 தீவிர மருந்து முரண்பாடு எச்சரிக்கை' : '⚠️ மருந்து எச்சரிக்கை';
+    if (l === 'te') return isSevere ? '🚨 తీవ్ర ఔషధ ప్రతిచర్య హెచ్చరిక' : '⚠️ ఔషధ జాగ్రత్త హెచ్చరిక';
+    if (l === 'kn') return isSevere ? '🚨 ಗಂಭೀರ ಔಷಧಿ ಅಡ್ಡಪರಿಣಾಮ ಎಚ್ಚರಿಕೆ' : '⚠️ ಔಷಧಿ ಎಚ್ಚರಿಕೆ';
+    if (l === 'ml') return isSevere ? '🚨 ഗുരുതര മരുന്ന് പ്രതിപ്രവർത്തന മുന്നറിയിപ്പ്' : '⚠️ മരുന്ന് ജാഗ്രതാ മുന്നറിയിപ്പ്';
+    if (l === 'bn') return isSevere ? '🚨 মারাত্মক ওষুধ সংঘর্ষের সতর্কতা' : '⚠️ ওষুধ প্রতিক্রিয়া সতর্কতা';
+    if (l === 'or') return isSevere ? '🚨 ଗୁରୁତର ଔଷଧ ସଂଘର୍ଷ ଚେତାବନୀ' : '⚠️ ଔଷଧ ସତର୍କତା ଚେତାବନୀ';
+    if (l === 'as') return isSevere ? '🚨 গুৰুতৰ ঔষধ সংঘাতৰ সতৰ্কবাণী' : '⚠️ ঔষধ সতৰ୍କতা সংকেত';
+    return isSevere ? '🚨 Severe Drug-Herb Interaction Alert' : '⚠️ Drug-Herb Interaction Advisory';
+  }
+
+  /**
+   * Build high-fidelity localized audio narration for safety clashes with ZERO English leaks
+   */
   private static buildClashNarration(
     herbName: string,
     drugName: string,
@@ -576,39 +904,103 @@ export class QueryResolverService {
   ): string {
     const isSevere = safety.evidenceLevel === 'established' && safety.confidence === 'High';
     const isModerate = safety.hasInteraction;
+    const adverseEffect = this.getLocalizedAdverseEffect(safety, lang);
+    const l = (lang || 'en').toLowerCase().slice(0, 2);
 
-    if (lang === 'hi') {
+    if (l === 'hi') {
       if (isSevere) {
-        return `सावधान! ${herbName} और ${drugName} को एक साथ लेने पर गंभीर खतरा है: ${safety.alertHeadline}। कृपया अपने डॉक्टर से परामर्श के बिना इन्हें साथ न लें।`;
+        return `सावधान! ${herbName} और ${drugName} को एक साथ लेने पर गंभीर खतरा है: ${adverseEffect}। कृपया अपने डॉक्टर से परामर्श के बिना इन्हें साथ न लें।`;
       }
       if (isModerate) {
-        return `चेतावनी: ${herbName} और ${drugName} के बीच परस्पर प्रभाव हो सकता है: ${safety.alertHeadline}। नियमित रूप से बीपी या शुगर की जांच करते रहें।`;
+        return `चेतावनी: ${herbName} और ${drugName} के बीच परस्पर प्रभाव हो सकता है: ${adverseEffect}। नियमित रूप से बीपी या शुगर की जांच करते रहें।`;
       }
       return `${herbName} और ${drugName} के बीच कोई ज्ञात गंभीर परस्पर प्रभाव नहीं मिला है। सामान्य मात्रा में लेना सुरक्षित माना जाता है।`;
     }
 
-    if (lang === 'gu') {
+    if (l === 'gu') {
       if (isSevere) {
-        return `સાવધાન! ${herbName} અને ${drugName} સાથે લેવાથી ગંભીર જોખમ છે: ${safety.alertHeadline}। ડૉક્ટરની સલાહ વિના બંને સાથે લેશો નહીં.`;
+        return `સાવધાન! ${herbName} અને ${drugName} સાથે લેવાથી ગંભીર જોખમ છે: ${adverseEffect}। ડૉક્ટરની સલાહ વિના બંને સાથે લેશો નહીં.`;
       }
       if (isModerate) {
-        return `ચેતવણી: ${herbName} અને ${drugName} વચ્ચે સામાન્ય ક્રિયાપ્રતિક્રિયા થઈ શકે છે: ${safety.alertHeadline}। બ્લડ પ્રેશર અથવા સુગરનું ધ્યાન રાખો.`;
+        return `ચેતવણી: ${herbName} અને ${drugName} વચ્ચે સામાન્ય ક્રિયાપ્રતિક્રિયા થઈ શકે છે: ${adverseEffect}। બ્લડ પ્રેશર અથવા સુગરનું ધ્યાન રાખો.`;
       }
       return `${herbName} અને ${drugName} વચ્ચે કોઈ ગંભીર વિરોધાભાસ જોવા મળ્યો નથી. સામાન્ય માત્રામાં લેવું સુરક્ષિત છે.`;
     }
 
-    if (lang === 'pa') {
+    if (l === 'pa') {
       if (isSevere) {
-        return `ਸਾਵਧਾਨ! ${herbName} ਅਤੇ ${drugName} ਇਕੱਠੇ ਲੈਣ ਨਾਲ ਵੱਡਾ ਖ਼ਤਰਾ ਹੈ: ${safety.alertHeadline}। ਬਿਨਾਂ ਡਾਕਟਰ ਦੀ ਸਲਾਹ ਤੋਂ ਨਾ ਲਵੋ।`;
+        return `ਸਾਵਧਾਨ! ${herbName} ਅਤੇ ${drugName} ਇਕੱਠੇ ਲੈਣ ਨਾਲ ਵੱਡਾ ਖ਼ਤਰਾ ਹੈ: ${adverseEffect}। ਬਿਨਾਂ ਡਾਕਟਰ ਦੀ ਸਲਾਹ ਤੋਂ ਨਾ ਲਵੋ।`;
       }
-      return `${herbName} ਅਤੇ ${drugName}: ${safety.alertHeadline}। ਸਾਵਧਾਨੀ ਵਰਤੋ।`;
+      if (isModerate) {
+        return `ਚੇਤਾਵਨੀ: ${herbName} ਅਤੇ ${drugName} ਦੇ ਵਿਚਕਾਰ ਅਸਰ ਹੋ ਸਕਦਾ ਹੈ: ${adverseEffect}।`;
+      }
+      return `${herbName} ਅਤੇ ${drugName} ਇਕੱਠੇ ਲੈਣਾ ਸੁਰੱਖਿਅਤ ਮੰਨਿਆ ਜਾਂਦਾ ਹੈ।`;
+    }
+
+    if (l === 'mr') {
+      if (isSevere) {
+        return `सावधान! ${herbName} आणि ${drugName} एकत्र घेतल्यास मोठा धोका आहे: ${adverseEffect}। डॉक्टरांच्या सल्ल्याशिवाय हे एकत्र घेऊ नका.`;
+      }
+      if (isModerate) {
+        return `इशारा: ${herbName} आणि ${drugName} मध्ये परस्पर दुष्परिणाम होऊ शकतो: ${adverseEffect}।`;
+      }
+      return `${herbName} आणि ${drugName} एकत्र घेणे सुरक्षित मानले जाते.`;
+    }
+
+    if (l === 'ta') {
+      if (isSevere) {
+        return `எச்சரிக்கை! ${herbName} மற்றும் ${drugName} ஆகியவற்றை ஒன்றாக உட்கொள்வது பெரும் ஆபத்தானது: ${adverseEffect}। மருத்துவரின் ஆலோசனை இல்லாமல் உட்கொள்ள வேண்டாம்.`;
+      }
+      return `${herbName} மற்றும் ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'te') {
+      if (isSevere) {
+        return `హెచ్చరిక! ${herbName} మరియు ${drugName} కలిపి తీసుకోవడం చాలా ప్రమాదకరం: ${adverseEffect}। వైద్యుని సలహా లేకుండా కలిపి వాడవద్దు.`;
+      }
+      return `${herbName} మరియు ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'kn') {
+      if (isSevere) {
+        return `ಎಚ್ಚರಿಕೆ! ${herbName} ಮತ್ತು ${drugName} ಒಟ್ಟಿಗೆ ತೆಗೆದುಕೊಳ್ಳುವುದು ಅಪಾಯಕಾರಿ: ${adverseEffect}। ವೈದ್ಯರ ಸಲಹೆಯಿಲ್ಲದೆ ತೆಗೆದುಕೊಳ್ಳಬೇಡಿ.`;
+      }
+      return `${herbName} ಮತ್ತು ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'ml') {
+      if (isSevere) {
+        return `മുന്നറിയിപ്പ്! ${herbName} കൂടാതെ ${drugName} ഒരുമിച്ച് കഴിക്കുന്നത് ഗുരുതരമായ അപകടമുണ്ടാക്കാം: ${adverseEffect}। ഡോക്ടറുടെ നിർദ്ദേശമില്ലാതെ കഴിക്കരുത്.`;
+      }
+      return `${herbName} കൂടാതെ ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'bn') {
+      if (isSevere) {
+        return `সাবধান! ${herbName} এবং ${drugName} একসাথে গ্রহণ করা বিপজ্জনক: ${adverseEffect}। ডাক্তারের পরামর্শ ছাড়া একসাথে খাবেন না।`;
+      }
+      return `${herbName} এবং ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'or') {
+      if (isSevere) {
+        return `ସାବଧାନ! ${herbName} ଏବଂ ${drugName} ଏକାଠି ନେବା ବିପଦଜନକ: ${adverseEffect}। ଡାକ୍ତରଙ୍କ ପରାମର୍ଶ ବିନା ଏକାଠି ନିଅନ୍ତୁ ନାହିଁ।`;
+      }
+      return `${herbName} ଏବଂ ${drugName}: ${adverseEffect}।`;
+    }
+
+    if (l === 'as') {
+      if (isSevere) {
+        return `সাৱধান! ${herbName} আৰু ${drugName} একেলগে খোৱাটো বিপদজনক: ${adverseEffect}। চিকিৎসকৰ পৰামৰ্শ অবিহনে একেলগে নাখাব।`;
+      }
+      return `${herbName} আৰু ${drugName}: ${adverseEffect}।`;
     }
 
     if (isSevere) {
-      return `Severe clinical alert! Taking ${herbName} concurrently with ${drugName} poses a high risk: ${safety.alertHeadline}. Do not combine without doctor supervision.`;
+      return `Severe clinical alert! Taking ${herbName} concurrently with ${drugName} poses a high risk: ${adverseEffect}. Do not combine without doctor supervision.`;
     }
     if (isModerate) {
-      return `Caution: Interaction detected between ${herbName} and ${drugName}: ${safety.alertHeadline}. Regular monitoring is advised.`;
+      return `Caution: Interaction detected between ${herbName} and ${drugName}: ${adverseEffect}. Regular monitoring is advised.`;
     }
     return `No severe interaction detected between ${herbName} and ${drugName}. Safe when used within standard dietary doses.`;
   }
