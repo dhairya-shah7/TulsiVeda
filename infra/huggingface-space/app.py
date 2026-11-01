@@ -114,7 +114,7 @@ Return ONLY a valid JSON object matching this exact TypeScript structure without
         },
     }
 
-# Gradio Interactive UI for Judges & Browser Testing with auto API
+# Gradio Interactive UI
 with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine") as demo:
     gr.Markdown("""
     # 🌿 TulsiVeda AI: BioMistral-7B Clinical Synthesis Engine
@@ -146,5 +146,4 @@ with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine") as demo:
         api_name="synthesize"
     )
 
-if __name__ == "__main__":
-    demo.launch()
+demo.launch(server_name="0.0.0.0", server_port=7860)
