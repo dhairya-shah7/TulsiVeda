@@ -2,7 +2,7 @@
 title: TulsiVeda BioMistral-7B Medical AI
 emoji: 🌿
 colorFrom: green
-colorTo: emerald
+colorTo: green
 sdk: gradio
 sdk_version: 4.44.0
 app_file: app.py
