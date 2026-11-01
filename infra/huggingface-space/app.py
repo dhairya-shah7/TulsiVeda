@@ -5,19 +5,13 @@ import json
 import re
 import requests
 import gradio as gr
-
-try:
-    import spaces
-    gpu_decorator = spaces.GPU
-except ImportError:
-    def gpu_decorator(func):
-        return func
+import spaces
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 MODEL_ID = "BioMistral/BioMistral-7B"
 HF_ROUTER_URL = f"https://router.huggingface.co/hf-inference/models/{MODEL_ID}"
 
-@gpu_decorator
+@spaces.GPU
 def query_biomistral(condition_query: str) -> dict:
     q = (condition_query or "").strip()
     if not q:
