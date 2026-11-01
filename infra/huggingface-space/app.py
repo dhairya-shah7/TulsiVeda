@@ -146,4 +146,4 @@ with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine") as demo:
         api_name="synthesize"
     )
 
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch(server_name="0.0.0.0", server_port=7860, ssr=False)
