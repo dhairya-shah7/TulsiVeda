@@ -1,21 +1,17 @@
 ---
-title: TulsiVeda BioMistral-7B Cloud Server
+title: TulsiVeda BioMistral-7B Medical AI
 emoji: 🌿
 colorFrom: green
 colorTo: emerald
-sdk: docker
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
 pinned: false
 ---
 
-# 🌿 TulsiVeda BioMistral Cloud Server
+# 🌿 TulsiVeda AI: BioMistral-7B Medical Research Microservice
 
-A dedicated microservice providing real-time BioMistral-7B clinical synthesis and CDSCO/AYUSH protocol generation for the TulsiVeda AI mobile app.
-
-### Deployment Instructions:
-1. Go to [Hugging Face Spaces](https://huggingface.co/new-space).
-2. Set Space Name: `tulsiveda-biomistral`
-3. SDK: `Docker` (or `Gradio/FastAPI`)
-4. In Space Settings &rarr; **Variables & Secrets**, add:
-   * `HF_TOKEN`: Your Hugging Face user access token (read permission).
-5. Push `app.py`, `requirements.txt`, and `Dockerfile` to the repository.
-6. The public URL will be: `https://<your-username>-tulsiveda-biomistral.hf.space`
+Evidence-based clinical protocol generator bridging **BioMistral-7B Open-Weight LLM** with:
+1. **CDSCO National List of Essential Medicines (NLEM)**
+2. **Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP)** Subsidized Generics
+3. **Ministry of AYUSH Pharmacopoeia & CCRAS Monographs**
