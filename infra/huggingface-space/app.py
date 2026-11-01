@@ -114,36 +114,17 @@ Return ONLY a valid JSON object matching this exact TypeScript structure without
         },
     }
 
-# Gradio Interactive UI
-with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine") as demo:
-    gr.Markdown("""
-    # 🌿 TulsiVeda AI: BioMistral-7B Clinical Synthesis Engine
-    **Real-Time Open-Weight Medical LLM Bridging CDSCO NLEM Generics & AYUSH Classical Monographs**
-    """)
-    
-    with gr.Row():
-        with gr.Column(scale=1):
-            query_input = gr.Textbox(
-                label="Enter Medical Condition / Symptom",
-                placeholder="E.g., AIDS, Hepatitis C, Kidney stones, Chronic Bronchitis, Psoriasis...",
-                lines=2
-            )
-            submit_btn = gr.Button("🔍 Synthesize 3-Tier Clinical Protocol", variant="primary")
-            
-            gr.Markdown("### 💡 Quick Examples (Click to test):")
-            gr.Examples(
-                examples=["AIDS", "Fatty Liver", "Kidney stones", "Psoriasis", "Chronic Bronchitis", "Hypothyroidism"],
-                inputs=query_input
-            )
-            
-        with gr.Column(scale=2):
-            output_json = gr.JSON(label="Synthesized Evidence-Based Protocol")
+demo = gr.Interface(
+    fn=query_biomistral,
+    inputs=gr.Textbox(
+        label="Medical Condition / Query",
+        placeholder="e.g. AIDS, Fatty Liver, Kidney stones, Psoriasis, Asthma...",
+        lines=2
+    ),
+    outputs=gr.JSON(label="Synthesized Evidence-Based Protocol"),
+    title="🌿 TulsiVeda AI - BioMistral Clinical Engine",
+    description="Real-Time Open-Weight Medical LLM Bridging CDSCO NLEM Generics & AYUSH Classical Monographs",
+    examples=["AIDS", "Fatty Liver", "Kidney stones", "Psoriasis", "Chronic Bronchitis", "Hypothyroidism"]
+)
 
-    submit_btn.click(
-        fn=query_biomistral,
-        inputs=query_input,
-        outputs=output_json,
-        api_name="synthesize"
-    )
-
-demo.launch(server_name="0.0.0.0", server_port=7860, ssr=False)
+demo.launch()
