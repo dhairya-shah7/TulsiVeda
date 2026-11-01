@@ -1,4 +1,6 @@
 import os
+os.environ["GRADIO_SSR_MODE"] = "False"
+
 import json
 import re
 import requests
@@ -122,9 +124,11 @@ demo = gr.Interface(
         lines=2
     ),
     outputs=gr.JSON(label="Synthesized Evidence-Based Protocol"),
-    title="🌿 TulsiVeda AI - BioMistral Clinical Engine",
-    description="Real-Time Open-Weight Medical LLM Bridging CDSCO NLEM Generics & AYUSH Classical Monographs",
-    examples=["AIDS", "Fatty Liver", "Kidney stones", "Psoriasis", "Chronic Bronchitis", "Hypothyroidism"]
+    title="TulsiVeda AI - BioMistral Clinical Engine",
+    description="Real-Time Open-Weight Medical LLM Bridging CDSCO NLEM Generics & AYUSH Classical Monographs"
 )
 
-demo.launch()
+try:
+    demo.launch(ssr_mode=False)
+except Exception:
+    demo.launch()
