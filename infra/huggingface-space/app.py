@@ -3,20 +3,6 @@ import json
 import re
 import requests
 import gradio as gr
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-
-# Initialize FastAPI app first so we can mount Gradio seamlessly
-fastapi_app = FastAPI(title="TulsiVeda BioMistral Microservice", version="2.5.0")
-
-fastapi_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 MODEL_ID = "BioMistral/BioMistral-7B"
@@ -128,31 +114,8 @@ Return ONLY a valid JSON object matching this exact TypeScript structure without
         },
     }
 
-# 1. Plain REST API route for Mobile App & cURL
-@fastapi_app.post("/api/v1/synthesize")
-async def api_synthesize(request: Request):
-    try:
-        body = await request.json()
-        query = body.get("query", "")
-    except Exception:
-        query = ""
-    result = query_biomistral(query)
-    return JSONResponse(content={
-        "status": "success",
-        "model": "BioMistral-7B Open-Weight LLM",
-        "data": result
-    })
-
-@fastapi_app.get("/api/v1/health")
-def api_health():
-    return {
-        "status": "healthy",
-        "service": "TulsiVeda BioMistral Gradio Server",
-        "token_configured": bool(HF_TOKEN)
-    }
-
-# 2. Gradio Interactive UI for Judges & Browser Testing
-with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine", theme=gr.themes.Soft()) as demo:
+# Gradio Interactive UI for Judges & Browser Testing with auto API
+with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine") as demo:
     gr.Markdown("""
     # 🌿 TulsiVeda AI: BioMistral-7B Clinical Synthesis Engine
     **Real-Time Open-Weight Medical LLM Bridging CDSCO NLEM Generics & AYUSH Classical Monographs**
@@ -167,10 +130,7 @@ with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine", theme=gr.theme
             )
             submit_btn = gr.Button("🔍 Synthesize 3-Tier Clinical Protocol", variant="primary")
             
-            gr.Markdown("""
-            ### 💡 Quick Examples:
-            Click any condition to test live:
-            """)
+            gr.Markdown("### 💡 Quick Examples (Click to test):")
             gr.Examples(
                 examples=["AIDS", "Fatty Liver", "Kidney stones", "Psoriasis", "Chronic Bronchitis", "Hypothyroidism"],
                 inputs=query_input
@@ -186,9 +146,5 @@ with gr.Blocks(title="TulsiVeda AI - BioMistral Clinical Engine", theme=gr.theme
         api_name="synthesize"
     )
 
-# Mount Gradio UI inside the FastAPI application
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
-
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    demo.launch()
