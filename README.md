@@ -109,12 +109,12 @@ When users query any symptom, rare condition, or uncatalogued entity, TulsiVeda 
    * **Endocrinology & Thyroid:** Levothyroxine Sodium 50/100mcg + Kanchnar Guggulu.
    * **Dermatology & Psoriasis / Eczema:** Terbinafine 250mg + Clobetasol + Khadirarishta & Mahatiktaka Ghrita.
    * **Pulmonology & COPD / Asthma:** Salmeterol + Fluticasone Inhaler + Vasavaleha & Sitopaladi Churna.
-   * **Cardiology & Hypertension:** Telmisartan 40mg + Amlodipine 5mg + Prabhakar Vati & Arjuna Ksheerapaka.
+   * **Cardiology, Hypertension & Left Ventricular Dysfunction (LVD / Heart Failure):** Tab Ramipril 2.5/5mg + Tab Carvedilol 3.125/6.25mg + Tab Furosemide 40mg IP (CDSCO Heart Failure Protocol) / Tab Telmisartan 40mg + Amlodipine 5mg IP + Prabhakar Vati & Arjuna Ksheerapaka (*Terminalia arjuna* & *Boerhavia diffusa*) + 2D-Echo LVEF & NT-proBNP diagnostics.
    * **Gastroenterology & GERD:** Pantoprazole 40mg + Kamadudha Ras & Bilwadi Churna.
    * **Musculoskeletal & Arthritis:** Febuxostat 40mg / Glucosamine + Yograj Guggulu & Shallaki.
    * **Hematology & Anemia:** Ferrous Ascorbate + Folic Acid + Punarnava Mandur & Dhatri Lauha.
    * **Ophthalmology, ENT, Metabolic Diabetes, Pediatrics, and Geriatrics.**
-3. **Tier 3 (Live BioMistral-7B Medical LLM):** Live Hugging Face inference with a 3.5s timeout and automatic on-device caching.
+3. **Tier 3 (Live BioMistral-7B Medical LLM ZeroGPU Node):** Real-time Gradio SSE streaming endpoint (`https://dhairya-shah7-tulsiveda-biomistral.hf.space/gradio_api/call/predict`) running BioMistral-7B with zero dummy strings, genuine active generic salts, and automatic on-device caching.
 
 ---
 
