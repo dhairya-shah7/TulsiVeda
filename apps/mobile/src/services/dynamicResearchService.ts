@@ -32,7 +32,7 @@ export class DynamicResearchService {
     const lower = cleanQuery.toLowerCase();
     const l = (langCode || 'en').toLowerCase().slice(0, 2);
 
-    // 1. Check local dynamic storage cache first
+    // 1. Check local dynamic storage cache first (bypassing any stale dummy records)
     try {
       const cached = StorageService.getDynamicClinicalRecords();
       const existing = cached.find((c: any) => 
@@ -40,16 +40,20 @@ export class DynamicResearchService {
         (Array.isArray(c.vernacularSymptomKeywords) && c.vernacularSymptomKeywords.some((k: string) => k.toLowerCase().includes(lower)))
       );
       if (existing) {
-        return {
-          record: existing,
-          isDynamic: true,
-          sourceCitation: l === 'hi' ? 'राष्ट्रीय चिकित्सा अनुसंधान रजिस्ट्री (स्थानीय रूप से सुरक्षित)' :
-                          l === 'gu' ? 'રાષ્ટ્રીય તબીબી સંશોધન રજિસ્ટ્રી (સ્થાનિક કેશ્ડ)' :
-                          l === 'bn' ? 'জাতীয় চিকিৎসা গবেষণা রেজিস্ট্রি (স্থানীয়ভাবে সংরক্ষিত)' :
-                          'National Medical Research Registry (Locally Cached)',
-          confidenceScore: 0.95,
-          modelSignature: this.MODEL_NAME,
-        };
+        const isStaleDummy = (existing.officialGeneric?.genericSalt || '').includes('Standard Therapeutic') ||
+                             (existing.officialGeneric?.medicineName || '').includes('Essential Pharmacopeial');
+        if (!isStaleDummy) {
+          return {
+            record: existing,
+            isDynamic: true,
+            sourceCitation: l === 'hi' ? 'राष्ट्रीय चिकित्सा अनुसंधान रजिस्ट्री (स्थानीय रूप से सुरक्षित)' :
+                            l === 'gu' ? 'રાષ્ટ્રીય તબીબી સંશોધન રજિસ્ટ્રી (સ્થાનિક કેશ્ડ)' :
+                            l === 'bn' ? 'জাতীয় চিকিৎসা গবেষণা রেজিস্ট্রি (স্থানীয়ভাবে সংরক্ষিত)' :
+                            'National Medical Research Registry (Locally Cached)',
+            confidenceScore: 0.95,
+            modelSignature: this.MODEL_NAME,
+          };
+        }
       }
     } catch (e) {
       console.warn('[DynamicResearch] Cache lookup warning:', e);
@@ -174,6 +178,13 @@ export class DynamicResearchService {
       }
 
       if (!parsedJson || !parsedJson.officialGeneric || !parsedJson.ayushClassicalFormulation) {
+        return null;
+      }
+
+      // Guard against stale remote space returning dummy placeholder strings
+      const rawGeneric = (parsedJson.officialGeneric?.genericSalt || '') + (parsedJson.officialGeneric?.medicineName || '');
+      if (rawGeneric.includes('Standard Therapeutic') || rawGeneric.includes('Essential Pharmacopeial')) {
+        console.warn('[DynamicResearch] Discarding stale remote placeholder, routing to Edge Clinical Engine');
         return null;
       }
 
